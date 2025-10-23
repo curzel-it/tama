@@ -32,7 +32,8 @@
       "Bash(curl -s http://localhost:3000/midi-composer.html)",
       "Bash(chmod +x sshprod.sh)",
       "Bash(sqlite3 tama.db \"SELECT c.id, c.name, COUNT(co.id) as content_count FROM channels c LEFT JOIN contents co ON c.id = co.channel_id WHERE c.name = ''hiddenmugs'' GROUP BY c.id\")",
-      "Bash(timeout 2 ./target/debug/tama preview sprites/neko_idle.txt)"
+      "Bash(timeout 2 ./target/debug/tama preview sprites/neko_idle.txt)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []

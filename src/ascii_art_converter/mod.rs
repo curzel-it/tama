@@ -36,19 +36,30 @@ impl AsciiArtSheet {
             return Err("Invalid header".to_string());
         }
 
-        let dimensions = header
+        let after_prefix = header
             .trim_start_matches("Ascii Art Animation, ")
-            .split('x')
-            .collect::<Vec<_>>();
+            .trim();
 
-        if dimensions.len() != 2 {
+        let parts: Vec<&str> = after_prefix
+            .split(',')
+            .map(|s| s.trim())
+            .collect();
+
+        if parts.is_empty() {
             return Err("Invalid dimensions in header".to_string());
         }
 
-        let width: usize = dimensions[0]
+        let dimensions_part = parts[0];
+        let dim_parts: Vec<&str> = dimensions_part.split('x').collect();
+
+        if dim_parts.len() != 2 {
+            return Err("Invalid dimensions format, expected WIDTHxHEIGHT".to_string());
+        }
+
+        let width: usize = dim_parts[0]
             .parse()
             .map_err(|_| "Invalid width")?;
-        let mut height: usize = dimensions[1]
+        let mut height: usize = dim_parts[1]
             .parse()
             .map_err(|_| "Invalid height")?;
 
@@ -118,5 +129,29 @@ mod tests {
         sheet.add_frame("⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀".to_string());
         let output = sheet.to_string();
         assert!(output.starts_with("Ascii Art Animation, 5x3\n"));
+    }
+
+    #[test]
+    fn test_from_string_with_fps() {
+        let content = "Ascii Art Animation, 5x3, 10fps\n⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀";
+        let result = AsciiArtSheet::from_string(content);
+        assert!(result.is_ok());
+
+        let sheet = result.unwrap();
+        assert_eq!(sheet.width, 5);
+        assert_eq!(sheet.height, 3);
+        assert_eq!(sheet.frames.len(), 1);
+    }
+
+    #[test]
+    fn test_from_string_without_fps() {
+        let content = "Ascii Art Animation, 5x3\n⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀";
+        let result = AsciiArtSheet::from_string(content);
+        assert!(result.is_ok());
+
+        let sheet = result.unwrap();
+        assert_eq!(sheet.width, 5);
+        assert_eq!(sheet.height, 3);
+        assert_eq!(sheet.frames.len(), 1);
     }
 }
