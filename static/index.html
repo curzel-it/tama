@@ -100,6 +100,19 @@
         </div>
     </div>
 
+    <div id="navigationControls" style="display: none;">
+        <div class="controls">
+            <button onclick="previousContent()">← Previous</button>
+            <div id="volumeControls">
+                <button onclick="decreaseVolume()">-</button>
+                <span id="volumeDisplay">+..........</span>
+                <button onclick="increaseVolume()">+</button>
+                <button onclick="toggleMute()" id="muteButton">Mute</button>
+            </div>
+            <button onclick="nextContent()">Next →</button>
+        </div>
+    </div>
+
     <div id="contentContainer">
         <div class="loading">Loading feed...</div>
     </div>
@@ -135,7 +148,78 @@
         // Initialize auth UI on page load
         window.addEventListener('DOMContentLoaded', () => {
             updateAuthUI();
+            initVolumeControls();
         });
+
+        // Volume control functionality
+        const VOLUME_STEPS = 10;
+        const VOLUME_STORAGE_KEY = 'tama_volume';
+        const MUTE_STORAGE_KEY = 'tama_muted';
+
+        function loadVolumeSettings() {
+            const savedVolume = localStorage.getItem(VOLUME_STORAGE_KEY);
+            const savedMuted = localStorage.getItem(MUTE_STORAGE_KEY);
+
+            if (savedVolume !== null) {
+                const volume = parseFloat(savedVolume);
+                midiPlayer.setVolume(volume);
+            }
+
+            if (savedMuted === 'true') {
+                midiPlayer.mute();
+            }
+        }
+
+        function saveVolumeSettings() {
+            localStorage.setItem(VOLUME_STORAGE_KEY, midiPlayer.getVolume().toString());
+            localStorage.setItem(MUTE_STORAGE_KEY, midiPlayer.getMuted().toString());
+        }
+
+        window.updateVolumeDisplay = function() {
+            const volume = midiPlayer.getVolume();
+            const isMuted = midiPlayer.getMuted();
+            const steps = Math.round(volume * VOLUME_STEPS);
+
+            const volumeDisplay = document.getElementById('volumeDisplay');
+            const muteButton = document.getElementById('muteButton');
+
+            if (volumeDisplay) {
+                const filled = '━'.repeat(steps);
+                const empty = '·'.repeat(VOLUME_STEPS - steps);
+                volumeDisplay.textContent = filled + '╸' + empty;
+            }
+
+            if (muteButton) {
+                muteButton.textContent = isMuted ? 'Unmute' : 'Mute';
+            }
+        }
+
+        function initVolumeControls() {
+            loadVolumeSettings();
+            window.updateVolumeDisplay();
+        }
+
+        window.increaseVolume = function() {
+            const currentVolume = midiPlayer.getVolume();
+            const newVolume = Math.min(1.0, currentVolume + (1.0 / VOLUME_STEPS));
+            midiPlayer.setVolume(newVolume);
+            saveVolumeSettings();
+            window.updateVolumeDisplay();
+        }
+
+        window.decreaseVolume = function() {
+            const currentVolume = midiPlayer.getVolume();
+            const newVolume = Math.max(0.0, currentVolume - (1.0 / VOLUME_STEPS));
+            midiPlayer.setVolume(newVolume);
+            saveVolumeSettings();
+            window.updateVolumeDisplay();
+        }
+
+        window.toggleMute = function() {
+            midiPlayer.toggleMute();
+            saveVolumeSettings();
+            window.updateVolumeDisplay();
+        }
     </script>
 </body>
 

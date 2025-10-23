@@ -26,10 +26,18 @@ a {
     text-decoration: none;
 }
 
+#navigationControls {
+    max-width: 800px;
+    width: 100%;
+    padding: 20px;
+    padding-bottom: 0;
+}
+
 #contentContainer {
     max-width: 800px;
     width: 100%;
     padding: 20px;
+    padding-top: 0;
 }
 
 .content-header {
@@ -43,8 +51,9 @@ a {
 
 .controls {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
+    gap: 20px;
     margin-top: 20px;
     padding-top: 20px;
 }
@@ -426,4 +435,31 @@ MIDI Composer
 .help code {
     padding: 2px 4px;
     border-radius: 2px;
+}
+
+/*
+--------------------------------------------------------------------------------
+Volume Controls
+--------------------------------------------------------------------------------
+*/
+
+#volumeControls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#volumeControls button {
+    padding: 5px 10px;
+    font-size: 12px;
+    min-width: auto;
+}
+
+#volumeDisplay {
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    letter-spacing: 1px;
+    white-space: pre;
+    min-width: 11ch;
+    text-align: center;
 }

@@ -125,6 +125,7 @@ function renderContent() {
 
     const item = feedData[currentIndex];
     const container = document.getElementById('contentContainer');
+    const navigationControls = document.getElementById('navigationControls');
     const art = item.content.art || '';
     const frames = parseFrames(art);
 
@@ -132,12 +133,9 @@ function renderContent() {
         updatePageDetailsForItem(item);
     }
 
-    const controlsHtml = isSingleContentMode
-        ? ''
-        : `<div class="controls">
-            <button onclick="previousContent()">← Previous</button>
-            <button onclick="nextContent()">Next →</button>
-        </div>`;
+    if (navigationControls) {
+        navigationControls.style.display = isSingleContentMode ? 'none' : 'block';
+    }
 
     container.innerHTML = `
         <div class="content-header">
@@ -147,8 +145,6 @@ function renderContent() {
             <div class="content-info">FPS: ${item.content.fps}</div>
             <div class="content-info">Frames: ${frames.length}</div>
         </div>
-
-        ${controlsHtml}
     `;
 
     animationController.start(frames, item.content.fps);
@@ -156,6 +152,10 @@ function renderContent() {
     midiPlayer.stop();
     if (item.content.midi_composition && item.content.midi_composition.trim()) {
         midiPlayer.play(item.content.midi_composition);
+    }
+
+    if (typeof window.updateVolumeDisplay === 'function') {
+        window.updateVolumeDisplay();
     }
 }
 
