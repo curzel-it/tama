@@ -1,0 +1,429 @@
+* {
+    font-family: 'Fira Code', monospace;
+}
+
+html {
+    height: 100%;
+}
+
+body {    
+    padding: 20px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 14px;
+}
+
+i {
+    font-style: italic;
+}
+
+a {
+    font-weight: bold;
+    text-decoration: none;
+}
+
+#contentContainer {
+    max-width: 800px;
+    width: 100%;
+    padding: 20px;
+}
+
+.content-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}
+
+.content-info {
+    margin: 10px 0;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+a.button, button {
+    font-weight: normal;
+}
+
+.loading,
+.error {
+    text-align: center;
+    padding: 50px;
+}
+
+#clickToContinueOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+#clickToContinueOverlay * {
+    text-align: center;
+}
+
+#clickToContinueOverlay.hidden {
+    display: none;
+}
+
+/*
+--------------------------------------------------------------------------------
+Auth UI
+--------------------------------------------------------------------------------
+*/
+
+#authControls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+#userInfo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#channelName {
+    font-weight: bold;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    padding: 30px;
+    border-radius: 4px;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    opacity: 0.7;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 2px;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+}
+
+.error {
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.auth-switch {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.auth-switch a {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.auth-switch a:hover {
+    opacity: 0.7;
+}
+
+#authModal h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+
+/*
+--------------------------------------------------------------------------------
+Color palette
+--------------------------------------------------------------------------------
+*/
+
+html, body, canvas, #clickToContinueOverlay {
+    background-color: #081820;
+    color: #88c070;
+}
+
+a {
+    color: white;
+}
+
+a.button, button, .modal a.button, .modal button {
+    background-color: #081820;
+    color: white;
+    border: 1px solid #88c070;
+    border-radius: 2px;
+}
+
+.modal {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    background-color: #081820;
+    border: 1px solid #88c070;
+}
+
+.close {
+    color: #88c070;
+}
+
+.form-group input,
+.form-group textarea {
+    background-color: transparent;
+    color: #88c070;
+    border: 1px solid #88c070;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #a0e080;
+}
+
+.error {
+    color: #ff6b6b;
+}
+
+.auth-switch a {
+    color: #88c070;
+}
+
+#midiInput {
+    background-color: #1a1a1a;
+    color: #88c070;
+    border: 1px solid #88c070;
+}
+
+.help {
+    background-color: #1a2a1a;
+    border: 1px solid #88c070;
+}
+
+.help code {
+    background-color: #0a1a0a;
+}
+
+@media (prefers-color-scheme: light) {
+    html, body, canvas, #clickToContinueOverlay {
+        background-color: #f0faf0;
+        color: #081820;
+    }
+
+    a.button, button, .modal a.button, .modal button {
+        background-color: #88c070;
+        color: #081820;
+        border: 1px solid #081820;
+        border-radius: 2px;
+    }
+
+    a {
+        color: #68b040;
+    }
+
+    .modal {
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .modal-content {
+        background-color: #f0faf0;
+        color: #081820;
+        border: 1px solid #081820;
+    }
+
+    .close {
+        color: #081820;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        background-color: transparent;
+        color: #081820;
+        border: 1px solid #081820;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        border-color: #88c070;
+    }
+
+    .error {
+        color: #d63031;
+    }
+
+    .auth-switch a {
+        color: #081820;
+    }
+
+    #midiInput {
+        background-color: white;
+        color: #081820;
+        border: 1px solid #081820;
+    }
+
+    .help {
+        background-color: #e8f5e9;
+        border: 1px solid #081820;
+    }
+
+    .help code {
+        background-color: #c8e6c9;
+    }
+}
+
+/*
+--------------------------------------------------------------------------------
+Pixel Editor
+--------------------------------------------------------------------------------
+*/
+
+#pixelCanvas {
+    border: 2px solid;
+    cursor: crosshair;
+    image-rendering: pixelated;
+}
+
+.pixel-editor-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pixel-editor-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 800px;
+    align-items: center;
+}
+
+.pixel-editor-header h1 {
+    margin: 0;
+}
+
+/*
+--------------------------------------------------------------------------------
+MIDI Composer
+--------------------------------------------------------------------------------
+*/
+
+.midi-container {
+    width: 100%;
+    max-width: 800px;
+}
+
+.midi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.midi-header h1 {
+    margin: 0;
+}
+
+#midiInput {
+    width: 100%;
+    min-height: 200px;
+    padding: 15px;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.midi-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.help {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.help h3 {
+    margin-top: 0;
+}
+
+.help code {
+    padding: 2px 4px;
+    border-radius: 2px;
+}

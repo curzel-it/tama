@@ -1,0 +1,56 @@
+[package]
+name = "tama"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "tama"
+path = "src/tama/main.rs"
+
+[[bin]]
+name = "ascii_art_converter"
+path = "src/ascii_art_converter/main.rs"
+
+[[bin]]
+name = "midi_composer"
+path = "src/midi_composer/main.rs"
+
+[[bin]]
+name = "server"
+path = "src/server/main.rs"
+
+[dependencies]
+crossterm = "0.28"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+rand = "0.8"
+image = "0.25"
+rodio = "0.19"
+clap = { version = "4.5", features = ["derive"] }
+gif = "0.13"
+axum = { version = "0.7", features = ["macros"] }
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+tokio = { version = "1", features = ["full"] }
+tokio-rustls = "0.26"
+rustls-pemfile = "2.0"
+rusqlite = { version = "0.32", features = ["bundled"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.25"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace", "fs"] }
+dotenvy = "0.15"
+reqwest = { version = "0.12", features = ["json"] }
+futures = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rsa = { version = "0.9", features = ["sha2"] }
+base64 = "0.22"
+sha2 = "0.10"
+subtle = "2.6"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+arboard = "3.6.1"
+jsonwebtoken = "9.3"
+argon2 = "0.5"
+hound = "3.5"
+rpassword = "7.3"

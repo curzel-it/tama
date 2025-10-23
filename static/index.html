@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tama</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <canvas id="realCanvas"></canvas>
+
+    <div id="clickToContinueOverlay">
+        <button id="clickToContinueButton">Turn on the TV</button>
+        </br>
+        <p>In short, Audio Context can only be started <i>after</i> a user interaction...</p>
+        <p>So yeah, please click the button...</p>
+        <p>If there's a way around this please, <i>PLEASE</i> <a href="https://github.com/curzel-it/tama/issues/new">let me know</a>!</p>
+    </div>
+
+    <div id="authControls">
+        <button id="createButton" onclick="handleCreateClick()" style="display: none;">Create</button>
+        <div id="devModeMessage" style="display: none;">
+            <p>To create content use the <a href="https://github.com/curzel-it/tama" target="_blank">CLI app</a></p>
+        </div>
+        <div id="userInfo" style="display: none;">
+            <span id="channelName"></span>
+            <button id="logoutButton" onclick="handleLogout()">Logout</button>
+        </div>
+    </div>
+
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideAuthModal()">&times;</span>
+            <h2>Login or Sign Up</h2>
+            <div id="authError" class="error"></div>
+
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label for="authChannelName">Channel Name</label>
+                    <input type="text" id="authChannelName" pattern="[^\s]+" required>
+                    <small>No spaces, max 250 characters</small>
+                </div>
+                <div class="form-group">
+                    <label for="authPassword">Password</label>
+                    <input type="password" id="authPassword" required>
+                </div>
+                <button type="submit">Continue</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="createChoiceModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideCreateChoiceModal()">&times;</span>
+            <h2>Create Content</h2>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <button onclick="showUploadModal()">Upload .txt File</button>
+                <a href="/pixel-editor.html" class="button" style="display: block; text-align: center; text-decoration: none; padding: 10px 20px;">Create Pixel Art</a>
+                <a href="/midi-composer.html" class="button" style="display: block; text-align: center; text-decoration: none; padding: 10px 20px;">Create MIDI Music</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideUploadModal()">&times;</span>
+            <h2>Upload Content</h2>
+            <div id="uploadError" class="error"></div>
+
+            <form id="uploadForm" onsubmit="handleUpload(event)">
+                <div class="form-group">
+                    <label for="contentName">Content Name</label>
+                    <input type="text" id="contentName" maxlength="200" required>
+                </div>
+                <div class="form-group">
+                    <label for="artFile">Art File (.txt)</label>
+                    <input type="file" id="artFile" accept=".txt" required>
+                </div>
+                <div class="form-group">
+                    <label for="midiFile">MIDI File (.txt)</label>
+                    <input type="file" id="midiFile" accept=".txt" required>
+                </div>
+                <div class="form-group">
+                    <label for="fps">FPS (0.1 - 120)</label>
+                    <input type="number" id="fps" step="0.1" min="0.1" max="120" value="10" required>
+                </div>
+                <div id="previewSection" style="display: none; margin: 20px 0;">
+                    <h3>Preview</h3>
+                    <canvas id="previewCanvas" style="max-width: 100%;"></canvas>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit">Publish</button>
+                    <button type="button" onclick="hideUploadModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="contentContainer">
+        <div class="loading">Loading feed...</div>
+    </div>
+
+    <script src="/asciiCanvas.js"></script>
+    <script src="/ascii.js"></script>
+    <script src="/network.js"></script>
+    <script src="/auth.js"></script>
+    <script src="/create.js"></script>
+    <script src="/midi.js" type="module"></script>
+    <script src="/main.js" type="module"></script>
+    <script type="module">
+        import { loadFeed, initializePage } from '/main.js';
+        import { midiPlayer } from '/midi.js';
+
+        const turnOnButton = document.getElementById('clickToContinueButton');
+        const overlay = document.getElementById('clickToContinueOverlay');
+
+        // Check if this is a direct content link
+        const isViewContentUrl = window.location.pathname.match(/\/view\/content\/\d+/);
+
+        turnOnButton.addEventListener('click', async () => {
+            midiPlayer.initAudioContext();
+            overlay.classList.add('hidden');
+
+            if (isViewContentUrl) {
+                await initializePage();
+            } else {
+                await loadFeed();
+            }
+        });
+
+        // Initialize auth UI on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateAuthUI();
+        });
+    </script>
+</body>
+
+</html>

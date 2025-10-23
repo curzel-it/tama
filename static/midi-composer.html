@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MIDI Composer - Tama</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <div class="midi-container">
+        <div class="midi-header">
+            <h1>MIDI Composer</h1>
+            <a href="/" class="button">Back to Home</a>
+        </div>
+
+        <textarea id="midiInput" placeholder="Enter MIDI composition here (e.g., 4c 4e 4g 4c5)">4c 4e 4g 2c5 4g 4e 2c</textarea>
+
+        <div class="midi-controls">
+            <button id="playButton">Play</button>
+            <button id="stopButton">Stop</button>
+            <button id="downloadButton">Download .txt</button>
+        </div>
+
+        <div class="help">
+            <h3>MIDI Notation Help</h3>
+            <p><strong>Basic Note Format:</strong> <code>{duration}{note}{octave?}{waveform?}{.volume?}</code></p>
+            <ul>
+                <li><strong>Duration:</strong> 1 (whole), 2 (half), 4 (quarter), 8 (eighth), 16 (sixteenth)</li>
+                <li><strong>Note:</strong> c, d, e, f, g, a, b (add # for sharp, e.g., #c)</li>
+                <li><strong>Octave:</strong> 0-8 (default: 4)</li>
+                <li><strong>Waveform:</strong> q (square), t (triangle), s (sawtooth), p (pulse)</li>
+                <li><strong>Volume:</strong> .0 to .9 (e.g., .5 for 50%)</li>
+            </ul>
+            <p><strong>Examples:</strong></p>
+            <ul>
+                <li><code>4c</code> - Quarter note C in octave 4</li>
+                <li><code>8#c5</code> - Eighth note C# in octave 5</li>
+                <li><code>4et.5</code> - Quarter note E with triangle wave at 50% volume</li>
+                <li><code>4-</code> - Quarter rest (silence)</li>
+                <li><code>4(c e g)</code> - Quarter note arpeggio (C major chord)</li>
+                <li><code>-- comment</code> - Comment (ignored)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="/midi.js" type="module"></script>
+    <script type="module">
+        import { midiPlayer } from '/midi.js';
+
+        const playButton = document.getElementById('playButton');
+        const stopButton = document.getElementById('stopButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const midiInput = document.getElementById('midiInput');
+
+        midiPlayer.initAudioContext();
+
+        playButton.addEventListener('click', async () => {
+            const composition = midiInput.value.trim();
+            if (!composition) {
+                alert('Please enter a MIDI composition');
+                return;
+            }
+
+            try {
+                await midiPlayer.play(composition);
+            } catch (error) {
+                alert(`Failed to play composition: ${error.message}`);
+                console.error('Play error:', error);
+            }
+        });
+
+        stopButton.addEventListener('click', () => {
+            midiPlayer.stop();
+        });
+
+        downloadButton.addEventListener('click', () => {
+            const composition = midiInput.value.trim();
+            if (!composition) {
+                alert('Please enter a MIDI composition');
+                return;
+            }
+
+            const blob = new Blob([composition], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'midi-composition.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                midiPlayer.stop();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo build:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo run:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(./target/debug/tama:*)",
+      "Bash(test:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(locate:*)",
+      "Bash(grep:*)",
+      "Bash(touch:*)",
+      "Bash(identify:*)",
+      "Bash(rm:*)",
+      "Read(//tmp/**)",
+      "Read(//c/**)",
+      "Bash(cargo check --bin server)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(timeout 5 bash -c \"until curl -s http://localhost:8080 > /dev/null 2>&1; do sleep 0.5; done && echo ''Server is ready''\")",
+      "Bash(timeout 5 bash -c \"until curl -s http://localhost:3000 > /dev/null 2>&1; do sleep 0.5; done && echo ''Server is ready''\")",
+      "Bash(curl -s http://localhost:3000/view/content/1)",
+      "Bash(curl -s http://localhost:300)",
+      "Bash(curl -s http://localhost:3000/auth.js)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(pkill -f \"cargo run --bin server\")",
+      "Bash(curl -s http://localhost:3000/pixel-editor.html)",
+      "Bash(curl -s http://localhost:3000/midi-composer.html)",
+      "Bash(chmod +x sshprod.sh)",
+      "Bash(sqlite3 tama.db \"SELECT c.id, c.name, COUNT(co.id) as content_count FROM channels c LEFT JOIN contents co ON c.id = co.channel_id WHERE c.name = ''hiddenmugs'' GROUP BY c.id\")",
+      "Bash(timeout 2 ./target/debug/tama preview sprites/neko_idle.txt)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
