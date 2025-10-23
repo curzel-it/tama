@@ -1,7 +1,7 @@
 --- MIDI ---
 --bpm 150 4e3s.9 4g3s.9 4a3s.9 4e3s.8 4g3s.8 4#a3s.8 4a3s.7 32- 4e3s.9 4g3s.9 4a3s.9 4g3s.8 4e3s.7
 --- ART ---
-Ascii Art Animation, 20x10
+Ascii Art Animation, 20x10, 4fps
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⡜⠈⢆⢀⠎⠘⡄⠀⠀⠀⠀⠀⠀

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Content Editor - Tama</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background: var(--button-bg);
+            border: 1px solid var(--button-border);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .tab-button.active {
+            background: var(--button-hover-bg);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .editor-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .shared-controls {
+            margin: 20px 0;
+            padding: 20px;
+            background: var(--background-secondary);
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px;
+        }
+
+        #pixelCanvas {
+            border: 1px solid var(--border-color);
+            cursor: crosshair;
+            margin: 20px 0;
+        }
+
+        .pixel-editor-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .midi-container {
+            max-width: 100%;
+        }
+
+        #midiInput {
+            width: 100%;
+            min-height: 200px;
+            font-family: 'Fira Code', monospace;
+            padding: 10px;
+            margin: 20px 0;
+        }
+
+        .midi-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .help {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--background-secondary);
+            border-radius: 8px;
+        }
+
+        .help h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="editor-container">
+        <div class="editor-header">
+            <h1>Content Editor</h1>
+            <a href="/" class="button">Back to Home</a>
+        </div>
+
+        <div class="shared-controls">
+            <div class="form-group">
+                <label for="contentName">Content Name</label>
+                <input type="text" id="contentName" maxlength="200" placeholder="Enter content name">
+            </div>
+            <div class="form-group">
+                <label for="fps">FPS (0.1 - 120)</label>
+                <input type="number" id="fps" step="0.1" min="0.1" max="120" value="10">
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('pixel')">Pixel Art</button>
+            <button class="tab-button" onclick="switchTab('midi')">MIDI Music</button>
+        </div>
+
+        <div id="pixelTab" class="tab-content active">
+            <h2>Pixel Art Editor</h2>
+            <canvas id="pixelCanvas"></canvas>
+            <div class="pixel-editor-controls">
+                <button id="clearButton">Clear</button>
+                <button id="fillButton">Fill</button>
+                <button id="downloadPixelButton">Download .txt</button>
+            </div>
+        </div>
+
+        <div id="midiTab" class="tab-content">
+            <h2>MIDI Composer</h2>
+            <div class="midi-container">
+                <textarea id="midiInput" placeholder="Enter MIDI composition here (e.g., 4c 4e 4g 4c5)">4c 4e 4g 2c5 4g 4e 2c</textarea>
+                <div class="midi-controls">
+                    <button id="playButton">Play</button>
+                    <button id="stopButton">Stop</button>
+                    <button id="downloadMidiButton">Download .txt</button>
+                </div>
+
+                <div class="help">
+                    <h3>MIDI Notation Help</h3>
+                    <p><strong>Basic Note Format:</strong> <code>{duration}{note}{octave?}{waveform?}{.volume?}</code></p>
+                    <ul>
+                        <li><strong>Duration:</strong> 1 (whole), 2 (half), 4 (quarter), 8 (eighth), 16 (sixteenth)</li>
+                        <li><strong>Note:</strong> c, d, e, f, g, a, b (add # for sharp, e.g., #c)</li>
+                        <li><strong>Octave:</strong> 0-8 (default: 4)</li>
+                        <li><strong>Waveform:</strong> q (square), t (triangle), s (sawtooth), p (pulse)</li>
+                        <li><strong>Volume:</strong> .0 to .9 (e.g., .5 for 50%)</li>
+                    </ul>
+                    <p><strong>Examples:</strong></p>
+                    <ul>
+                        <li><code>4c</code> - Quarter note C in octave 4</li>
+                        <li><code>8#c5</code> - Eighth note C# in octave 5</li>
+                        <li><code>4et.5</code> - Quarter note E with triangle wave at 50% volume</li>
+                        <li><code>4-</code> - Quarter rest (silence)</li>
+                        <li><code>4(c e g)</code> - Quarter note arpeggio (C major chord)</li>
+                        <li><code>-- comment</code> - Comment (ignored)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="shared-controls">
+            <button id="publishButton" onclick="handlePublish()" style="padding: 15px 30px; font-size: 16px;">Publish Content</button>
+            <div id="publishError" class="error"></div>
+        </div>
+    </div>
+
+    <script src="/auth.js"></script>
+    <script src="/network.js"></script>
+    <script src="/midi.js" type="module"></script>
+    <script type="module">
+        import { midiPlayer } from '/midi.js';
+
+        // Tab switching
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tabName === 'pixel') {
+                document.querySelector('.tab-button:nth-child(1)').classList.add('active');
+                document.getElementById('pixelTab').classList.add('active');
+            } else if (tabName === 'midi') {
+                document.querySelector('.tab-button:nth-child(2)').classList.add('active');
+                document.getElementById('midiTab').classList.add('active');
+            }
+        }
+
+        // Pixel Editor
+        const PIXEL_WIDTH = 64;
+        const PIXEL_HEIGHT = 40;
+        const CELL_SIZE = 10;
+
+        const canvas = document.getElementById('pixelCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = PIXEL_WIDTH * CELL_SIZE;
+        canvas.height = PIXEL_HEIGHT * CELL_SIZE;
+
+        const pixels = Array(PIXEL_HEIGHT).fill(null).map(() => Array(PIXEL_WIDTH).fill(false));
+
+        let isDrawing = false;
+        let drawMode = true;
+
+        function getPixelColor() {
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+                ? '#081820'
+                : '#88c070';
+        }
+
+        function getBgColor() {
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+                ? '#f0faf0'
+                : '#081820';
+        }
+
+        function render() {
+            ctx.fillStyle = getBgColor();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = getPixelColor();
+            for (let y = 0; y < PIXEL_HEIGHT; y++) {
+                for (let x = 0; x < PIXEL_WIDTH; x++) {
+                    if (pixels[y][x]) {
+                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+
+            ctx.strokeStyle = getPixelColor();
+            ctx.globalAlpha = 0.2;
+            for (let x = 0; x <= PIXEL_WIDTH; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * CELL_SIZE, 0);
+                ctx.lineTo(x * CELL_SIZE, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= PIXEL_HEIGHT; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * CELL_SIZE);
+                ctx.lineTo(canvas.width, y * CELL_SIZE);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function getPixelCoords(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((event.clientX - rect.left) / CELL_SIZE);
+            const y = Math.floor((event.clientY - rect.top) / CELL_SIZE);
+            return { x, y };
+        }
+
+        function setPixel(x, y, value) {
+            if (x >= 0 && x < PIXEL_WIDTH && y >= 0 && y < PIXEL_HEIGHT) {
+                pixels[y][x] = value;
+                render();
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const { x, y } = getPixelCoords(e);
+            drawMode = !pixels[y][x];
+            setPixel(x, y, drawMode);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing) {
+                const { x, y } = getPixelCoords(e);
+                setPixel(x, y, drawMode);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+
+        document.getElementById('clearButton').addEventListener('click', () => {
+            for (let y = 0; y < PIXEL_HEIGHT; y++) {
+                for (let x = 0; x < PIXEL_WIDTH; x++) {
+                    pixels[y][x] = false;
+                }
+            }
+            render();
+        });
+
+        document.getElementById('fillButton').addEventListener('click', () => {
+            for (let y = 0; y < PIXEL_HEIGHT; y++) {
+                for (let x = 0; x < PIXEL_WIDTH; x++) {
+                    pixels[y][x] = true;
+                }
+            }
+            render();
+        });
+
+        function pixelsToBraille(pixels) {
+            const BRAILLE_BASE = 0x2800;
+            const lines = [];
+
+            for (let charY = 0; charY < 10; charY++) {
+                let line = '';
+                for (let charX = 0; charX < 32; charX++) {
+                    const baseX = charX * 2;
+                    const baseY = charY * 4;
+
+                    let brailleValue = 0;
+
+                    const brailleOffsets = [
+                        [0, 0, 0x01], [0, 1, 0x02], [0, 2, 0x04], [0, 3, 0x40],
+                        [1, 0, 0x08], [1, 1, 0x10], [1, 2, 0x20], [1, 3, 0x80]
+                    ];
+
+                    for (const [dx, dy, bit] of brailleOffsets) {
+                        const x = baseX + dx;
+                        const y = baseY + dy;
+                        if (y < PIXEL_HEIGHT && x < PIXEL_WIDTH && pixels[y][x]) {
+                            brailleValue |= bit;
+                        }
+                    }
+
+                    const char = String.fromCharCode(BRAILLE_BASE + brailleValue);
+                    line += char;
+                }
+                lines.push(line);
+            }
+
+            return lines.join('\n');
+        }
+
+        document.getElementById('downloadPixelButton').addEventListener('click', () => {
+            const brailleArt = pixelsToBraille(pixels);
+            const blob = new Blob([brailleArt], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pixel-art.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', render);
+
+        render();
+
+        // MIDI Composer
+        const playButton = document.getElementById('playButton');
+        const stopButton = document.getElementById('stopButton');
+        const downloadMidiButton = document.getElementById('downloadMidiButton');
+        const midiInput = document.getElementById('midiInput');
+
+        midiPlayer.initAudioContext();
+
+        playButton.addEventListener('click', async () => {
+            const composition = midiInput.value.trim();
+            if (!composition) {
+                alert('Please enter a MIDI composition');
+                return;
+            }
+
+            try {
+                await midiPlayer.play(composition);
+            } catch (error) {
+                alert(`Failed to play composition: ${error.message}`);
+                console.error('Play error:', error);
+            }
+        });
+
+        stopButton.addEventListener('click', () => {
+            midiPlayer.stop();
+        });
+
+        downloadMidiButton.addEventListener('click', () => {
+            const composition = midiInput.value.trim();
+            if (!composition) {
+                alert('Please enter a MIDI composition');
+                return;
+            }
+
+            const blob = new Blob([composition], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'midi-composition.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                midiPlayer.stop();
+            }
+        });
+
+        // Publish functionality
+        window.handlePublish = async function() {
+            const publishError = document.getElementById('publishError');
+            publishError.textContent = '';
+
+            const auth = window.authManager;
+            if (!auth.isAuthenticated()) {
+                publishError.textContent = 'Please login first';
+                window.location.href = '/';
+                return;
+            }
+
+            const channel = auth.getChannel();
+            if (!channel || !channel.id) {
+                publishError.textContent = 'Invalid authentication. Please login again.';
+                return;
+            }
+
+            const contentName = document.getElementById('contentName').value.trim();
+            const fps = parseFloat(document.getElementById('fps').value);
+
+            if (!contentName) {
+                publishError.textContent = 'Please enter a content name';
+                return;
+            }
+
+            if (isNaN(fps) || fps < 0.1 || fps > 120) {
+                publishError.textContent = 'FPS must be between 0.1 and 120';
+                return;
+            }
+
+            const brailleArt = pixelsToBraille(pixels);
+            const midiComposition = midiInput.value.trim();
+
+            if (!brailleArt.trim() && !midiComposition) {
+                publishError.textContent = 'Please create either pixel art or MIDI composition (or both)';
+                return;
+            }
+
+            try {
+                const payload = {
+                    channel_id: channel.id,
+                    name: contentName,
+                    art: brailleArt,
+                    midi: midiComposition,
+                    fps: fps
+                };
+
+                const response = await httpPost('/content', payload, auth.getToken());
+                const result = await handleResponse(response);
+
+                if (result && result.id) {
+                    window.location.href = `/view/content/${result.id}`;
+                } else {
+                    publishError.textContent = 'Content published successfully!';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                }
+            } catch (error) {
+                publishError.textContent = `Failed to publish: ${error.message}`;
+                console.error('Publish error:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>

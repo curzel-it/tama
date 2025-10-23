@@ -5,13 +5,26 @@ let currentIndex = 0;
 let isSingleContentMode = false;
 const animationController = new AnimationController();
 
-async function fetchFeed() {
+async function fetchServers() {
     try {
-        const response = await httpGet('/feed');
-        const data = await handleResponse(response);
-        return data;
+        const response = await httpGet('/servers');
+        const servers = await handleResponse(response);
+        return servers || [];
     } catch (error) {
-        handleError(error, 'fetchFeed');
+        console.error('Failed to fetch servers:', error);
+        return [];
+    }
+}
+
+async function fetchFeedFromServer(serverUrl) {
+    try {
+        const url = serverUrl.endsWith('/feed') ? serverUrl : `${serverUrl}/feed`;
+        const response = await httpGet(url);
+        const data = await handleResponse(response);
+        return { success: true, data: data || [], serverUrl };
+    } catch (error) {
+        console.error(`Failed to fetch from ${serverUrl}:`, error);
+        return { success: false, serverUrl, error };
     }
 }
 
@@ -32,19 +45,42 @@ function parseContentIdFromUrl() {
 
 export async function loadFeed() {
     const container = document.getElementById('contentContainer');
+    container.innerHTML = '<div class="loading">Loading feed...</div>';
 
     try {
-        feedData = await fetchFeed();
-
-        if (!feedData || feedData.length === 0) {
-            container.innerHTML = '<div class="error">No content in feed yet. Upload some content!</div>';
-            return;
-        }
-
+        feedData = [];
         currentIndex = 0;
         isSingleContentMode = false;
-        renderContent();
+        let hasRenderedFirst = false;
+
+        const currentOrigin = window.location.origin;
+        let servers = await fetchServers();
+
+        servers = [currentOrigin, ...servers.filter(s => s !== currentOrigin)];
+
+        console.log(`Fetching feed from ${servers.length} server(s):`, servers);
+
+        const fetchPromises = servers.map(serverUrl =>
+            fetchFeedFromServer(serverUrl).then(result => {
+                if (result.success && result.data && result.data.length > 0) {
+                    console.log(`Received ${result.data.length} items from ${result.serverUrl}`);
+                    feedData.push(...result.data);
+
+                    if (!hasRenderedFirst) {
+                        hasRenderedFirst = true;
+                        renderContent();
+                    }
+                }
+            })
+        );
+
+        await Promise.allSettled(fetchPromises);
+
+        if (feedData.length === 0) {
+            container.innerHTML = '<div class="error">No content in feed yet. Upload some content!</div>';
+        }
     } catch (error) {
+        console.error('Error loading feed:', error);
         container.innerHTML = `<div class="error">Failed to load feed: ${error.message}</div>`;
     }
 }
@@ -53,60 +89,25 @@ export async function loadSingleContent(contentId) {
     const container = document.getElementById('contentContainer');
 
     try {
-        // Load the feed in the background for navigation
-        feedData = await fetchFeed();
+        await loadFeed();
 
         if (!feedData || feedData.length === 0) {
-            // Fallback: if feed is empty, just load the single content
-            const contentData = await fetchContent(contentId);
-
-            if (!contentData) {
-                container.innerHTML = '<div class="error">Content not found</div>';
-                return;
-            }
-
-            feedData = [{
-                channel: {
-                    id: 0,
-                    name: "Shared Content"
-                },
-                content: contentData
-            }];
-            currentIndex = 0;
-            isSingleContentMode = true;
-        } else {
-            // Find the content in the feed
-            const contentIndexInFeed = feedData.findIndex(
-                item => item.content.id === contentId
-            );
-
-            if (contentIndexInFeed !== -1) {
-                // Content found in feed, navigate to it
-                currentIndex = contentIndexInFeed;
-                isSingleContentMode = false;
-            } else {
-                // Content not in feed, fetch it separately and prepend to feed
-                const contentData = await fetchContent(contentId);
-
-                if (contentData) {
-                    feedData.unshift({
-                        channel: {
-                            id: 0,
-                            name: "Shared Content"
-                        },
-                        content: contentData
-                    });
-                    currentIndex = 0;
-                    isSingleContentMode = false;
-                } else {
-                    container.innerHTML = '<div class="error">Content not found</div>';
-                    return;
-                }
-            }
+            container.innerHTML = '<div class="error">Content not found</div>';
+            return;
         }
 
-        renderContent();
+        const contentIndexInFeed = feedData.findIndex(
+            item => item.content.id === contentId
+        );
+
+        if (contentIndexInFeed !== -1) {
+            currentIndex = contentIndexInFeed;
+            renderContent();
+        } else {
+            container.innerHTML = '<div class="error">Content not found in feed</div>';
+        }
     } catch (error) {
+        console.error('Error loading content:', error);
         container.innerHTML = `<div class="error">Failed to load content: ${error.message}</div>`;
     }
 }
@@ -124,19 +125,17 @@ function renderContent() {
 
     const item = feedData[currentIndex];
     const container = document.getElementById('contentContainer');
-    const frames = parseFrames(item.content.art);
+    const navigationControls = document.getElementById('navigationControls');
+    const art = item.content.art || '';
+    const frames = parseFrames(art);
 
     if (!isSingleContentMode) {
         updatePageDetailsForItem(item);
     }
 
-    const controlsHtml = isSingleContentMode
-        ? ''
-        : `<div class="controls">
-            <button onclick="previousContent()" ${currentIndex === 0 ? 'disabled' : ''}>← Previous</button>
-            <div class="counter">${currentIndex + 1} / ${feedData.length}</div>
-            <button onclick="nextContent()" ${currentIndex === feedData.length - 1 ? 'disabled' : ''}>Next →</button>
-        </div>`;
+    if (navigationControls) {
+        navigationControls.style.display = isSingleContentMode ? 'none' : 'block';
+    }
 
     container.innerHTML = `
         <div class="content-header">
@@ -146,29 +145,38 @@ function renderContent() {
             <div class="content-info">FPS: ${item.content.fps}</div>
             <div class="content-info">Frames: ${frames.length}</div>
         </div>
-
-        ${controlsHtml}
     `;
 
     animationController.start(frames, item.content.fps);
 
-    if (item.content.midi_composition) {
+    midiPlayer.stop();
+    if (item.content.midi_composition && item.content.midi_composition.trim()) {
         midiPlayer.play(item.content.midi_composition);
+    }
+
+    if (typeof window.updateVolumeDisplay === 'function') {
+        window.updateVolumeDisplay();
     }
 }
 
 window.previousContent = function() {
-    if (currentIndex > 0) {
-        currentIndex--;
-        renderContent();
+    if (!feedData || feedData.length === 0) return;
+
+    currentIndex--;
+    if (currentIndex < 0) {
+        currentIndex = feedData.length - 1;
     }
+    renderContent();
 }
 
 window.nextContent = function() {
-    if (feedData && currentIndex < feedData.length - 1) {
-        currentIndex++;
-        renderContent();
+    if (!feedData || feedData.length === 0) return;
+
+    currentIndex++;
+    if (currentIndex >= feedData.length) {
+        currentIndex = 0;
     }
+    renderContent();
 }
 
 function updatePageDetailsForItem(item) {

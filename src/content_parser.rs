@@ -21,6 +21,29 @@ impl From<std::io::Error> for ParseError {
     }
 }
 
+fn parse_fps_from_header(header: &str) -> f32 {
+    let after_prefix = header
+        .trim_start_matches("Ascii Art Animation, ")
+        .trim();
+
+    let parts: Vec<&str> = after_prefix
+        .split(',')
+        .map(|s| s.trim())
+        .collect();
+
+    if parts.len() >= 2 {
+        let fps_part = parts[1].trim();
+        if let Some(fps_idx) = fps_part.find("fps") {
+            let fps_str = &fps_part[..fps_idx].trim();
+            if let Ok(fps) = fps_str.parse::<f32>() {
+                return fps;
+            }
+        }
+    }
+
+    10.0
+}
+
 pub fn parse_content_file(path: &str) -> Result<ContentFile, ParseError> {
     let content = fs::read_to_string(path)?;
     parse_content(&content)
@@ -68,13 +91,13 @@ pub fn parse_content(content: &str) -> Result<ContentFile, ParseError> {
     let first_art_line = art_lines.first()
         .ok_or_else(|| ParseError::InvalidFormat("ART section has no header".to_string()))?;
 
-    let fps = if first_art_line.starts_with("Ascii Art Animation") {
-        10.0
-    } else {
+    if !first_art_line.starts_with("Ascii Art Animation") {
         return Err(ParseError::InvalidFormat(
             "ART section must start with 'Ascii Art Animation' header".to_string()
         ));
-    };
+    }
+
+    let fps = parse_fps_from_header(first_art_line);
 
     Ok(ContentFile {
         midi_composition,
@@ -151,5 +174,53 @@ Ascii Art Animation, 16x11
 
         let result = parse_content(content);
         assert!(matches!(result, Err(ParseError::InvalidFormat(_))));
+    }
+
+    #[test]
+    fn test_parse_custom_fps() {
+        let content = r#"--- MIDI ---
+8c4t 8e4t
+--- ART ---
+Ascii Art Animation, 16x11, 5fps
+⠀⠀⠀⠀
+"#;
+
+        let result = parse_content(content);
+        assert!(result.is_ok());
+
+        let parsed = result.unwrap();
+        assert_eq!(parsed.fps, 5.0);
+    }
+
+    #[test]
+    fn test_parse_default_fps() {
+        let content = r#"--- MIDI ---
+8c4t 8e4t
+--- ART ---
+Ascii Art Animation, 16x11
+⠀⠀⠀⠀
+"#;
+
+        let result = parse_content(content);
+        assert!(result.is_ok());
+
+        let parsed = result.unwrap();
+        assert_eq!(parsed.fps, 10.0);
+    }
+
+    #[test]
+    fn test_parse_fps_with_trailing_characters() {
+        let content = r#"--- MIDI ---
+8c4t 8e4t
+--- ART ---
+Ascii Art Animation, 16x11, 2fps⠀⠀⠀
+⠀⠀⠀⠀
+"#;
+
+        let result = parse_content(content);
+        assert!(result.is_ok());
+
+        let parsed = result.unwrap();
+        assert_eq!(parsed.fps, 2.0);
     }
 }

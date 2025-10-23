@@ -3,6 +3,10 @@ const TV_HEIGHT = 10;
 const PIXEL_WIDTH = TV_WIDTH * 2;
 const PIXEL_HEIGHT = TV_HEIGHT * 4;
 const SPACE = ' ';
+const CHAR_WIDTH = 9;
+const CHAR_HEIGHT = CHAR_WIDTH * 2;
+const CHARACTER_SPACING = CHAR_WIDTH / 6.0;
+const LINE_SPACING = CHARACTER_SPACING * 2;
 
 function isLightMode() {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -18,7 +22,7 @@ function backgroundColor() {
 
 function renderContentFrame(contentFrame) {
     const text = renderContentToString(contentFrame);
-    renderStringToCanvas(6, 12, 1, 2, text)
+    renderStringToCanvas(CHAR_WIDTH, CHAR_HEIGHT, CHARACTER_SPACING, LINE_SPACING, text)
 }
 
 function renderStringToCanvas(charWidth, charHeight, characterSpacing, lineSpacing, content) {
