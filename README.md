@@ -4,6 +4,11 @@ Ascii art, retro vibes, and MIDI music in your command line, in _glorious_ 64 x 
 
 <img src="docs/cli.png" width="520px"/>
 
+Also working on a [web version](https://tama.curzel.it):
+
+<img src="docs/webui-dark.png" width="520px"/>
+<img src="docs/webui-light.png" width="520px"/>
+
 ## Quick Start
 See [sprites/neko_idle.txt](sprites/neko_idle.txt) for an example of content format.
 
