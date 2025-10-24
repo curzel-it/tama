@@ -151,35 +151,34 @@ function handleLogout() {
 
 function updateAuthUI() {
     const createButton = document.getElementById('createButton');
-    const userInfo = document.getElementById('userInfo');
-    const channelNameSpan = document.getElementById('channelName');
+    const loginButton = document.getElementById('loginButton');
     const logoutButton = document.getElementById('logoutButton');
-    const devModeMessage = document.getElementById('devModeMessage');
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const isDevMode = urlParams.get('dev') === 'true';
+    const channelNameSpan = document.getElementById('channelName');
 
     if (authManager.isAuthenticated()) {
         const channel = authManager.getChannel();
-        createButton.style.display = 'none';
-        userInfo.style.display = 'flex';
+        channelNameSpan.style.display = 'inline';
         channelNameSpan.textContent = channel.name;
-        if (devModeMessage) {
-            devModeMessage.style.display = 'none';
+        if (logoutButton) {
+            logoutButton.style.display = 'inline-block';
+        }
+        if (createButton) {
+            createButton.style.display = 'inline-block';
+        }
+        if (loginButton) {
+            loginButton.style.display = 'none';
         }
     } else {
-        if (isDevMode) {
-            createButton.style.display = 'block';
-            if (devModeMessage) {
-                devModeMessage.style.display = 'none';
-            }
-        } else {
-            createButton.style.display = 'none';
-            if (devModeMessage) {
-                devModeMessage.style.display = 'block';
-            }
+        channelNameSpan.style.display = 'none';
+        if (logoutButton) {
+            logoutButton.style.display = 'none';
         }
-        userInfo.style.display = 'none';
+        if (createButton) {
+            createButton.style.display = 'none';
+        }
+        if (loginButton) {
+            loginButton.style.display = 'inline-block';
+        }
     }
 }
 

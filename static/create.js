@@ -33,25 +33,40 @@ function hideUploadModal() {
 
 async function handleUpload(event) {
     event.preventDefault();
+    console.log('handleUpload called - v2');
 
     const errorDiv = document.getElementById('uploadError');
     errorDiv.textContent = '';
 
     try {
-        const contentName = document.getElementById('contentName').value;
-        const artFile = document.getElementById('artFile').files[0];
-        const midiFile = document.getElementById('midiFile').files[0];
-        const fps = parseFloat(document.getElementById('fps').value);
+        const spriteFileInput = document.getElementById('spriteFile');
+        console.log('spriteFileInput:', spriteFileInput);
 
-        if (!artFile || !midiFile) {
-            errorDiv.textContent = 'Please select both art and MIDI files';
+        if (!spriteFileInput) {
+            errorDiv.textContent = 'File input not found. Please refresh the page.';
             return;
         }
 
-        const artContent = await readFileAsText(artFile);
-        const midiContent = await readFileAsText(midiFile);
+        const spriteFile = spriteFileInput.files[0];
+        console.log('spriteFile:', spriteFile);
 
-        showPreview(artContent);
+        if (!spriteFile) {
+            errorDiv.textContent = 'Please select a sprite file';
+            return;
+        }
+
+        const fileContent = await readFileAsText(spriteFile);
+        console.log('File content length:', fileContent.length);
+
+        const parsed = parseSpriteFile(fileContent);
+        console.log('Parsed:', parsed);
+
+        if (!parsed) {
+            errorDiv.textContent = 'Invalid sprite file format. Expected --- MIDI --- and --- ART --- sections.';
+            return;
+        }
+
+        const { midi, art, fps, name } = parsed;
 
         const channel = authManager.getChannel();
         const token = authManager.getToken();
@@ -63,9 +78,9 @@ async function handleUpload(event) {
 
         const response = await httpPost('/content', {
             channel_id: channel.id,
-            name: contentName,
-            art: artContent,
-            midi: midiContent,
+            name: name || spriteFile.name.replace('.txt', ''),
+            art: art,
+            midi: midi,
             fps: fps
         }, token);
 
@@ -81,6 +96,57 @@ async function handleUpload(event) {
     }
 }
 
+function parseSpriteFile(content) {
+    const lines = content.split('\n');
+
+    let midiSection = [];
+    let artSection = [];
+    let currentSection = null;
+    let fps = 10;
+    let name = '';
+    let foundArtHeader = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        if (line === '--- MIDI ---') {
+            currentSection = 'midi';
+            continue;
+        } else if (line === '--- ART ---') {
+            currentSection = 'art';
+            continue;
+        }
+
+        if (currentSection === 'midi' && line) {
+            midiSection.push(line);
+        } else if (currentSection === 'art') {
+            const originalLine = lines[i];
+
+            if (!foundArtHeader) {
+                const headerMatch = originalLine.match(/(\d+(?:\.\d+)?)fps/);
+                if (headerMatch) {
+                    fps = parseFloat(headerMatch[1]);
+                    const namePart = originalLine.split(',')[0].replace('Ascii Art Animation', '').trim();
+                    name = namePart;
+                    foundArtHeader = true;
+                }
+            }
+            artSection.push(originalLine);
+        }
+    }
+
+    if (midiSection.length === 0 || artSection.length === 0) {
+        return null;
+    }
+
+    return {
+        midi: midiSection.join('\n'),
+        art: artSection.join('\n'),
+        fps: fps,
+        name: name
+    };
+}
+
 function readFileAsText(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -90,7 +156,7 @@ function readFileAsText(file) {
     });
 }
 
-function showPreview(artContent) {
+function showPreview(artContent, fps, name) {
     const previewSection = document.getElementById('previewSection');
     previewSection.style.display = 'block';
 
@@ -105,7 +171,57 @@ function showPreview(artContent) {
     previewCanvas.height = mainCanvas.height;
 
     ctx.drawImage(mainCanvas, 0, 0);
+
+    const fileInfo = document.getElementById('fileInfo');
+    if (fileInfo) {
+        fileInfo.textContent = `FPS: ${fps}${name ? ` | Name: ${name}` : ''}`;
+    }
 }
+
+// Add file change listener to auto-preview
+document.addEventListener('DOMContentLoaded', () => {
+    const spriteFileInput = document.getElementById('spriteFile');
+    if (spriteFileInput) {
+        spriteFileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const errorDiv = document.getElementById('uploadError');
+            const fileInfo = document.getElementById('fileInfo');
+            const previewSection = document.getElementById('previewSection');
+
+            try {
+                const fileContent = await readFileAsText(file);
+                const parsed = parseSpriteFile(fileContent);
+
+                if (!parsed) {
+                    errorDiv.textContent = 'Invalid sprite file format';
+                    previewSection.style.display = 'none';
+                    return;
+                }
+
+                errorDiv.textContent = '';
+                const { midi, art, fps, name } = parsed;
+
+                if (fileInfo && previewSection) {
+                    previewSection.style.display = 'block';
+                    fileInfo.innerHTML = `
+                        <strong>✓ File parsed successfully!</strong><br>
+                        FPS: ${fps}<br>
+                        ${name ? `Name: ${name}<br>` : ''}
+                        MIDI notes: ${midi.split('\n').length} line(s)<br>
+                        Art content ready<br>
+                        <br>
+                        <em>Click "Publish" to upload.</em>
+                    `;
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error reading file';
+                previewSection.style.display = 'none';
+            }
+        });
+    }
+});
 
 window.handleCreateClick = handleCreateClick;
 window.showCreateChoiceModal = showCreateChoiceModal;

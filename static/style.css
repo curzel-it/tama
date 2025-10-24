@@ -111,9 +111,6 @@ Auth UI
     top: 20px;
     right: 20px;
     z-index: 1000;
-}
-
-#userInfo {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -136,10 +133,12 @@ Auth UI
 }
 
 .modal-content {
-    padding: 30px;
+    padding: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
     border-radius: 4px;
     max-width: 400px;
-    width: 90%;
+    width: 100%;
     position: relative;
 }
 
@@ -462,4 +461,29 @@ Volume Controls
     white-space: pre;
     min-width: 11ch;
     text-align: center;
+}
+
+/*
+--------------------------------------------------------------------------------
+Mobile Styles
+--------------------------------------------------------------------------------
+*/
+
+@media (max-width: 768px) {
+    #authControls {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    #volumeControls {
+        display: none !important;
+    }
+
+    body {
+        padding: 10px;
+        padding-top: 60px;
+    }
 }
