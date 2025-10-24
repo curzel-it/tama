@@ -143,12 +143,19 @@ Auth UI
 }
 
 .close {
-    position: absolute;
-    right: 15px;
-    top: 10px;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
+    line-height: 1;
+}
+
+.modal-content .close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
 }
 
 .close:hover {
@@ -211,7 +218,6 @@ Auth UI
     margin-bottom: 20px;
 }
 
-
 /*
 --------------------------------------------------------------------------------
 Color palette
@@ -227,7 +233,7 @@ a {
     color: white;
 }
 
-a.button, button, .modal a.button, .modal button {
+a.button, button, .modal a.button, .modal button, .file-button {
     background-color: #081820;
     color: white;
     border: 1px solid #88c070;
@@ -247,6 +253,7 @@ a.button, button, .modal a.button, .modal button {
     color: #88c070;
 }
 
+.form-group-inline input,
 .form-group input,
 .form-group textarea {
     background-color: transparent;
@@ -282,13 +289,17 @@ a.button, button, .modal a.button, .modal button {
     background-color: #0a1a0a;
 }
 
+.preview-panel {
+    background: #051015;
+}
+
 @media (prefers-color-scheme: light) {
     html, body, canvas, #clickToContinueOverlay {
         background-color: #f0faf0;
         color: #081820;
     }
 
-    a.button, button, .modal a.button, .modal button {
+    a.button, button, .modal a.button, .modal button, .file-button {
         background-color: #88c070;
         color: #081820;
         border: 1px solid #081820;
@@ -313,9 +324,10 @@ a.button, button, .modal a.button, .modal button {
         color: #081820;
     }
 
+    .form-group-inline input,
     .form-group input,
     .form-group textarea {
-        background-color: transparent;
+        background-color: white;
         color: #081820;
         border: 1px solid #081820;
     }
@@ -346,6 +358,10 @@ a.button, button, .modal a.button, .modal button {
 
     .help code {
         background-color: #c8e6c9;
+    }
+
+    .preview-panel {
+        background: #c8e6c9;
     }
 }
 

@@ -14,31 +14,33 @@
 
 <body>
     <div class="editor-container">
-        <div class="editor-header">
-            <h1>Content Editor</h1>
-            <a href="/" class="button">Back to Home</a>
-        </div>
+        <h1>Content Editor</h1>
 
-        <div class="form-group">
-            <label for="contentName">Content Name</label>
-            <input type="text" id="contentName" maxlength="200" placeholder="Enter content name">
-        </div>
-
-        <div class="form-group">
-            <label for="loadFile">Load Content File</label>
-            <input type="file" id="loadFile" accept=".txt">
+        <div class="section">
+            <div class="section-header" onclick="toggleSection('fileSection')">
+                <span class="section-toggle">▼</span>
+                <h2>File</h2>
+            </div>
+            <div id="fileSection" class="section-content">
+                <div class="button-row">
+                    <label for="loadFile" class="button file-button">Upload</label>
+                    <input type="file" id="loadFile" accept=".txt" style="display: none;">
+                    <button id="downloadButton" style="padding: 15px 30px; font-size: 16px;">Download</button>
+                    <button id="publishButton" style="padding: 15px 30px; font-size: 16px;">Publish</button>
+                </div>
+                <div id="publishError"></div>
+            </div>
         </div>
 
         <div class="section">
             <div class="section-header" onclick="toggleSection('midiSection')">
-                <h2>MIDI</h2>
                 <span class="section-toggle">▼</span>
+                <h2>MIDI</h2>
             </div>
             <div id="midiSection" class="section-content">
                 <div class="form-group">
                     <label for="midiComposition">MIDI Composition</label>
                     <textarea id="midiComposition" placeholder="Enter MIDI notes (e.g., 4c 4e 4g 2c5)">4c 4e 4g 2c5 4g 4e 2c</textarea>
-                    <small>Format: {duration}{note}{octave?}{waveform?}{.volume?}</small>
                 </div>
                 <div class="button-row">
                     <button id="playButton">Play</button>
@@ -49,31 +51,32 @@
 
         <div class="section">
             <div class="section-header" onclick="toggleSection('pixelSection')">
-                <h2>Pixel Art</h2>
                 <span class="section-toggle">▼</span>
+                <h2>Pixel Art</h2>
             </div>
             <div id="pixelSection" class="section-content">
                 <div class="form-group-inline">
-                    <label for="canvasWidth">Canvas Size (characters):</label>
-                    <input type="number" id="canvasWidth" value="20" min="1" max="100">
+                    <label for="canvasWidth">Canvas Size (pixels):</label>
+                    <input type="number" id="canvasWidth" value="64" min="2" max="64" step="2">
                     <span>×</span>
-                    <input type="number" id="canvasHeight" value="10" min="1" max="50">
+                    <input type="number" id="canvasHeight" value="40" min="4" max="40" step="4">
                     <button id="resizeButton">Resize</button>
                 </div>
 
-                <div class="form-group">
-                    <label for="fps">Animation FPS (0.1 - 120)</label>
-                    <input type="number" id="fps" step="0.1" min="0.1" max="120" value="10" style="width: 100px;">
+                <div class="form-group-inline">
+                    <label for="fps">Animation FPS (1 - 30):</label>
+                    <input type="number" id="fps" step="1" min="1" max="30" value="10">
                 </div>
 
-                <div class="canvas-container">
-                    <canvas id="pixelCanvas"></canvas>
-                </div>
-
-                <div class="button-row">
-                    <button id="clearButton">Clear Frame</button>
-                    <button id="fillButton">Fill Frame</button>
-                    <button id="togglePreviewButton">Show Preview</button>
+                <div class="canvas-tools-container">
+                    <div class="canvas-container">
+                        <canvas id="pixelCanvas"></canvas>
+                    </div>
+                    <div class="tools-panel">
+                        <button id="clearButton">Clear Frame</button>
+                        <button id="fillButton">Fill Frame</button>
+                        <button id="togglePreviewButton">Show Preview</button>
+                    </div>
                 </div>
 
                 <div class="frames-container">
@@ -89,40 +92,26 @@
                 </div>
             </div>
         </div>
-
-        <div class="section export-section">
-            <div class="section-header" onclick="toggleSection('exportSection')">
-                <h2>Export</h2>
-                <span class="section-toggle">▼</span>
-            </div>
-            <div id="exportSection" class="section-content">
-                <div class="button-row">
-                    <button id="downloadButton" style="padding: 15px 30px; font-size: 16px;">Download</button>
-                    <button id="publishButton" style="padding: 15px 30px; font-size: 16px;">Publish</button>
-                </div>
-                <div id="publishError"></div>
-            </div>
-        </div>
     </div>
 
     <div id="previewPanel" class="preview-panel">
         <div class="preview-header">
             <h3>Animation Preview</h3>
-            <button id="closePreviewButton">×</button>
+            <button id="closePreviewButton" class="close">×</button>
         </div>
         <div class="preview-controls">
             <button id="previewPlayButton">▶ Play</button>
             <button id="previewPauseButton">⏸ Pause</button>
             <span id="previewFrameLabel">Frame 1 / 1</span>
-            <div class="zoom-controls">
-                <button class="zoom-button" data-zoom="1">1x</button>
-                <button class="zoom-button active" data-zoom="2">2x</button>
-                <button class="zoom-button" data-zoom="3">3x</button>
-                <button class="zoom-button" data-zoom="4">4x</button>
-            </div>
         </div>
         <div class="preview-canvas-container">
             <canvas id="previewCanvas"></canvas>
+        </div>
+        <div class="zoom-controls">
+            <button class="zoom-button" data-zoom="1">1x</button>
+            <button class="zoom-button active" data-zoom="2">2x</button>
+            <button class="zoom-button" data-zoom="3">3x</button>
+            <button class="zoom-button" data-zoom="4">4x</button>
         </div>
     </div>
 
@@ -143,9 +132,11 @@
 
         window.toggleSection = toggleSection;
 
+        const TV_WIDTH = 32;
+        const TV_HEIGHT = 10;
         const CELL_SIZE = 10;
-        let canvasWidth = 20;
-        let canvasHeight = 10;
+        let canvasWidth = TV_WIDTH;  // in braille characters
+        let canvasHeight = TV_HEIGHT; // in braille characters
         let PIXEL_WIDTH = canvasWidth * 2;
         let PIXEL_HEIGHT = canvasHeight * 4;
 
@@ -167,12 +158,6 @@
             return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
                 ? '#081820'
                 : '#88c070';
-        }
-
-        function getBgColor() {
-            return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
-                ? '#f0faf0'
-                : '#081820';
         }
 
         function updateCanvasSize() {
@@ -392,6 +377,12 @@
             return { x, y };
         }
 
+        function getBgColor() {
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+                ? '#f0faf0'
+                : '#081820';
+        }
+
         function setPixel(x, y, value) {
             const frame = getCurrentFrame();
             if (frame && x >= 0 && x < PIXEL_WIDTH && y >= 0 && y < PIXEL_HEIGHT) {
@@ -460,11 +451,16 @@
         });
 
         document.getElementById('resizeButton').addEventListener('click', () => {
-            const newWidth = parseInt(document.getElementById('canvasWidth').value);
-            const newHeight = parseInt(document.getElementById('canvasHeight').value);
+            const newPixelWidth = parseInt(document.getElementById('canvasWidth').value);
+            const newPixelHeight = parseInt(document.getElementById('canvasHeight').value);
 
-            if (newWidth < 1 || newWidth > 100 || newHeight < 1 || newHeight > 50) {
-                alert('Canvas dimensions must be between 1-100 width and 1-50 height');
+            // Convert pixels to characters (2 pixels wide, 4 pixels tall per character)
+            const newWidth = newPixelWidth / 2;
+            const newHeight = newPixelHeight / 4;
+
+            if (newPixelWidth < 2 || newPixelWidth > 64 || newPixelHeight < 4 || newPixelHeight > 40 ||
+                newPixelWidth % 2 !== 0 || newPixelHeight % 4 !== 0) {
+                alert('Canvas dimensions must be 2-64 pixels wide (multiples of 2) and 4-40 pixels tall (multiples of 4)');
                 return;
             }
 
@@ -689,8 +685,9 @@
 
                 document.getElementById('midiComposition').value = parsed.midi;
                 document.getElementById('fps').value = parsed.fps;
-                document.getElementById('canvasWidth').value = parsed.width;
-                document.getElementById('canvasHeight').value = parsed.height;
+                // Convert characters to pixels for display
+                document.getElementById('canvasWidth').value = parsed.width * 2;
+                document.getElementById('canvasHeight').value = parsed.height * 4;
 
                 canvasWidth = parsed.width;
                 canvasHeight = parsed.height;
@@ -713,7 +710,6 @@
         });
 
         document.getElementById('downloadButton').addEventListener('click', () => {
-            const contentName = document.getElementById('contentName').value.trim() || 'content';
             const fps = parseFloat(document.getElementById('fps').value);
             const midiComposition = document.getElementById('midiComposition').value.trim();
 
@@ -735,7 +731,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${contentName}.txt`;
+            a.download = 'content.txt';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -787,16 +783,10 @@
                 return;
             }
 
-            const contentName = document.getElementById('contentName').value.trim();
             const fps = parseFloat(document.getElementById('fps').value);
 
-            if (!contentName) {
-                publishError.textContent = 'Please enter a content name';
-                return;
-            }
-
-            if (isNaN(fps) || fps < 0.1 || fps > 120) {
-                publishError.textContent = 'FPS must be between 0.1 and 120';
+            if (isNaN(fps) || fps < 1 || fps > 30) {
+                publishError.textContent = 'FPS must be between 1 and 30';
                 return;
             }
 
@@ -810,7 +800,7 @@
             try {
                 const payload = {
                     channel_id: channel.id,
-                    name: contentName,
+                    name: '',
                     art: brailleArt.trim(),
                     midi: midiComposition,
                     fps: fps
@@ -841,6 +831,7 @@
         });
 
         updateCanvasSize();
+        addFrame();
         render();
     </script>
 </body>
