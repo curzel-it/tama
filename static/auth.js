@@ -149,8 +149,6 @@ async function handleAuth(event) {
         await authManager.loginOrSignup(channelName, password);
         hideAuthModal();
         updateAuthUI();
-
-        window.location.href = '/content-editor.html';
     } catch (error) {
         errorDiv.textContent = error.message;
         errorDiv.style.display = 'block';

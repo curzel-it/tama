@@ -4,10 +4,13 @@ Ascii art, retro vibes, and MIDI music in your command line, in _glorious_ 64 x 
 
 <img src="docs/cli.png" width="520px"/>
 
-Also working on a [web version](https://tama.curzel.it):
+Ok, ok, it also works on [the web](https://tama.curzel.it):
 
-<img src="docs/webui-dark.png" width="520px"/>
-<img src="docs/webui-light.png" width="520px"/>
+<img src="docs/feed-dark.png" width="520px"/>
+
+And we have a content editor:
+
+<img src="docs/editor-dark.png" width="520px"/>
 
 ## Quick Start
 See [sprites/neko_idle.txt](sprites/neko_idle.txt) for an example of content format.
@@ -63,9 +66,13 @@ In short:
 
 So yeah, you can spin up your own server if you want, and we can just add it to the index... _Et voilà, dollar-store federation!_
 
-## More docs
+## More Docs
 - [ASCII Art Animations](docs/ascii_art_sheets.md) - How to create and use ASCII art animations
 - [MIDI Composer](docs/midi_composer.md) - Complete guide to the MIDI composer with examples
+
+## More Screenshots
+<img src="docs/feed-light.png" width="520px"/>
+<img src="docs/editor-light.png" width="520px"/>
 
 ## Credits
 Hope it's cool if I borrowed the [Neko](https://en.wikipedia.org/wiki/Neko_(software)) character!
