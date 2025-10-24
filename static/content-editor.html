@@ -10,32 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <style>
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .tab-button {
-            padding: 10px 20px;
-            background: var(--button-bg);
-            border: 1px solid var(--button-border);
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .tab-button.active {
-            background: var(--button-hover-bg);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
         .editor-container {
             max-width: 1200px;
             margin: 20px auto;
@@ -46,14 +20,51 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
-        .shared-controls {
+        .section {
             margin: 20px 0;
-            padding: 20px;
-            background: var(--background-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--background-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-header:hover {
+            background: var(--button-hover-bg);
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .section-toggle {
+            font-size: 20px;
+            transition: transform 0.3s;
+        }
+
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 20px;
+            display: block;
+        }
+
+        .section-content.collapsed {
+            display: none;
         }
 
         .form-group {
@@ -63,53 +74,190 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
+            font-weight: 500;
         }
 
-        .form-group input {
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group textarea {
             width: 100%;
-            max-width: 400px;
-            padding: 8px;
+            max-width: 600px;
+            padding: 10px;
+            font-family: 'Fira Code', monospace;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--background);
+            color: var(--text-color);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group-inline {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .form-group-inline input[type="number"] {
+            width: 80px;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .frames-container {
+            margin: 20px 0;
+        }
+
+        .frames-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .frames-list {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px;
+            background: var(--background-secondary);
+            border-radius: 4px;
+            min-height: 50px;
+            margin-bottom: 15px;
+        }
+
+        .frame-button {
+            padding: 10px 20px;
+            background: var(--button-bg);
+            border: 2px solid var(--button-border);
+            border-radius: 4px;
+            cursor: grab;
+            flex-shrink: 0;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .frame-button:active {
+            cursor: grabbing;
+        }
+
+        .frame-button.active {
+            border-color: var(--button-hover-bg);
+            background: var(--button-hover-bg);
+        }
+
+        .frame-button.drag-over {
+            opacity: 0.5;
+        }
+
+        .canvas-container {
+            border: 2px solid var(--border-color);
+            display: inline-block;
+            border-radius: 4px;
+            margin: 20px 0;
         }
 
         #pixelCanvas {
-            border: 1px solid var(--border-color);
             cursor: crosshair;
-            margin: 20px 0;
+            display: block;
         }
 
-        .pixel-editor-controls {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
+        .export-section {
+            padding: 20px;
+            text-align: center;
         }
 
-        .midi-container {
-            max-width: 100%;
+        .export-section .button-row {
+            justify-content: center;
         }
 
-        #midiInput {
-            width: 100%;
-            min-height: 200px;
-            font-family: 'Fira Code', monospace;
-            padding: 10px;
-            margin: 20px 0;
-        }
-
-        .midi-controls {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .help {
-            margin-top: 20px;
-            padding: 15px;
+        .preview-panel {
+            position: fixed;
+            top: 100px;
+            right: 50px;
             background: var(--background-secondary);
+            border: 2px solid var(--border-color);
             border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            resize: both;
+            overflow: auto;
+            min-width: 200px;
+            min-height: 200px;
+            max-width: 800px;
+            max-height: 800px;
+            z-index: 1000;
+            display: none;
         }
 
-        .help h3 {
-            margin-top: 0;
+        .preview-panel.visible {
+            display: block;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: move;
+        }
+
+        .preview-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .preview-canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px;
+            padding: 10px;
+            background: var(--background);
+            border-radius: 4px;
+        }
+
+        #previewCanvas {
+            image-rendering: pixelated;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .zoom-button {
+            padding: 5px 10px;
+            font-size: 12px;
+            min-width: 40px;
+        }
+
+        .zoom-button.active {
+            background: var(--button-hover-bg);
+            border-color: var(--button-hover-bg);
+        }
+
+        #publishError {
+            color: red;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -121,68 +269,110 @@
             <a href="/" class="button">Back to Home</a>
         </div>
 
-        <div class="shared-controls">
-            <div class="form-group">
-                <label for="contentName">Content Name</label>
-                <input type="text" id="contentName" maxlength="200" placeholder="Enter content name">
-            </div>
-            <div class="form-group">
-                <label for="fps">FPS (0.1 - 120)</label>
-                <input type="number" id="fps" step="0.1" min="0.1" max="120" value="10">
-            </div>
+        <div class="form-group">
+            <label for="contentName">Content Name</label>
+            <input type="text" id="contentName" maxlength="200" placeholder="Enter content name">
         </div>
 
-        <div class="tabs">
-            <button class="tab-button active" onclick="switchTab('pixel')">Pixel Art</button>
-            <button class="tab-button" onclick="switchTab('midi')">MIDI Music</button>
+        <div class="form-group">
+            <label for="loadFile">Load Content File</label>
+            <input type="file" id="loadFile" accept=".txt">
         </div>
 
-        <div id="pixelTab" class="tab-content active">
-            <h2>Pixel Art Editor</h2>
-            <canvas id="pixelCanvas"></canvas>
-            <div class="pixel-editor-controls">
-                <button id="clearButton">Clear</button>
-                <button id="fillButton">Fill</button>
-                <button id="downloadPixelButton">Download .txt</button>
+        <div class="section">
+            <div class="section-header" onclick="toggleSection('midiSection')">
+                <h2>MIDI</h2>
+                <span class="section-toggle">▼</span>
             </div>
-        </div>
-
-        <div id="midiTab" class="tab-content">
-            <h2>MIDI Composer</h2>
-            <div class="midi-container">
-                <textarea id="midiInput" placeholder="Enter MIDI composition here (e.g., 4c 4e 4g 4c5)">4c 4e 4g 2c5 4g 4e 2c</textarea>
-                <div class="midi-controls">
+            <div id="midiSection" class="section-content">
+                <div class="form-group">
+                    <label for="midiComposition">MIDI Composition</label>
+                    <textarea id="midiComposition" placeholder="Enter MIDI notes (e.g., 4c 4e 4g 2c5)">4c 4e 4g 2c5 4g 4e 2c</textarea>
+                    <small>Format: {duration}{note}{octave?}{waveform?}{.volume?}</small>
+                </div>
+                <div class="button-row">
                     <button id="playButton">Play</button>
                     <button id="stopButton">Stop</button>
-                    <button id="downloadMidiButton">Download .txt</button>
-                </div>
-
-                <div class="help">
-                    <h3>MIDI Notation Help</h3>
-                    <p><strong>Basic Note Format:</strong> <code>{duration}{note}{octave?}{waveform?}{.volume?}</code></p>
-                    <ul>
-                        <li><strong>Duration:</strong> 1 (whole), 2 (half), 4 (quarter), 8 (eighth), 16 (sixteenth)</li>
-                        <li><strong>Note:</strong> c, d, e, f, g, a, b (add # for sharp, e.g., #c)</li>
-                        <li><strong>Octave:</strong> 0-8 (default: 4)</li>
-                        <li><strong>Waveform:</strong> q (square), t (triangle), s (sawtooth), p (pulse)</li>
-                        <li><strong>Volume:</strong> .0 to .9 (e.g., .5 for 50%)</li>
-                    </ul>
-                    <p><strong>Examples:</strong></p>
-                    <ul>
-                        <li><code>4c</code> - Quarter note C in octave 4</li>
-                        <li><code>8#c5</code> - Eighth note C# in octave 5</li>
-                        <li><code>4et.5</code> - Quarter note E with triangle wave at 50% volume</li>
-                        <li><code>4-</code> - Quarter rest (silence)</li>
-                        <li><code>4(c e g)</code> - Quarter note arpeggio (C major chord)</li>
-                        <li><code>-- comment</code> - Comment (ignored)</li>
-                    </ul>
                 </div>
             </div>
         </div>
 
-        <div class="shared-controls">
-            <button id="publishButton" onclick="handlePublish()" style="padding: 15px 30px; font-size: 16px;">Publish Content</button>
-            <div id="publishError" class="error"></div>
+        <div class="section">
+            <div class="section-header" onclick="toggleSection('pixelSection')">
+                <h2>Pixel Art</h2>
+                <span class="section-toggle">▼</span>
+            </div>
+            <div id="pixelSection" class="section-content">
+                <div class="form-group-inline">
+                    <label for="canvasWidth">Canvas Size (characters):</label>
+                    <input type="number" id="canvasWidth" value="20" min="1" max="100">
+                    <span>×</span>
+                    <input type="number" id="canvasHeight" value="10" min="1" max="50">
+                    <button id="resizeButton">Resize</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="fps">Animation FPS (0.1 - 120)</label>
+                    <input type="number" id="fps" step="0.1" min="0.1" max="120" value="10" style="width: 100px;">
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="pixelCanvas"></canvas>
+                </div>
+
+                <div class="button-row">
+                    <button id="clearButton">Clear Frame</button>
+                    <button id="fillButton">Fill Frame</button>
+                    <button id="togglePreviewButton">Show Preview</button>
+                </div>
+
+                <div class="frames-container">
+                    <div class="frames-header">
+                        <h3>Frames (<span id="frameCount">0</span>) - <span id="currentFrameLabel">No frames</span></h3>
+                    </div>
+                    <div id="framesList" class="frames-list"></div>
+                    <div class="button-row">
+                        <button id="duplicateFrameButton">Duplicate Frame</button>
+                        <button id="deleteFrameButton">Delete Frame</button>
+                        <button id="addFrameButton">+ Add Empty Frame</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section export-section">
+            <div class="section-header" onclick="toggleSection('exportSection')">
+                <h2>Export</h2>
+                <span class="section-toggle">▼</span>
+            </div>
+            <div id="exportSection" class="section-content">
+                <div class="button-row">
+                    <button id="downloadButton" style="padding: 15px 30px; font-size: 16px;">Download</button>
+                    <button id="publishButton" style="padding: 15px 30px; font-size: 16px;">Publish</button>
+                </div>
+                <div id="publishError"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="previewPanel" class="preview-panel">
+        <div class="preview-header">
+            <h3>Animation Preview</h3>
+            <button id="closePreviewButton">×</button>
+        </div>
+        <div class="preview-controls">
+            <button id="previewPlayButton">▶ Play</button>
+            <button id="previewPauseButton">⏸ Pause</button>
+            <span id="previewFrameLabel">Frame 1 / 1</span>
+            <div class="zoom-controls">
+                <button class="zoom-button" data-zoom="1">1x</button>
+                <button class="zoom-button active" data-zoom="2">2x</button>
+                <button class="zoom-button" data-zoom="3">3x</button>
+                <button class="zoom-button" data-zoom="4">4x</button>
+            </div>
+        </div>
+        <div class="preview-canvas-container">
+            <canvas id="previewCanvas"></canvas>
         </div>
     </div>
 
@@ -192,32 +382,33 @@
     <script type="module">
         import { midiPlayer } from '/midi.js';
 
-        // Tab switching
-        window.switchTab = function(tabName) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const header = content.previousElementSibling;
+            const toggle = header.querySelector('.section-toggle');
 
-            if (tabName === 'pixel') {
-                document.querySelector('.tab-button:nth-child(1)').classList.add('active');
-                document.getElementById('pixelTab').classList.add('active');
-            } else if (tabName === 'midi') {
-                document.querySelector('.tab-button:nth-child(2)').classList.add('active');
-                document.getElementById('midiTab').classList.add('active');
-            }
+            content.classList.toggle('collapsed');
+            toggle.classList.toggle('collapsed');
         }
 
-        // Pixel Editor
-        const PIXEL_WIDTH = 64;
-        const PIXEL_HEIGHT = 40;
+        window.toggleSection = toggleSection;
+
         const CELL_SIZE = 10;
+        let canvasWidth = 20;
+        let canvasHeight = 10;
+        let PIXEL_WIDTH = canvasWidth * 2;
+        let PIXEL_HEIGHT = canvasHeight * 4;
+
+        let frames = [];
+        let currentFrameIndex = -1;
+        let previewAnimationInterval = null;
+        let previewFrameIndex = 0;
+        let previewZoom = 2;
 
         const canvas = document.getElementById('pixelCanvas');
         const ctx = canvas.getContext('2d');
-
-        canvas.width = PIXEL_WIDTH * CELL_SIZE;
-        canvas.height = PIXEL_HEIGHT * CELL_SIZE;
-
-        const pixels = Array(PIXEL_HEIGHT).fill(null).map(() => Array(PIXEL_WIDTH).fill(false));
+        const previewCanvas = document.getElementById('previewCanvas');
+        const previewCtx = previewCanvas.getContext('2d');
 
         let isDrawing = false;
         let drawMode = true;
@@ -234,15 +425,172 @@
                 : '#081820';
         }
 
+        function updateCanvasSize() {
+            PIXEL_WIDTH = canvasWidth * 2;
+            PIXEL_HEIGHT = canvasHeight * 4;
+            canvas.width = PIXEL_WIDTH * CELL_SIZE;
+            canvas.height = PIXEL_HEIGHT * CELL_SIZE;
+            updatePreviewCanvasSize();
+        }
+
+        function updatePreviewCanvasSize() {
+            previewCanvas.width = PIXEL_WIDTH * previewZoom;
+            previewCanvas.height = PIXEL_HEIGHT * previewZoom;
+        }
+
+        function resizeFrames(newWidth, newHeight) {
+            const newPixelWidth = newWidth * 2;
+            const newPixelHeight = newHeight * 4;
+
+            const resizedFrames = frames.map(frame => {
+                const newFrame = Array(newPixelHeight).fill(null).map(() => Array(newPixelWidth).fill(false));
+
+                const offsetX = Math.floor((newPixelWidth - PIXEL_WIDTH) / 2);
+                const offsetY = Math.floor((newPixelHeight - PIXEL_HEIGHT) / 2);
+
+                for (let y = 0; y < Math.min(PIXEL_HEIGHT, newPixelHeight); y++) {
+                    for (let x = 0; x < Math.min(PIXEL_WIDTH, newPixelWidth); x++) {
+                        const targetY = y + offsetY;
+                        const targetX = x + offsetX;
+                        if (targetY >= 0 && targetY < newPixelHeight && targetX >= 0 && targetX < newPixelWidth) {
+                            newFrame[targetY][targetX] = frame[y][x];
+                        }
+                    }
+                }
+
+                return newFrame;
+            });
+
+            frames = resizedFrames;
+            canvasWidth = newWidth;
+            canvasHeight = newHeight;
+            updateCanvasSize();
+            render();
+        }
+
+        function getCurrentFrame() {
+            if (currentFrameIndex >= 0 && currentFrameIndex < frames.length) {
+                return frames[currentFrameIndex];
+            }
+            return null;
+        }
+
+        function addFrame() {
+            const newFrame = Array(PIXEL_HEIGHT).fill(null).map(() => Array(PIXEL_WIDTH).fill(false));
+            frames.push(newFrame);
+            currentFrameIndex = frames.length - 1;
+            updateFramesList();
+            render();
+        }
+
+        function deleteFrame(index) {
+            if (frames.length === 0) return;
+            frames.splice(index, 1);
+            if (currentFrameIndex >= frames.length) {
+                currentFrameIndex = frames.length - 1;
+            }
+            updateFramesList();
+            render();
+        }
+
+        function duplicateFrame() {
+            if (currentFrameIndex < 0 || currentFrameIndex >= frames.length) {
+                addFrame();
+                return;
+            }
+            const copy = frames[currentFrameIndex].map(row => [...row]);
+            frames.splice(currentFrameIndex + 1, 0, copy);
+            currentFrameIndex++;
+            updateFramesList();
+            render();
+        }
+
+        function selectFrame(index) {
+            currentFrameIndex = index;
+            updateFramesList();
+            render();
+        }
+
+        function updateFramesList() {
+            const framesList = document.getElementById('framesList');
+            framesList.innerHTML = '';
+
+            frames.forEach((frame, index) => {
+                const frameButton = document.createElement('button');
+                frameButton.className = 'frame-button';
+                if (index === currentFrameIndex) {
+                    frameButton.classList.add('active');
+                }
+                frameButton.textContent = `${index + 1}`;
+                frameButton.draggable = true;
+
+                frameButton.addEventListener('click', () => selectFrame(index));
+
+                frameButton.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', index.toString());
+                });
+
+                frameButton.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+
+                frameButton.addEventListener('dragenter', (e) => {
+                    e.preventDefault();
+                    frameButton.classList.add('drag-over');
+                });
+
+                frameButton.addEventListener('dragleave', () => {
+                    frameButton.classList.remove('drag-over');
+                });
+
+                frameButton.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    frameButton.classList.remove('drag-over');
+
+                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    const toIndex = index;
+
+                    if (fromIndex !== toIndex) {
+                        const [movedFrame] = frames.splice(fromIndex, 1);
+                        frames.splice(toIndex, 0, movedFrame);
+
+                        if (currentFrameIndex === fromIndex) {
+                            currentFrameIndex = toIndex;
+                        } else if (fromIndex < currentFrameIndex && toIndex >= currentFrameIndex) {
+                            currentFrameIndex--;
+                        } else if (fromIndex > currentFrameIndex && toIndex <= currentFrameIndex) {
+                            currentFrameIndex++;
+                        }
+
+                        updateFramesList();
+                    }
+                });
+
+                framesList.appendChild(frameButton);
+            });
+
+            document.getElementById('frameCount').textContent = frames.length;
+            if (frames.length > 0 && currentFrameIndex >= 0) {
+                document.getElementById('currentFrameLabel').textContent = `Frame ${currentFrameIndex + 1} / ${frames.length}`;
+            } else {
+                document.getElementById('currentFrameLabel').textContent = 'No frames';
+            }
+        }
+
         function render() {
             ctx.fillStyle = getBgColor();
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = getPixelColor();
-            for (let y = 0; y < PIXEL_HEIGHT; y++) {
-                for (let x = 0; x < PIXEL_WIDTH; x++) {
-                    if (pixels[y][x]) {
-                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            const frame = getCurrentFrame();
+            if (frame) {
+                ctx.fillStyle = getPixelColor();
+                for (let y = 0; y < PIXEL_HEIGHT; y++) {
+                    for (let x = 0; x < PIXEL_WIDTH; x++) {
+                        if (frame[y][x]) {
+                            ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        }
                     }
                 }
             }
@@ -264,6 +612,29 @@
             ctx.globalAlpha = 1;
         }
 
+        function renderPreview(frameIndex) {
+            previewCtx.fillStyle = getBgColor();
+            previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+            if (frames.length === 0 || frameIndex < 0 || frameIndex >= frames.length) {
+                return;
+            }
+
+            const frame = frames[frameIndex];
+            previewCtx.fillStyle = getPixelColor();
+            for (let y = 0; y < PIXEL_HEIGHT; y++) {
+                for (let x = 0; x < PIXEL_WIDTH; x++) {
+                    if (frame[y][x]) {
+                        previewCtx.fillRect(x * previewZoom, y * previewZoom, previewZoom, previewZoom);
+                    }
+                }
+            }
+
+            if (frames.length > 0) {
+                document.getElementById('previewFrameLabel').textContent = `Frame ${frameIndex + 1} / ${frames.length}`;
+            }
+        }
+
         function getPixelCoords(event) {
             const rect = canvas.getBoundingClientRect();
             const x = Math.floor((event.clientX - rect.left) / CELL_SIZE);
@@ -272,16 +643,20 @@
         }
 
         function setPixel(x, y, value) {
-            if (x >= 0 && x < PIXEL_WIDTH && y >= 0 && y < PIXEL_HEIGHT) {
-                pixels[y][x] = value;
+            const frame = getCurrentFrame();
+            if (frame && x >= 0 && x < PIXEL_WIDTH && y >= 0 && y < PIXEL_HEIGHT) {
+                frame[y][x] = value;
                 render();
             }
         }
 
         canvas.addEventListener('mousedown', (e) => {
+            const frame = getCurrentFrame();
+            if (!frame) return;
+
             isDrawing = true;
             const { x, y } = getPixelCoords(e);
-            drawMode = !pixels[y][x];
+            drawMode = !frame[y][x];
             setPixel(x, y, drawMode);
         });
 
@@ -300,31 +675,143 @@
             isDrawing = false;
         });
 
-        document.getElementById('clearButton').addEventListener('click', () => {
-            for (let y = 0; y < PIXEL_HEIGHT; y++) {
-                for (let x = 0; x < PIXEL_WIDTH; x++) {
-                    pixels[y][x] = false;
-                }
+        document.getElementById('addFrameButton').addEventListener('click', addFrame);
+
+        document.getElementById('deleteFrameButton').addEventListener('click', () => {
+            if (currentFrameIndex >= 0) {
+                deleteFrame(currentFrameIndex);
             }
-            render();
+        });
+
+        document.getElementById('duplicateFrameButton').addEventListener('click', duplicateFrame);
+
+        document.getElementById('clearButton').addEventListener('click', () => {
+            const frame = getCurrentFrame();
+            if (frame) {
+                for (let y = 0; y < PIXEL_HEIGHT; y++) {
+                    for (let x = 0; x < PIXEL_WIDTH; x++) {
+                        frame[y][x] = false;
+                    }
+                }
+                render();
+            }
         });
 
         document.getElementById('fillButton').addEventListener('click', () => {
-            for (let y = 0; y < PIXEL_HEIGHT; y++) {
-                for (let x = 0; x < PIXEL_WIDTH; x++) {
-                    pixels[y][x] = true;
+            const frame = getCurrentFrame();
+            if (frame) {
+                for (let y = 0; y < PIXEL_HEIGHT; y++) {
+                    for (let x = 0; x < PIXEL_WIDTH; x++) {
+                        frame[y][x] = true;
+                    }
+                }
+                render();
+            }
+        });
+
+        document.getElementById('resizeButton').addEventListener('click', () => {
+            const newWidth = parseInt(document.getElementById('canvasWidth').value);
+            const newHeight = parseInt(document.getElementById('canvasHeight').value);
+
+            if (newWidth < 1 || newWidth > 100 || newHeight < 1 || newHeight > 50) {
+                alert('Canvas dimensions must be between 1-100 width and 1-50 height');
+                return;
+            }
+
+            resizeFrames(newWidth, newHeight);
+        });
+
+        document.getElementById('togglePreviewButton').addEventListener('click', () => {
+            const panel = document.getElementById('previewPanel');
+            const button = document.getElementById('togglePreviewButton');
+
+            if (panel.classList.contains('visible')) {
+                panel.classList.remove('visible');
+                button.textContent = 'Show Preview';
+                stopPreviewAnimation();
+            } else {
+                panel.classList.add('visible');
+                button.textContent = 'Hide Preview';
+                if (frames.length > 0) {
+                    previewFrameIndex = 0;
+                    renderPreview(previewFrameIndex);
                 }
             }
-            render();
+        });
+
+        document.getElementById('closePreviewButton').addEventListener('click', () => {
+            document.getElementById('previewPanel').classList.remove('visible');
+            document.getElementById('togglePreviewButton').textContent = 'Show Preview';
+            stopPreviewAnimation();
+        });
+
+        function playPreviewAnimation() {
+            if (frames.length === 0) return;
+            if (previewAnimationInterval) return;
+
+            const fps = parseFloat(document.getElementById('fps').value) || 10;
+            const interval = 1000 / fps;
+
+            previewAnimationInterval = setInterval(() => {
+                previewFrameIndex = (previewFrameIndex + 1) % frames.length;
+                renderPreview(previewFrameIndex);
+            }, interval);
+        }
+
+        function stopPreviewAnimation() {
+            if (previewAnimationInterval) {
+                clearInterval(previewAnimationInterval);
+                previewAnimationInterval = null;
+            }
+        }
+
+        document.getElementById('previewPlayButton').addEventListener('click', playPreviewAnimation);
+        document.getElementById('previewPauseButton').addEventListener('click', stopPreviewAnimation);
+
+        document.querySelectorAll('.zoom-button').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.zoom-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+                previewZoom = parseInt(button.dataset.zoom);
+                updatePreviewCanvasSize();
+                renderPreview(previewFrameIndex);
+            });
+        });
+
+        let isDraggingPreview = false;
+        let previewDragOffsetX = 0;
+        let previewDragOffsetY = 0;
+
+        document.querySelector('.preview-header').addEventListener('mousedown', (e) => {
+            isDraggingPreview = true;
+            const panel = document.getElementById('previewPanel');
+            const rect = panel.getBoundingClientRect();
+            previewDragOffsetX = e.clientX - rect.left;
+            previewDragOffsetY = e.clientY - rect.top;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDraggingPreview) {
+                const panel = document.getElementById('previewPanel');
+                panel.style.left = (e.clientX - previewDragOffsetX) + 'px';
+                panel.style.top = (e.clientY - previewDragOffsetY) + 'px';
+                panel.style.right = 'auto';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDraggingPreview = false;
         });
 
         function pixelsToBraille(pixels) {
             const BRAILLE_BASE = 0x2800;
             const lines = [];
+            const charHeight = Math.ceil(pixels.length / 4);
+            const charWidth = Math.ceil(pixels[0].length / 2);
 
-            for (let charY = 0; charY < 10; charY++) {
+            for (let charY = 0; charY < charHeight; charY++) {
                 let line = '';
-                for (let charX = 0; charX < 32; charX++) {
+                for (let charX = 0; charX < charWidth; charX++) {
                     const baseX = charX * 2;
                     const baseY = charY * 4;
 
@@ -338,7 +825,7 @@
                     for (const [dx, dy, bit] of brailleOffsets) {
                         const x = baseX + dx;
                         const y = baseY + dy;
-                        if (y < PIXEL_HEIGHT && x < PIXEL_WIDTH && pixels[y][x]) {
+                        if (y < pixels.length && x < pixels[0].length && pixels[y][x]) {
                             brailleValue |= bit;
                         }
                     }
@@ -346,39 +833,170 @@
                     const char = String.fromCharCode(BRAILLE_BASE + brailleValue);
                     line += char;
                 }
-                lines.push(line);
+                lines.push(line.trimEnd());
             }
 
             return lines.join('\n');
         }
 
-        document.getElementById('downloadPixelButton').addEventListener('click', () => {
-            const brailleArt = pixelsToBraille(pixels);
-            const blob = new Blob([brailleArt], { type: 'text/plain' });
+        function brailleToPixels(brailleText, charWidth, charHeight) {
+            const lines = brailleText.trim().split('\n');
+            const framesData = [];
+
+            for (let frameStart = 0; frameStart < lines.length; frameStart += charHeight) {
+                const frameLines = lines.slice(frameStart, frameStart + charHeight);
+                const pixelHeight = charHeight * 4;
+                const pixelWidth = charWidth * 2;
+                const pixels = Array(pixelHeight).fill(null).map(() => Array(pixelWidth).fill(false));
+
+                for (let charY = 0; charY < frameLines.length; charY++) {
+                    const line = frameLines[charY];
+                    for (let charX = 0; charX < Math.min(line.length, charWidth); charX++) {
+                        const char = line[charX];
+                        const brailleValue = char.charCodeAt(0) - 0x2800;
+
+                        const baseX = charX * 2;
+                        const baseY = charY * 4;
+
+                        const brailleOffsets = [
+                            [0, 0, 0x01], [0, 1, 0x02], [0, 2, 0x04], [0, 3, 0x40],
+                            [1, 0, 0x08], [1, 1, 0x10], [1, 2, 0x20], [1, 3, 0x80]
+                        ];
+
+                        for (const [dx, dy, bit] of brailleOffsets) {
+                            if (brailleValue & bit) {
+                                const x = baseX + dx;
+                                const y = baseY + dy;
+                                if (x < pixelWidth && y < pixelHeight) {
+                                    pixels[y][x] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                framesData.push(pixels);
+            }
+
+            return framesData;
+        }
+
+        function parseContentFile(fileContent) {
+            const lines = fileContent.split('\n');
+            let midi = '';
+            let art = '';
+            let width = 20;
+            let height = 10;
+            let fps = 10;
+            let inMidi = false;
+            let inArt = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+
+                if (line.includes('--- MIDI ---')) {
+                    inMidi = true;
+                    inArt = false;
+                    continue;
+                }
+
+                if (line.includes('--- ART ---')) {
+                    inMidi = false;
+                    inArt = true;
+                    continue;
+                }
+
+                if (inMidi && line.trim()) {
+                    const midiContent = line.replace(/^--bpm\s+\d+\s*/, '').trim();
+                    if (midiContent) {
+                        midi = midiContent;
+                    }
+                }
+
+                if (inArt) {
+                    const match = line.match(/Ascii Art Animation,\s*(\d+)x(\d+),\s*(\d+(?:\.\d+)?)fps/);
+                    if (match) {
+                        width = parseInt(match[1]);
+                        height = parseInt(match[2]);
+                        fps = parseFloat(match[3]);
+                    } else if (line.trim()) {
+                        art += line + '\n';
+                    }
+                }
+            }
+
+            return { midi, art, width, height, fps };
+        }
+
+        document.getElementById('loadFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target.result;
+                const parsed = parseContentFile(content);
+
+                document.getElementById('midiComposition').value = parsed.midi;
+                document.getElementById('fps').value = parsed.fps;
+                document.getElementById('canvasWidth').value = parsed.width;
+                document.getElementById('canvasHeight').value = parsed.height;
+
+                canvasWidth = parsed.width;
+                canvasHeight = parsed.height;
+                updateCanvasSize();
+
+                if (parsed.art.trim()) {
+                    frames = brailleToPixels(parsed.art, parsed.width, parsed.height);
+                    if (frames.length > 0) {
+                        currentFrameIndex = 0;
+                    }
+                } else {
+                    frames = [];
+                    currentFrameIndex = -1;
+                }
+
+                updateFramesList();
+                render();
+            };
+            reader.readAsText(file);
+        });
+
+        document.getElementById('downloadButton').addEventListener('click', () => {
+            const contentName = document.getElementById('contentName').value.trim() || 'content';
+            const fps = parseFloat(document.getElementById('fps').value);
+            const midiComposition = document.getElementById('midiComposition').value.trim();
+
+            let content = '--- MIDI ---\n';
+            if (midiComposition) {
+                content += `--bpm 150 ${midiComposition}\n`;
+            } else {
+                content += '--bpm 150\n';
+            }
+            content += '--- ART ---\n';
+            content += `Ascii Art Animation, ${canvasWidth}x${canvasHeight}, ${fps}fps\n`;
+
+            frames.forEach(frame => {
+                const brailleArt = pixelsToBraille(frame);
+                content += brailleArt + '\n';
+            });
+
+            const blob = new Blob([content], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'pixel-art.txt';
+            a.download = `${contentName}.txt`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         });
 
-        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', render);
-
-        render();
-
-        // MIDI Composer
-        const playButton = document.getElementById('playButton');
-        const stopButton = document.getElementById('stopButton');
-        const downloadMidiButton = document.getElementById('downloadMidiButton');
-        const midiInput = document.getElementById('midiInput');
-
         midiPlayer.initAudioContext();
 
-        playButton.addEventListener('click', async () => {
-            const composition = midiInput.value.trim();
+        document.getElementById('playButton').addEventListener('click', async () => {
+            const composition = document.getElementById('midiComposition').value.trim();
+
             if (!composition) {
                 alert('Please enter a MIDI composition');
                 return;
@@ -392,26 +1010,8 @@
             }
         });
 
-        stopButton.addEventListener('click', () => {
+        document.getElementById('stopButton').addEventListener('click', () => {
             midiPlayer.stop();
-        });
-
-        downloadMidiButton.addEventListener('click', () => {
-            const composition = midiInput.value.trim();
-            if (!composition) {
-                alert('Please enter a MIDI composition');
-                return;
-            }
-
-            const blob = new Blob([composition], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'midi-composition.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
         });
 
         document.addEventListener('keydown', (e) => {
@@ -420,8 +1020,7 @@
             }
         });
 
-        // Publish functionality
-        window.handlePublish = async function() {
+        document.getElementById('publishButton').addEventListener('click', async () => {
             const publishError = document.getElementById('publishError');
             publishError.textContent = '';
 
@@ -451,19 +1050,18 @@
                 return;
             }
 
-            const brailleArt = pixelsToBraille(pixels);
-            const midiComposition = midiInput.value.trim();
+            let brailleArt = '';
+            frames.forEach(frame => {
+                brailleArt += pixelsToBraille(frame) + '\n';
+            });
 
-            if (!brailleArt.trim() && !midiComposition) {
-                publishError.textContent = 'Please create either pixel art or MIDI composition (or both)';
-                return;
-            }
+            const midiComposition = document.getElementById('midiComposition').value.trim();
 
             try {
                 const payload = {
                     channel_id: channel.id,
                     name: contentName,
-                    art: brailleArt,
+                    art: brailleArt.trim(),
                     midi: midiComposition,
                     fps: fps
                 };
@@ -483,7 +1081,17 @@
                 publishError.textContent = `Failed to publish: ${error.message}`;
                 console.error('Publish error:', error);
             }
-        }
+        });
+
+        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+            render();
+            if (frames.length > 0) {
+                renderPreview(previewFrameIndex);
+            }
+        });
+
+        updateCanvasSize();
+        render();
     </script>
 </body>
 

@@ -102,6 +102,14 @@ const authManager = new AuthManager();
 
 function showAuthModal() {
     const modal = document.getElementById('authModal');
+    const mobileNotice = document.getElementById('mobileNotice');
+
+    if (isMobileDevice() && mobileNotice) {
+        mobileNotice.style.display = 'block';
+    } else if (mobileNotice) {
+        mobileNotice.style.display = 'none';
+    }
+
     modal.style.display = 'flex';
 }
 
@@ -155,11 +163,17 @@ function handleLogout() {
     authManager.logout();
 }
 
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || window.innerWidth < 768;
+}
+
 function updateAuthUI() {
     const createButton = document.getElementById('createButton');
     const loginButton = document.getElementById('loginButton');
     const logoutButton = document.getElementById('logoutButton');
     const channelNameSpan = document.getElementById('channelName');
+    const isMobile = isMobileDevice();
 
     if (authManager.isAuthenticated()) {
         const channel = authManager.getChannel();
@@ -169,7 +183,11 @@ function updateAuthUI() {
             logoutButton.style.display = 'inline-block';
         }
         if (createButton) {
-            createButton.style.display = 'inline-block';
+            if (isMobile) {
+                createButton.style.display = 'none';
+            } else {
+                createButton.style.display = 'inline-block';
+            }
         }
         if (loginButton) {
             loginButton.style.display = 'none';

@@ -33,6 +33,11 @@
         <div class="modal-content">
             <span class="close" onclick="hideAuthModal()">&times;</span>
             <h2>Login or Sign Up</h2>
+            <div id="mobileNotice" style="display: none; padding: 15px; margin-bottom: 15px; background: var(--background-secondary); border-radius: 8px;">
+                <p style="margin: 0 0 10px 0;"><strong>📱 Mobile users:</strong></p>
+                <p style="margin: 0;">Content creation is only available on desktop. A mobile app is coming soon!</p>
+                <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">You can still browse and enjoy content on mobile.</p>
+            </div>
             <div id="authError" class="error" style="display: none;"></div>
             <form id="authForm" onsubmit="handleAuth(event)">
                 <div class="form-group">
