@@ -1,0 +1,257 @@
+body {
+    display: block;
+    height: auto;
+    justify-content: flex-start;
+    padding: 20px;
+}
+
+.editor-container {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px;
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.section {
+    margin: 20px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--background-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.section-header:hover {
+    background: var(--button-hover-bg);
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.section-toggle {
+    font-size: 20px;
+    transition: transform 0.3s;
+}
+
+.section-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
+.section-content {
+    padding: 20px;
+    display: block;
+}
+
+.section-content.collapsed {
+    display: none;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea {
+    width: 100%;
+    max-width: 600px;
+    padding: 10px;
+    font-family: 'Fira Code', monospace;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--background);
+    color: var(--text-color);
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group-inline {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-group-inline input[type="number"] {
+    width: 80px;
+}
+
+.button-row {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.frames-container {
+    margin: 20px 0;
+}
+
+.frames-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.frames-list {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 10px;
+    background: var(--background-secondary);
+    border-radius: 4px;
+    min-height: 50px;
+    margin-bottom: 15px;
+}
+
+.frame-button {
+    padding: 10px 20px;
+    background: var(--button-bg);
+    border: 2px solid var(--button-border);
+    border-radius: 4px;
+    cursor: grab;
+    flex-shrink: 0;
+    user-select: none;
+    transition: all 0.2s;
+}
+
+.frame-button:active {
+    cursor: grabbing;
+}
+
+.frame-button.active {
+    border-color: var(--button-hover-bg);
+    background: var(--button-hover-bg);
+}
+
+.frame-button.drag-over {
+    opacity: 0.5;
+}
+
+.canvas-container {
+    border: 2px solid var(--border-color);
+    display: inline-block;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+#pixelCanvas {
+    cursor: crosshair;
+    display: block;
+}
+
+.export-section {
+    padding: 20px;
+    text-align: center;
+}
+
+.export-section .button-row {
+    justify-content: center;
+}
+
+.preview-panel {
+    position: fixed;
+    top: 100px;
+    right: 50px;
+    background: var(--background-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    resize: both;
+    overflow: auto;
+    min-width: 200px;
+    min-height: 200px;
+    max-width: 800px;
+    max-height: 800px;
+    z-index: 1000;
+    display: none;
+}
+
+.preview-panel.visible {
+    display: block;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    cursor: move;
+}
+
+.preview-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.preview-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.preview-canvas-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100px;
+    padding: 10px;
+    background: var(--background);
+    border-radius: 4px;
+}
+
+#previewCanvas {
+    image-rendering: pixelated;
+    max-width: 100%;
+    height: auto;
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.zoom-button {
+    padding: 5px 10px;
+    font-size: 12px;
+    min-width: 40px;
+}
+
+.zoom-button.active {
+    background: var(--button-hover-bg);
+    border-color: var(--button-hover-bg);
+}
+
+#publishError {
+    color: red;
+    margin-top: 10px;
+}

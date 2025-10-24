@@ -150,9 +150,7 @@ async function handleAuth(event) {
         hideAuthModal();
         updateAuthUI();
 
-        if (typeof showCreateChoiceModal === 'function') {
-            showCreateChoiceModal();
-        }
+        window.location.href = '/content-editor.html';
     } catch (error) {
         errorDiv.textContent = error.message;
         errorDiv.style.display = 'block';
@@ -164,8 +162,7 @@ function handleLogout() {
 }
 
 function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-        || window.innerWidth < 768;
+    return window.innerWidth < 720;
 }
 
 function updateAuthUI() {

@@ -1,6 +1,6 @@
 function handleCreateClick() {
     if (authManager.isAuthenticated()) {
-        showCreateChoiceModal();
+        window.location.href = '/content-editor.html';
     } else {
         showAuthModal();
     }
