@@ -102,6 +102,14 @@ const authManager = new AuthManager();
 
 function showAuthModal() {
     const modal = document.getElementById('authModal');
+    const mobileNotice = document.getElementById('mobileNotice');
+
+    if (isMobileDevice() && mobileNotice) {
+        mobileNotice.style.display = 'block';
+    } else if (mobileNotice) {
+        mobileNotice.style.display = 'none';
+    }
+
     modal.style.display = 'flex';
 }
 
@@ -111,7 +119,9 @@ function hideAuthModal() {
 
     document.getElementById('authChannelName').value = '';
     document.getElementById('authPassword').value = '';
-    document.getElementById('authError').textContent = '';
+    const errorDiv = document.getElementById('authError');
+    errorDiv.textContent = '';
+    errorDiv.style.display = 'none';
 }
 
 async function handleAuth(event) {
@@ -123,25 +133,27 @@ async function handleAuth(event) {
 
     if (channelName.includes(' ')) {
         errorDiv.textContent = 'Channel name cannot contain spaces';
+        errorDiv.style.display = 'block';
         return;
     }
 
     if (channelName.length > 250) {
         errorDiv.textContent = 'Channel name is too long (max 250 characters)';
+        errorDiv.style.display = 'block';
         return;
     }
 
     try {
         errorDiv.textContent = '';
+        errorDiv.style.display = 'none';
         await authManager.loginOrSignup(channelName, password);
         hideAuthModal();
         updateAuthUI();
 
-        if (typeof showCreateChoiceModal === 'function') {
-            showCreateChoiceModal();
-        }
+        window.location.href = '/content-editor.html';
     } catch (error) {
         errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
     }
 }
 
@@ -149,37 +161,45 @@ function handleLogout() {
     authManager.logout();
 }
 
+function isMobileDevice() {
+    return window.innerWidth < 720;
+}
+
 function updateAuthUI() {
     const createButton = document.getElementById('createButton');
-    const userInfo = document.getElementById('userInfo');
-    const channelNameSpan = document.getElementById('channelName');
+    const loginButton = document.getElementById('loginButton');
     const logoutButton = document.getElementById('logoutButton');
-    const devModeMessage = document.getElementById('devModeMessage');
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const isDevMode = urlParams.get('dev') === 'true';
+    const channelNameSpan = document.getElementById('channelName');
+    const isMobile = isMobileDevice();
 
     if (authManager.isAuthenticated()) {
         const channel = authManager.getChannel();
-        createButton.style.display = 'none';
-        userInfo.style.display = 'flex';
+        channelNameSpan.style.display = 'inline';
         channelNameSpan.textContent = channel.name;
-        if (devModeMessage) {
-            devModeMessage.style.display = 'none';
+        if (logoutButton) {
+            logoutButton.style.display = 'inline-block';
+        }
+        if (createButton) {
+            if (isMobile) {
+                createButton.style.display = 'none';
+            } else {
+                createButton.style.display = 'inline-block';
+            }
+        }
+        if (loginButton) {
+            loginButton.style.display = 'none';
         }
     } else {
-        if (isDevMode) {
-            createButton.style.display = 'block';
-            if (devModeMessage) {
-                devModeMessage.style.display = 'none';
-            }
-        } else {
-            createButton.style.display = 'none';
-            if (devModeMessage) {
-                devModeMessage.style.display = 'block';
-            }
+        channelNameSpan.style.display = 'none';
+        if (logoutButton) {
+            logoutButton.style.display = 'none';
         }
-        userInfo.style.display = 'none';
+        if (createButton) {
+            createButton.style.display = 'none';
+        }
+        if (loginButton) {
+            loginButton.style.display = 'inline-block';
+        }
     }
 }
 

@@ -111,9 +111,6 @@ Auth UI
     top: 20px;
     right: 20px;
     z-index: 1000;
-}
-
-#userInfo {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -136,20 +133,29 @@ Auth UI
 }
 
 .modal-content {
-    padding: 30px;
+    padding: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
     border-radius: 4px;
     max-width: 400px;
-    width: 90%;
+    width: 100%;
     position: relative;
 }
 
 .close {
-    position: absolute;
-    right: 15px;
-    top: 10px;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
+    line-height: 1;
+}
+
+.modal-content .close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
 }
 
 .close:hover {
@@ -212,6 +218,9 @@ Auth UI
     margin-bottom: 20px;
 }
 
+.frame-item {
+    border-radius: 4px;
+}
 
 /*
 --------------------------------------------------------------------------------
@@ -228,7 +237,7 @@ a {
     color: white;
 }
 
-a.button, button, .modal a.button, .modal button {
+a.button, button, .modal a.button, .modal button, .file-button {
     background-color: #081820;
     color: white;
     border: 1px solid #88c070;
@@ -248,10 +257,11 @@ a.button, button, .modal a.button, .modal button {
     color: #88c070;
 }
 
+.form-group-inline input,
 .form-group input,
 .form-group textarea {
-    background-color: transparent;
-    color: #88c070;
+    background-color: rgba(255,255,255,0.03);
+    color: white;
     border: 1px solid #88c070;
 }
 
@@ -283,13 +293,25 @@ a.button, button, .modal a.button, .modal button {
     background-color: #0a1a0a;
 }
 
+.preview-panel {
+    background: #081820;
+}
+
+.frame-item {
+    border: 1px solid #88c070;
+}
+
+.frame-item.selected {
+    border: 2px solid white;
+}
+
 @media (prefers-color-scheme: light) {
     html, body, canvas, #clickToContinueOverlay {
         background-color: #f0faf0;
         color: #081820;
     }
 
-    a.button, button, .modal a.button, .modal button {
+    a.button, button, .modal a.button, .modal button, .file-button {
         background-color: #88c070;
         color: #081820;
         border: 1px solid #081820;
@@ -314,9 +336,10 @@ a.button, button, .modal a.button, .modal button {
         color: #081820;
     }
 
+    .form-group-inline input,
     .form-group input,
     .form-group textarea {
-        background-color: transparent;
+        background-color: white;
         color: #081820;
         border: 1px solid #081820;
     }
@@ -347,6 +370,18 @@ a.button, button, .modal a.button, .modal button {
 
     .help code {
         background-color: #c8e6c9;
+    }
+
+    .preview-panel {
+        background: #F0FAF0;
+    }
+
+    .frame-item {
+        border: 1px solid #081820;
+    }
+
+    .frame-item.selected {
+        border: 2px solid #88c070;
     }
 }
 
@@ -462,4 +497,29 @@ Volume Controls
     white-space: pre;
     min-width: 11ch;
     text-align: center;
+}
+
+/*
+--------------------------------------------------------------------------------
+Mobile Styles
+--------------------------------------------------------------------------------
+*/
+
+@media (max-width: 768px) {
+    #authControls {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    #volumeControls {
+        display: none !important;
+    }
+
+    body {
+        padding: 10px;
+        padding-top: 60px;
+    }
 }

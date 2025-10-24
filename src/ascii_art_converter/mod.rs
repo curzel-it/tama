@@ -154,4 +154,65 @@ mod tests {
         assert_eq!(sheet.height, 3);
         assert_eq!(sheet.frames.len(), 1);
     }
+
+    #[test]
+    fn test_multi_frame_parsing() {
+        let content = "Ascii Art Animation, 5x2\n⠁⠁⠁⠁⠁\n⠁⠁⠁⠁⠁\n⠂⠂⠂⠂⠂\n⠂⠂⠂⠂⠂\n⠃⠃⠃⠃⠃\n⠃⠃⠃⠃⠃";
+        let result = AsciiArtSheet::from_string(content);
+        assert!(result.is_ok());
+
+        let sheet = result.unwrap();
+        assert_eq!(sheet.width, 5);
+        assert_eq!(sheet.height, 2);
+        assert_eq!(sheet.frames.len(), 3, "Should have 3 frames");
+
+        // Verify frame contents
+        assert!(sheet.frames[0].contains("⠁⠁⠁⠁⠁"), "Frame 1 should contain marker ⠁");
+        assert!(sheet.frames[1].contains("⠂⠂⠂⠂⠂"), "Frame 2 should contain marker ⠂");
+        assert!(sheet.frames[2].contains("⠃⠃⠃⠃⠃"), "Frame 3 should contain marker ⠃");
+    }
+
+    #[test]
+    fn test_neko_idle_frame_count() {
+        use std::fs;
+        if let Ok(content) = fs::read_to_string("sprites/neko_idle.txt") {
+            let art_section_start = content.find("--- ART ---").unwrap() + "--- ART ---".len();
+            let art_content = &content[art_section_start..].trim();
+
+            let result = AsciiArtSheet::from_string(art_content);
+            assert!(result.is_ok(), "Should parse neko_idle.txt successfully");
+
+            let sheet = result.unwrap();
+            assert_eq!(sheet.width, 20, "Width should be 20");
+            assert_eq!(sheet.height, 10, "Height should be 10");
+            assert_eq!(sheet.frames.len(), 6, "Should have 6 frames");
+        }
+    }
+
+    #[test]
+    fn test_content_editor_format_round_trip() {
+        // Simulate the exact format the content editor produces:
+        // 1. Header line
+        // 2. Each frame followed by \n (pixelsToBraille returns lines.join('\n'), then + '\n')
+        // 3. When concatenated, no empty lines between frames
+
+        let frame1 = "⠁⠁⠁⠁⠁\n⠁⠁⠁⠁⠁";
+        let frame2 = "⠂⠂⠂⠂⠂\n⠂⠂⠂⠂⠂";
+        let frame3 = "⠃⠃⠃⠃⠃\n⠃⠃⠃⠃⠃";
+
+        // This is what content-editor.html produces in download/publish
+        let content_editor_format = format!(
+            "Ascii Art Animation, 5x2, 10fps\n{}\n{}\n{}\n",
+            frame1, frame2, frame3
+        );
+
+        let result = AsciiArtSheet::from_string(&content_editor_format);
+        assert!(result.is_ok(), "Should parse content editor format");
+
+        let sheet = result.unwrap();
+        assert_eq!(sheet.frames.len(), 3, "Should preserve all 3 frames from content editor");
+        assert!(sheet.frames[0].contains("⠁"), "Frame 1 preserved");
+        assert!(sheet.frames[1].contains("⠂"), "Frame 2 preserved");
+        assert!(sheet.frames[2].contains("⠃"), "Frame 3 preserved");
+    }
 }

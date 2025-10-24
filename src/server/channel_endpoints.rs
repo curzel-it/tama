@@ -15,10 +15,6 @@ const MAX_FPS: f32 = 120.0;
 
 fn validate_content_upload(request: &CreateContentRequest) -> Result<(), &'static str> {
     // Validate content name
-    if request.name.trim().is_empty() {
-        return Err("Content name cannot be empty");
-    }
-
     if request.name.len() > MAX_CONTENT_NAME_LENGTH {
         return Err("Content name is too long");
     }

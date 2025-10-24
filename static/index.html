@@ -23,22 +23,22 @@
     </div>
 
     <div id="authControls">
+        <span id="channelName" style="display: none;"></span>
+        <button id="logoutButton" onclick="handleLogout()" style="display: none;">Logout</button>
         <button id="createButton" onclick="handleCreateClick()" style="display: none;">Create</button>
-        <div id="devModeMessage" style="display: none;">
-            <p>To create content use the <a href="https://github.com/curzel-it/tama" target="_blank">CLI app</a></p>
-        </div>
-        <div id="userInfo" style="display: none;">
-            <span id="channelName"></span>
-            <button id="logoutButton" onclick="handleLogout()">Logout</button>
-        </div>
+        <button id="loginButton" onclick="showAuthModal()" style="display: none;">Login</button>
     </div>
 
     <div id="authModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="hideAuthModal()">&times;</span>
             <h2>Login or Sign Up</h2>
-            <div id="authError" class="error"></div>
-
+            <div id="mobileNotice" style="display: none; padding: 15px; margin-bottom: 15px; background: var(--background-secondary); border-radius: 8px;">
+                <p style="margin: 0 0 10px 0;"><strong>📱 Mobile users:</strong></p>
+                <p style="margin: 0;">Content creation is only available on desktop. A mobile app is coming soon!</p>
+                <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">You can still browse and enjoy content on mobile.</p>
+            </div>
+            <div id="authError" class="error" style="display: none;"></div>
             <form id="authForm" onsubmit="handleAuth(event)">
                 <div class="form-group">
                     <label for="authChannelName">Channel Name</label>
@@ -69,28 +69,15 @@
         <div class="modal-content">
             <span class="close" onclick="hideUploadModal()">&times;</span>
             <h2>Upload Content</h2>
-            <div id="uploadError" class="error"></div>
-
+            <div id="uploadError" class="error" style="display: none;"></div>
             <form id="uploadForm" onsubmit="handleUpload(event)">
                 <div class="form-group">
-                    <label for="contentName">Content Name</label>
-                    <input type="text" id="contentName" maxlength="200" required>
-                </div>
-                <div class="form-group">
-                    <label for="artFile">Art File (.txt)</label>
-                    <input type="file" id="artFile" accept=".txt" required>
-                </div>
-                <div class="form-group">
-                    <label for="midiFile">MIDI File (.txt)</label>
-                    <input type="file" id="midiFile" accept=".txt" required>
-                </div>
-                <div class="form-group">
-                    <label for="fps">FPS (0.1 - 120)</label>
-                    <input type="number" id="fps" step="0.1" min="0.1" max="120" value="10" required>
+                    <label for="spriteFile">Sprite File (.txt)</label>
+                    <input type="file" id="spriteFile" accept=".txt" required>
+                    <small>Upload a .txt file containing both art and MIDI data</small>
                 </div>
                 <div id="previewSection" style="display: none; margin: 20px 0;">
-                    <h3>Preview</h3>
-                    <canvas id="previewCanvas" style="max-width: 100%;"></canvas>
+                    <div id="fileInfo" style="font-size: 14px; padding: 15px; border: 1px solid; border-radius: 4px;"></div>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button type="submit">Publish</button>

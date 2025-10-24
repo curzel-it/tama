@@ -41,7 +41,7 @@ class MidiSynthesizer {
 
         if (noteChar === '-') {
             const duration = this.durationToSeconds(durationValue);
-            return { pitch: null, duration, waveform: 'square', volume: 1.0, arpeggioNotes: [] };
+            return { pitch: null, duration, waveform: 'square', volume: 1.0, arpeggioNotes: [], adsr: false, vibrato: false };
         }
 
         const noteLower = noteChar.toLowerCase();
@@ -80,7 +80,7 @@ class MidiSynthesizer {
         const midiNote = this.noteToMidiNumber(noteLower, octave, isSharp);
         const duration = this.durationToSeconds(durationValue);
 
-        return { pitch: midiNote, duration, waveform, volume, arpeggioNotes: [] };
+        return { pitch: midiNote, duration, waveform, volume, arpeggioNotes: [], adsr: false, vibrato: false };
     }
 
     parseArpeggio(durationValue, input) {
@@ -154,7 +154,7 @@ class MidiSynthesizer {
 
         const duration = this.durationToSeconds(durationValue);
 
-        return { pitch: null, duration, waveform, volume, arpeggioNotes };
+        return { pitch: null, duration, waveform, volume, arpeggioNotes, adsr: false, vibrato: false };
     }
 
     noteToMidiNumber(note, octave, sharp) {
@@ -174,6 +174,157 @@ class MidiSynthesizer {
         return 440.0 * Math.pow(2, (midiNote - 69) / 12.0);
     }
 
+    parseChannels(input) {
+        const tokens = input.trim().split(/\s+/);
+
+        if (tokens.length === 0) {
+            throw new Error('Empty input');
+        }
+
+        const globalFlags = { volume: null, adsr: false, vibrato: false };
+        let currentFlags = { volume: null, adsr: false, vibrato: false };
+        let bpm = null;
+        const channels = [];
+        let i = 0;
+        let foundChannel = false;
+
+        while (i < tokens.length) {
+            const token = tokens[i];
+
+            if (token === '--volume') {
+                if (i + 1 >= tokens.length) {
+                    throw new Error('Missing value for --volume');
+                }
+                const vol = parseFloat(tokens[i + 1]);
+                if (isNaN(vol)) {
+                    throw new Error(`Invalid volume value: '${tokens[i + 1]}'`);
+                }
+                if (vol < 0.0 || vol > 1.0) {
+                    throw new Error(`Volume must be between 0.0 and 1.0, got ${vol}`);
+                }
+
+                if (foundChannel) {
+                    currentFlags.volume = vol;
+                } else {
+                    globalFlags.volume = vol;
+                }
+                i += 2;
+            } else if (token === '--bpm') {
+                if (i + 1 >= tokens.length) {
+                    throw new Error('Missing value for --bpm');
+                }
+                const bpmVal = parseInt(tokens[i + 1]);
+                if (isNaN(bpmVal)) {
+                    throw new Error(`Invalid BPM value: '${tokens[i + 1]}'`);
+                }
+                if (bpmVal < 1 || bpmVal > 300) {
+                    throw new Error(`BPM must be between 1 and 300, got ${bpmVal}`);
+                }
+                bpm = bpmVal;
+                i += 2;
+            } else if (token === '--adsr') {
+                if (foundChannel) {
+                    currentFlags.adsr = true;
+                } else {
+                    globalFlags.adsr = true;
+                }
+                i += 1;
+            } else if (token === '--vibrato') {
+                if (foundChannel) {
+                    currentFlags.vibrato = true;
+                } else {
+                    globalFlags.vibrato = true;
+                }
+                i += 1;
+            } else if (token === '--channel') {
+                if (foundChannel && channels.length === 0) {
+                    throw new Error('--channel found but no composition provided');
+                }
+                foundChannel = true;
+                currentFlags = { volume: null, adsr: false, vibrato: false };
+                i += 1;
+            } else {
+                if (foundChannel) {
+                    let composition = '';
+                    while (i < tokens.length && !tokens[i].startsWith('--')) {
+                        if (composition) {
+                            composition += ' ';
+                        }
+                        composition += tokens[i];
+                        i++;
+                    }
+
+                    if (!composition) {
+                        throw new Error('Empty composition for channel');
+                    }
+
+                    const volume = currentFlags.volume !== null ? currentFlags.volume : globalFlags.volume;
+                    const adsr = currentFlags.adsr || globalFlags.adsr;
+                    const vibrato = currentFlags.vibrato || globalFlags.vibrato;
+
+                    channels.push({ composition, volume, adsr, vibrato });
+                    foundChannel = false;
+                } else {
+                    let composition = '';
+                    while (i < tokens.length && !tokens[i].startsWith('--')) {
+                        if (composition) {
+                            composition += ' ';
+                        }
+                        composition += tokens[i];
+                        i++;
+                    }
+
+                    if (composition) {
+                        channels.push({
+                            composition,
+                            volume: globalFlags.volume,
+                            adsr: globalFlags.adsr,
+                            vibrato: globalFlags.vibrato
+                        });
+                    }
+                }
+            }
+        }
+
+        if (foundChannel) {
+            throw new Error('--channel found but no composition provided');
+        }
+
+        if (channels.length === 0) {
+            throw new Error('No channels or compositions found');
+        }
+
+        return { channels, bpm };
+    }
+
+    applyAdsrEnvelope(sampleIndex, totalSamples) {
+        const t = sampleIndex / totalSamples;
+
+        const attackTime = 0.05;
+        const decayTime = 0.15;
+        const sustainLevel = 0.7;
+        const releaseTime = 0.20;
+
+        if (t < attackTime) {
+            return t / attackTime;
+        } else if (t < attackTime + decayTime) {
+            const decayProgress = (t - attackTime) / decayTime;
+            return 1.0 - (1.0 - sustainLevel) * decayProgress;
+        } else if (t < 1.0 - releaseTime) {
+            return sustainLevel;
+        } else {
+            const releaseProgress = (t - (1.0 - releaseTime)) / releaseTime;
+            return sustainLevel * (1.0 - releaseProgress);
+        }
+    }
+
+    applyVibrato(t, frequency) {
+        const vibratoRate = 5.0;
+        const vibratoDepth = 0.02;
+        const vibratoOffset = Math.sin(t * vibratoRate * 2.0 * Math.PI) * vibratoDepth;
+        return frequency * (1.0 + vibratoOffset);
+    }
+
     generateNoteSamples(note) {
         if (note.arpeggioNotes.length > 0) {
             const allSamples = [];
@@ -181,57 +332,60 @@ class MidiSynthesizer {
 
             for (const arpPitch of note.arpeggioNotes) {
                 const frequency = this.midiToFrequency(arpPitch);
-                const samples = this.generateWaveformSamples(frequency, noteDuration, note.volume, note.waveform);
+                const samples = this.generateWaveformSamples(frequency, noteDuration, note.volume, note.waveform, note.adsr, note.vibrato);
                 allSamples.push(...samples);
             }
 
             return allSamples;
         } else if (note.pitch !== null) {
             const frequency = this.midiToFrequency(note.pitch);
-            return this.generateWaveformSamples(frequency, note.duration, note.volume, note.waveform);
+            return this.generateWaveformSamples(frequency, note.duration, note.volume, note.waveform, note.adsr, note.vibrato);
         } else {
             const numSamples = Math.floor(this.sampleRate * note.duration);
             return new Array(numSamples).fill(0);
         }
     }
 
-    generateWaveformSamples(frequency, duration, volume, waveform) {
+    generateWaveformSamples(frequency, duration, volume, waveform, adsr, vibrato) {
         const numSamples = Math.floor(this.sampleRate * duration);
         const amplitude = 0.2 * volume;
         const samples = [];
 
         for (let i = 0; i < numSamples; i++) {
             const t = i / this.sampleRate;
+            const freq = vibrato ? this.applyVibrato(t, frequency) : frequency;
+            const envelope = adsr ? this.applyAdsrEnvelope(i, numSamples) : 1.0;
+
             let sample = 0;
 
             switch (waveform) {
                 case 'square': {
-                    const wave = Math.sin(t * frequency * 2.0 * Math.PI);
+                    const wave = Math.sin(t * freq * 2.0 * Math.PI);
                     sample = wave >= 0 ? amplitude : -amplitude;
                     break;
                 }
                 case 'triangle': {
-                    const phase = (t * frequency) % 1.0;
+                    const phase = (t * freq) % 1.0;
                     const wave = phase < 0.5 ? (4.0 * phase - 1.0) : (3.0 - 4.0 * phase);
                     sample = wave * amplitude;
                     break;
                 }
                 case 'sawtooth': {
-                    const phase = (t * frequency) % 1.0;
+                    const phase = (t * freq) % 1.0;
                     const wave = 2.0 * phase - 1.0;
                     sample = wave * amplitude;
                     break;
                 }
                 case 'pulse': {
                     const dutyCycle = 0.25;
-                    const phase = (t * frequency) % 1.0;
+                    const phase = (t * freq) % 1.0;
                     const wave = phase < dutyCycle ? 1.0 : -1.0;
                     sample = wave * amplitude;
                     break;
                 }
             }
 
-            samples.push(sample);
+            samples.push(sample * envelope);
         }
 
         return samples;
@@ -242,10 +396,6 @@ class MidiSynthesizer {
         const notes = [];
 
         for (const noteStr of noteStrings) {
-            if (noteStr.startsWith('--')) {
-                continue;
-            }
-
             try {
                 const note = this.parseNote(noteStr);
                 notes.push(note);
@@ -258,15 +408,80 @@ class MidiSynthesizer {
     }
 
     generateAudioBuffer(composition) {
-        const notes = this.parseComposition(composition);
-        const allSamples = [];
+        if (composition.includes('--channel') || composition.includes('--bpm') ||
+            composition.includes('--volume') || composition.includes('--adsr') ||
+            composition.includes('--vibrato')) {
 
-        for (const note of notes) {
-            const noteSamples = this.generateNoteSamples(note);
-            allSamples.push(...noteSamples);
+            const { channels, bpm } = this.parseChannels(composition);
+
+            if (bpm !== null) {
+                this.bpm = bpm;
+            }
+
+            if (channels.length === 1 && !composition.includes('--channel')) {
+                const channel = channels[0];
+                let notes = this.parseComposition(channel.composition);
+
+                for (const note of notes) {
+                    if (channel.volume !== null && note.volume === 1.0) {
+                        note.volume = channel.volume;
+                    }
+                    note.adsr = channel.adsr;
+                    note.vibrato = channel.vibrato;
+                }
+
+                const allSamples = [];
+                for (const note of notes) {
+                    const noteSamples = this.generateNoteSamples(note);
+                    allSamples.push(...noteSamples);
+                }
+                return allSamples;
+            } else {
+                const channelSamples = [];
+                let maxLength = 0;
+
+                for (const channel of channels) {
+                    let notes = this.parseComposition(channel.composition);
+
+                    for (const note of notes) {
+                        if (channel.volume !== null && note.volume === 1.0) {
+                            note.volume = channel.volume;
+                        }
+                        note.adsr = channel.adsr;
+                        note.vibrato = channel.vibrato;
+                    }
+
+                    const channelBuffer = [];
+                    for (const note of notes) {
+                        const noteSamples = this.generateNoteSamples(note);
+                        channelBuffer.push(...noteSamples);
+                    }
+
+                    maxLength = Math.max(maxLength, channelBuffer.length);
+                    channelSamples.push(channelBuffer);
+                }
+
+                const mixedSamples = new Array(maxLength).fill(0);
+
+                for (const channelBuffer of channelSamples) {
+                    for (let i = 0; i < channelBuffer.length; i++) {
+                        mixedSamples[i] += channelBuffer[i];
+                    }
+                }
+
+                return mixedSamples;
+            }
+        } else {
+            const notes = this.parseComposition(composition);
+            const allSamples = [];
+
+            for (const note of notes) {
+                const noteSamples = this.generateNoteSamples(note);
+                allSamples.push(...noteSamples);
+            }
+
+            return allSamples;
         }
-
-        return allSamples;
     }
 }
 

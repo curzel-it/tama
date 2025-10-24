@@ -53,11 +53,6 @@ fn default_limit() -> i64 {
     50
 }
 
-#[derive(Deserialize)]
-pub struct MidiPlayRequest {
-    pub midi_composition: String,
-}
-
 
 pub fn initialize_database(db_path: &str) -> Result<DbPool, String> {
     let manager = SqliteConnectionManager::file(db_path);
@@ -272,30 +267,6 @@ async fn get_servers(State(state): State<AppState>) -> Result<Json<Vec<String>>,
     Ok(Json(servers))
 }
 
-async fn play_midi(Json(request): Json<MidiPlayRequest>) -> Result<axum::response::Response, StatusCode> {
-    use axum::response::IntoResponse;
-
-    println!("[POST /midi/play] Request received");
-
-    let mut engine = tama::midi_composer::MidiEngine::new(120)
-        .map_err(|e| {
-            eprintln!("Failed to create MIDI engine: {e}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
-
-    let wav_bytes = engine.generate_wav_bytes(&request.midi_composition)
-        .map_err(|e| {
-            eprintln!("Failed to generate WAV: {e}");
-            StatusCode::BAD_REQUEST
-        })?;
-
-    println!("[POST /midi/play] Generated {} bytes of WAV audio", wav_bytes.len());
-
-    Ok((
-        [(axum::http::header::CONTENT_TYPE, "audio/wav")],
-        wav_bytes,
-    ).into_response())
-}
 
 async fn load_tls_config(cert_path: &str, key_path: &str) -> Result<RustlsConfig, String> {
     RustlsConfig::from_pem_file(cert_path, key_path)
@@ -385,7 +356,6 @@ pub async fn run_server(db_path: &str, port: u16, jwt_secret: String) -> Result<
         .route("/channel/:channel_id", get(get_channel))
         .route("/content/:content_id", get(get_content))
         .route("/servers", get(get_servers))
-        .route("/midi/play", post(play_midi))
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::rate_limit_api,
@@ -404,6 +374,7 @@ pub async fn run_server(db_path: &str, port: u16, jwt_secret: String) -> Result<
     // Upload routes with upload rate limiting and size validation
     let upload_routes = Router::new()
         .route("/content", post(channel_endpoints::create_content))
+        .with_state(state.clone())
         .route_layer(axum_middleware::from_fn(middleware::validate_content_size))
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
@@ -418,11 +389,11 @@ pub async fn run_server(db_path: &str, port: u16, jwt_secret: String) -> Result<
     let app = Router::new()
         .merge(public_routes)
         .merge(auth_routes)
-        .merge(upload_routes)
         .nest_service("/", static_service)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
-        .with_state(state);
+        .with_state(state)
+        .merge(upload_routes);
 
     // Check for SSL/TLS configuration
     let ssl_cert_path = std::env::var("SSL_CERT_PATH").ok();
