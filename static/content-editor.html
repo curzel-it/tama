@@ -789,7 +789,7 @@
                 return;
             }
 
-            let brailleArt = '';
+            let brailleArt = `Ascii Art Animation, ${canvasWidth}x${canvasHeight}, ${fps}fps\n`;
             frames.forEach(frame => {
                 brailleArt += pixelsToBraille(frame) + '\n';
             });
