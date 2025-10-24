@@ -949,61 +949,6 @@ impl MidiEngine {
         }
     }
 
-    pub fn generate_wav_bytes(&mut self, composition: &str) -> Result<Vec<u8>, String> {
-        use crate::midi_composer::channels::parse_channels;
-
-        let (channels, bpm) = parse_channels(composition)?;
-
-        if let Some(bpm_val) = bpm {
-            self.bpm = bpm_val;
-        }
-
-        if channels.len() == 1 && !composition.contains("--channel") {
-            let channel = &channels[0];
-            let mut notes = self.parse_notes(&channel.composition)?;
-
-            for note in &mut notes {
-                if channel.volume.is_some() && note.volume == 1.0 {
-                    note.volume = channel.volume.unwrap_or(1.0);
-                }
-                note.adsr = channel.adsr;
-                note.vibrato = channel.vibrato;
-            }
-
-            let sample_rate = 48000_u32;
-            let mut all_samples = Vec::new();
-
-            for note in &notes {
-                let note_samples = self.generate_note_samples(note);
-                all_samples.extend(note_samples);
-            }
-
-            let mut wav_buffer = std::io::Cursor::new(Vec::new());
-            let spec = hound::WavSpec {
-                channels: 1,
-                sample_rate,
-                bits_per_sample: 16,
-                sample_format: hound::SampleFormat::Int,
-            };
-
-            let mut writer = hound::WavWriter::new(&mut wav_buffer, spec)
-                .map_err(|e| format!("Failed to create WAV writer: {e}"))?;
-
-            for sample in all_samples {
-                let amplitude = i16::MAX as f32;
-                let sample_i16 = (sample * amplitude) as i16;
-                writer.write_sample(sample_i16)
-                    .map_err(|e| format!("Failed to write sample: {e}"))?;
-            }
-
-            writer.finalize()
-                .map_err(|e| format!("Failed to finalize WAV: {e}"))?;
-
-            Ok(wav_buffer.into_inner())
-        } else {
-            Err("Multi-channel compositions are not supported for WAV generation".to_string())
-        }
-    }
 }
 
 #[cfg(test)]
