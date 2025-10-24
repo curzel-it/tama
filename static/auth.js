@@ -111,7 +111,9 @@ function hideAuthModal() {
 
     document.getElementById('authChannelName').value = '';
     document.getElementById('authPassword').value = '';
-    document.getElementById('authError').textContent = '';
+    const errorDiv = document.getElementById('authError');
+    errorDiv.textContent = '';
+    errorDiv.style.display = 'none';
 }
 
 async function handleAuth(event) {
@@ -123,16 +125,19 @@ async function handleAuth(event) {
 
     if (channelName.includes(' ')) {
         errorDiv.textContent = 'Channel name cannot contain spaces';
+        errorDiv.style.display = 'block';
         return;
     }
 
     if (channelName.length > 250) {
         errorDiv.textContent = 'Channel name is too long (max 250 characters)';
+        errorDiv.style.display = 'block';
         return;
     }
 
     try {
         errorDiv.textContent = '';
+        errorDiv.style.display = 'none';
         await authManager.loginOrSignup(channelName, password);
         hideAuthModal();
         updateAuthUI();
@@ -142,6 +147,7 @@ async function handleAuth(event) {
         }
     } catch (error) {
         errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
     }
 }
 

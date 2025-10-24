@@ -33,8 +33,7 @@
         <div class="modal-content">
             <span class="close" onclick="hideAuthModal()">&times;</span>
             <h2>Login or Sign Up</h2>
-            <div id="authError" class="error"></div>
-
+            <div id="authError" class="error" style="display: none;"></div>
             <form id="authForm" onsubmit="handleAuth(event)">
                 <div class="form-group">
                     <label for="authChannelName">Channel Name</label>
@@ -65,8 +64,7 @@
         <div class="modal-content">
             <span class="close" onclick="hideUploadModal()">&times;</span>
             <h2>Upload Content</h2>
-            <div id="uploadError" class="error"></div>
-
+            <div id="uploadError" class="error" style="display: none;"></div>
             <form id="uploadForm" onsubmit="handleUpload(event)">
                 <div class="form-group">
                     <label for="spriteFile">Sprite File (.txt)</label>

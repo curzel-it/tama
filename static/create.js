@@ -27,7 +27,9 @@ function hideUploadModal() {
     modal.style.display = 'none';
 
     document.getElementById('uploadForm').reset();
-    document.getElementById('uploadError').textContent = '';
+    const errorDiv = document.getElementById('uploadError');
+    errorDiv.textContent = '';
+    errorDiv.style.display = 'none';
     document.getElementById('previewSection').style.display = 'none';
 }
 
@@ -37,6 +39,7 @@ async function handleUpload(event) {
 
     const errorDiv = document.getElementById('uploadError');
     errorDiv.textContent = '';
+    errorDiv.style.display = 'none';
 
     try {
         const spriteFileInput = document.getElementById('spriteFile');
@@ -44,6 +47,7 @@ async function handleUpload(event) {
 
         if (!spriteFileInput) {
             errorDiv.textContent = 'File input not found. Please refresh the page.';
+            errorDiv.style.display = 'block';
             return;
         }
 
@@ -52,6 +56,7 @@ async function handleUpload(event) {
 
         if (!spriteFile) {
             errorDiv.textContent = 'Please select a sprite file';
+            errorDiv.style.display = 'block';
             return;
         }
 
@@ -63,6 +68,7 @@ async function handleUpload(event) {
 
         if (!parsed) {
             errorDiv.textContent = 'Invalid sprite file format. Expected --- MIDI --- and --- ART --- sections.';
+            errorDiv.style.display = 'block';
             return;
         }
 
@@ -73,6 +79,7 @@ async function handleUpload(event) {
 
         if (!channel || !token) {
             errorDiv.textContent = 'Not authenticated. Please log in.';
+            errorDiv.style.display = 'block';
             return;
         }
 
@@ -92,6 +99,7 @@ async function handleUpload(event) {
 
     } catch (error) {
         errorDiv.textContent = error.message || 'Failed to upload content';
+        errorDiv.style.display = 'block';
         console.error('Upload error:', error);
     }
 }
@@ -196,11 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!parsed) {
                     errorDiv.textContent = 'Invalid sprite file format';
+                    errorDiv.style.display = 'block';
                     previewSection.style.display = 'none';
                     return;
                 }
 
                 errorDiv.textContent = '';
+                errorDiv.style.display = 'none';
                 const { midi, art, fps, name } = parsed;
 
                 if (fileInfo && previewSection) {
@@ -217,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 errorDiv.textContent = 'Error reading file';
+                errorDiv.style.display = 'block';
                 previewSection.style.display = 'none';
             }
         });
