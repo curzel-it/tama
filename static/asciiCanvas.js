@@ -57,7 +57,7 @@ function renderStringToCanvas(charWidth, charHeight, characterSpacing, lineSpaci
     }
 }
 
-function renderContentToString(content) {
+function formatContentToLines(content) {
     const lines = content.replaceAll('⠀', SPACE).replaceAll(' ', SPACE).split('\n');
     const contentWidth = Math.max(...lines.map(line => line.length));
 
@@ -69,6 +69,12 @@ function renderContentToString(content) {
     while (formattedLines.length < TV_HEIGHT) {
         formattedLines.push(SPACE.repeat(TV_WIDTH));
     }
+
+    return formattedLines;
+}
+
+function renderContentToString(content) {
+    const formattedLines = formatContentToLines(content);
 
     return `            ╱
         ╲  ╱
@@ -87,7 +93,7 @@ function renderContentToString(content) {
 ││${formattedLines[9]}││
 │╰────────────────────────────────╯│
 │              Tama Tv             │
-╰──────────────────────────────────╯`;    
+╰──────────────────────────────────╯`;
 }
 
 function padded(text, count) {

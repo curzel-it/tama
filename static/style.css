@@ -256,8 +256,8 @@ a.button, button, .modal a.button, .modal button, .file-button {
 .form-group-inline input,
 .form-group input,
 .form-group textarea {
-    background-color: transparent;
-    color: #88c070;
+    background-color: rgba(255,255,255,0.03);
+    color: white;
     border: 1px solid #88c070;
 }
 
@@ -290,7 +290,7 @@ a.button, button, .modal a.button, .modal button, .file-button {
 }
 
 .preview-panel {
-    background: #051015;
+    background: #081820;
 }
 
 @media (prefers-color-scheme: light) {
@@ -361,7 +361,7 @@ a.button, button, .modal a.button, .modal button, .file-button {
     }
 
     .preview-panel {
-        background: #c8e6c9;
+        background: #F0FAF0;
     }
 }
 

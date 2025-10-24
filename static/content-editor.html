@@ -100,18 +100,10 @@
             <button id="closePreviewButton" class="close">×</button>
         </div>
         <div class="preview-controls">
-            <button id="previewPlayButton">▶ Play</button>
-            <button id="previewPauseButton">⏸ Pause</button>
             <span id="previewFrameLabel">Frame 1 / 1</span>
         </div>
         <div class="preview-canvas-container">
             <canvas id="previewCanvas"></canvas>
-        </div>
-        <div class="zoom-controls">
-            <button class="zoom-button" data-zoom="1">1x</button>
-            <button class="zoom-button active" data-zoom="2">2x</button>
-            <button class="zoom-button" data-zoom="3">3x</button>
-            <button class="zoom-button" data-zoom="4">4x</button>
         </div>
     </div>
 
@@ -144,7 +136,7 @@
         let currentFrameIndex = -1;
         let previewAnimationInterval = null;
         let previewFrameIndex = 0;
-        let previewZoom = 2;
+        const previewZoom = 1;
 
         const canvas = document.getElementById('pixelCanvas');
         const ctx = canvas.getContext('2d');
@@ -169,8 +161,7 @@
         }
 
         function updatePreviewCanvasSize() {
-            previewCanvas.width = PIXEL_WIDTH * previewZoom;
-            previewCanvas.height = PIXEL_HEIGHT * previewZoom;
+            // Size will be calculated in renderPreview based on braille text dimensions
         }
 
         function resizeFrames(newWidth, newHeight) {
@@ -348,20 +339,39 @@
         }
 
         function renderPreview(frameIndex) {
-            previewCtx.fillStyle = getBgColor();
-            previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
-
             if (frames.length === 0 || frameIndex < 0 || frameIndex >= frames.length) {
                 return;
             }
 
             const frame = frames[frameIndex];
+            const brailleText = pixelsToBraille(frame);
+
+            // Render braille text to canvas
+            const lines = brailleText.split('\n');
+            const maxLineLength = Math.max(...lines.map(line => line.length));
+
+            const charWidth = 9 * previewZoom;
+            const charHeight = 18 * previewZoom;
+            const characterSpacing = (charWidth / 6.0);
+            const lineSpacing = characterSpacing * 2;
+
+            previewCanvas.width = maxLineLength * (charWidth + characterSpacing);
+            previewCanvas.height = lines.length * (charHeight + lineSpacing);
+
+            // Clear background
+            previewCtx.fillStyle = getBgColor();
+            previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+            // Set font and draw text
+            previewCtx.font = `${charHeight}px 'Fira Code', monospace`;
+            previewCtx.textBaseline = 'top';
             previewCtx.fillStyle = getPixelColor();
-            for (let y = 0; y < PIXEL_HEIGHT; y++) {
-                for (let x = 0; x < PIXEL_WIDTH; x++) {
-                    if (frame[y][x]) {
-                        previewCtx.fillRect(x * previewZoom, y * previewZoom, previewZoom, previewZoom);
-                    }
+
+            for (let y = 0; y < lines.length; y++) {
+                const line = lines[y];
+                for (let x = 0; x < line.length; x++) {
+                    const char = line[x] || ' ';
+                    previewCtx.fillText(char, x * (charWidth + characterSpacing), y * (charHeight + lineSpacing));
                 }
             }
 
@@ -481,6 +491,7 @@
                 if (frames.length > 0) {
                     previewFrameIndex = 0;
                     renderPreview(previewFrameIndex);
+                    playPreviewAnimation();
                 }
             }
         });
@@ -511,18 +522,6 @@
             }
         }
 
-        document.getElementById('previewPlayButton').addEventListener('click', playPreviewAnimation);
-        document.getElementById('previewPauseButton').addEventListener('click', stopPreviewAnimation);
-
-        document.querySelectorAll('.zoom-button').forEach(button => {
-            button.addEventListener('click', () => {
-                document.querySelectorAll('.zoom-button').forEach(b => b.classList.remove('active'));
-                button.classList.add('active');
-                previewZoom = parseInt(button.dataset.zoom);
-                updatePreviewCanvasSize();
-                renderPreview(previewFrameIndex);
-            });
-        });
 
         let isDraggingPreview = false;
         let previewDragOffsetX = 0;
