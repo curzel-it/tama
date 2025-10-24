@@ -81,14 +81,9 @@
 
                 <div class="frames-container">
                     <div class="frames-header">
-                        <h3>Frames (<span id="frameCount">0</span>) - <span id="currentFrameLabel">No frames</span></h3>
+                        <h3>Frames (<span id="frameCount">0</span>)</h3>
                     </div>
                     <div id="framesList" class="frames-list"></div>
-                    <div class="button-row">
-                        <button id="duplicateFrameButton">Duplicate Frame</button>
-                        <button id="deleteFrameButton">Delete Frame</button>
-                        <button id="addFrameButton">+ Add Empty Frame</button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -219,17 +214,6 @@
             render();
         }
 
-        function duplicateFrame() {
-            if (currentFrameIndex < 0 || currentFrameIndex >= frames.length) {
-                addFrame();
-                return;
-            }
-            const copy = frames[currentFrameIndex].map(row => [...row]);
-            frames.splice(currentFrameIndex + 1, 0, copy);
-            currentFrameIndex++;
-            updateFramesList();
-            render();
-        }
 
         function selectFrame(index) {
             currentFrameIndex = index;
@@ -237,43 +221,86 @@
             render();
         }
 
+        function renderFrameThumbnail(frame) {
+            const thumbnailSize = 64;
+            const scale = Math.min(thumbnailSize / PIXEL_WIDTH, thumbnailSize / PIXEL_HEIGHT);
+            const thumbWidth = Math.floor(PIXEL_WIDTH * scale);
+            const thumbHeight = Math.floor(PIXEL_HEIGHT * scale);
+
+            const thumbCanvas = document.createElement('canvas');
+            thumbCanvas.width = thumbWidth;
+            thumbCanvas.height = thumbHeight;
+            thumbCanvas.className = 'frame-preview';
+            const thumbCtx = thumbCanvas.getContext('2d');
+
+            thumbCtx.fillStyle = getBgColor();
+            thumbCtx.fillRect(0, 0, thumbWidth, thumbHeight);
+
+            thumbCtx.fillStyle = getPixelColor();
+            for (let y = 0; y < PIXEL_HEIGHT; y++) {
+                for (let x = 0; x < PIXEL_WIDTH; x++) {
+                    if (frame[y][x]) {
+                        const px = Math.floor(x * scale);
+                        const py = Math.floor(y * scale);
+                        const size = Math.ceil(scale);
+                        thumbCtx.fillRect(px, py, size, size);
+                    }
+                }
+            }
+
+            return thumbCanvas;
+        }
+
         function updateFramesList() {
             const framesList = document.getElementById('framesList');
             framesList.innerHTML = '';
 
             frames.forEach((frame, index) => {
-                const frameButton = document.createElement('button');
-                frameButton.className = 'frame-button';
+                const frameItem = document.createElement('div');
+                frameItem.className = 'frame-item';
                 if (index === currentFrameIndex) {
-                    frameButton.classList.add('active');
+                    frameItem.classList.add('selected');
                 }
-                frameButton.textContent = `${index + 1}`;
-                frameButton.draggable = true;
+                frameItem.draggable = true;
 
-                frameButton.addEventListener('click', () => selectFrame(index));
+                const frameNumber = document.createElement('div');
+                frameNumber.className = 'frame-number';
+                frameNumber.textContent = index + 1;
 
-                frameButton.addEventListener('dragstart', (e) => {
+                const thumbnail = renderFrameThumbnail(frame);
+
+                frameItem.appendChild(frameNumber);
+                frameItem.appendChild(thumbnail);
+
+                frameItem.addEventListener('click', () => selectFrame(index));
+
+                frameItem.addEventListener('dragstart', (e) => {
                     e.dataTransfer.effectAllowed = 'move';
                     e.dataTransfer.setData('text/plain', index.toString());
+                    frameItem.classList.add('dragging');
                 });
 
-                frameButton.addEventListener('dragover', (e) => {
+                frameItem.addEventListener('dragend', () => {
+                    frameItem.classList.remove('dragging');
+                });
+
+                frameItem.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
                 });
 
-                frameButton.addEventListener('dragenter', (e) => {
+                frameItem.addEventListener('dragenter', (e) => {
                     e.preventDefault();
-                    frameButton.classList.add('drag-over');
+                    frameItem.classList.add('drag-over');
                 });
 
-                frameButton.addEventListener('dragleave', () => {
-                    frameButton.classList.remove('drag-over');
+                frameItem.addEventListener('dragleave', () => {
+                    frameItem.classList.remove('drag-over');
                 });
 
-                frameButton.addEventListener('drop', (e) => {
+                frameItem.addEventListener('drop', (e) => {
                     e.preventDefault();
-                    frameButton.classList.remove('drag-over');
+                    frameItem.classList.remove('drag-over');
 
                     const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
                     const toIndex = index;
@@ -294,15 +321,26 @@
                     }
                 });
 
-                framesList.appendChild(frameButton);
+                framesList.appendChild(frameItem);
+
+                if (index === currentFrameIndex) {
+                    const deleteButton = document.createElement('div');
+                    deleteButton.className = 'delete-frame-button';
+                    deleteButton.textContent = '×';
+                    deleteButton.title = 'Delete Frame';
+                    deleteButton.addEventListener('click', () => deleteFrame(index));
+                    framesList.appendChild(deleteButton);
+                }
             });
 
+            const addButton = document.createElement('div');
+            addButton.className = 'add-frame-button';
+            addButton.textContent = '+';
+            addButton.title = 'Add Empty Frame';
+            addButton.addEventListener('click', addFrame);
+            framesList.appendChild(addButton);
+
             document.getElementById('frameCount').textContent = frames.length;
-            if (frames.length > 0 && currentFrameIndex >= 0) {
-                document.getElementById('currentFrameLabel').textContent = `Frame ${currentFrameIndex + 1} / ${frames.length}`;
-            } else {
-                document.getElementById('currentFrameLabel').textContent = 'No frames';
-            }
         }
 
         function render() {
@@ -420,21 +458,14 @@
 
         canvas.addEventListener('mouseup', () => {
             isDrawing = false;
+            updateFramesList();
         });
 
         canvas.addEventListener('mouseleave', () => {
             isDrawing = false;
+            updateFramesList();
         });
 
-        document.getElementById('addFrameButton').addEventListener('click', addFrame);
-
-        document.getElementById('deleteFrameButton').addEventListener('click', () => {
-            if (currentFrameIndex >= 0) {
-                deleteFrame(currentFrameIndex);
-            }
-        });
-
-        document.getElementById('duplicateFrameButton').addEventListener('click', duplicateFrame);
 
         document.getElementById('clearButton').addEventListener('click', () => {
             const frame = getCurrentFrame();
@@ -445,6 +476,7 @@
                     }
                 }
                 render();
+                updateFramesList();
             }
         });
 
@@ -457,6 +489,7 @@
                     }
                 }
                 render();
+                updateFramesList();
             }
         });
 

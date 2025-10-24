@@ -218,6 +218,10 @@ Auth UI
     margin-bottom: 20px;
 }
 
+.frame-item {
+    border-radius: 4px;
+}
+
 /*
 --------------------------------------------------------------------------------
 Color palette
@@ -293,6 +297,14 @@ a.button, button, .modal a.button, .modal button, .file-button {
     background: #081820;
 }
 
+.frame-item {
+    border: 1px solid #88c070;
+}
+
+.frame-item.selected {
+    border: 2px solid white;
+}
+
 @media (prefers-color-scheme: light) {
     html, body, canvas, #clickToContinueOverlay {
         background-color: #f0faf0;
@@ -362,6 +374,14 @@ a.button, button, .modal a.button, .modal button, .file-button {
 
     .preview-panel {
         background: #F0FAF0;
+    }
+
+    .frame-item {
+        border: 1px solid #081820;
+    }
+
+    .frame-item.selected {
+        border: 2px solid #88c070;
     }
 }
 

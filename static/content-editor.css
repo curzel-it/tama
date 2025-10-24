@@ -120,37 +120,104 @@ body {
 
 .frames-list {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     overflow-x: auto;
-    padding: 10px;
     background: var(--background-secondary);
     border-radius: 4px;
-    min-height: 50px;
-    margin-bottom: 15px;
+    min-height: 80px;
+    align-items: flex-start;
 }
 
-.frame-button {
-    padding: 10px 20px;
-    background: var(--button-bg);
-    border: 2px solid var(--button-border);
-    border-radius: 4px;
-    cursor: grab;
+.frame-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
     flex-shrink: 0;
+    cursor: pointer;
     user-select: none;
-    transition: all 0.2s;
+    position: relative;
 }
 
-.frame-button:active {
+.frame-item.dragging {
+    opacity: 0.5;
+}
+
+.frame-number {
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 2px 6px;
+    background: var(--background);
+    border-radius: 3px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.frame-preview {
+    border: 2px solid var(--border-color);
+    border-radius: 2px;
+    background: var(--background);
+    cursor: grab;
+    transition: border-color 0.2s, transform 0.1s;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.frame-preview:active {
     cursor: grabbing;
 }
 
-.frame-button.active {
+.frame-item.selected .frame-preview {
     border-color: var(--button-hover-bg);
-    background: var(--button-hover-bg);
+    box-shadow: 0 0 0 1px var(--button-hover-bg);
 }
 
-.frame-button.drag-over {
-    opacity: 0.5;
+.frame-item.selected .frame-number {
+    background: var(--button-hover-bg);
+    color: var(--background);
+}
+
+.frame-item:hover .frame-preview {
+    border-color: var(--button-hover-bg);
+}
+
+.frame-item.drag-over .frame-preview {
+    border-color: var(--button-hover-bg);
+    border-style: dashed;
+}
+
+.add-frame-button,
+.delete-frame-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 64px;
+    border: 2px dashed var(--border-color);
+    border-radius: 2px;
+    background: var(--background);
+    cursor: pointer;
+    font-size: 24px;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.add-frame-button {
+    width: 48px;
+}
+
+.delete-frame-button {
+    width: 32px;
+}
+
+.add-frame-button:hover {
+    border-color: var(--button-hover-bg);
+    color: var(--button-hover-bg);
+    background: var(--background-secondary);
+}
+
+.delete-frame-button {
+    color: #d9534f;
 }
 
 .canvas-tools-container {
