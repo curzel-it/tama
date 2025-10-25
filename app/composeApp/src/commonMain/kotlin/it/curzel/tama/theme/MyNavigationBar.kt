@@ -15,46 +15,39 @@ fun MyNavigationBar(
     rightAction: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 4.dp
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        // Left section: back button + title
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
-            // Left button (back button)
-            Box(
-                modifier = Modifier.width(64.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                if (onBackClick != null) {
-                    TextButton(onClick = onBackClick) {
-                        Text("← Back")
-                    }
+            if (onBackClick != null) {
+                TextButton(onClick = onBackClick) {
+                    Text("← Back")
                 }
             }
 
-            // Title (center, flexible)
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.padding(start = if (onBackClick != null) 8.dp else 16.dp)
             )
+        }
 
-            // Right button
-            Box(
-                modifier = Modifier.width(64.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                rightAction?.invoke()
-            }
+        // Right button
+        Box(
+            modifier = Modifier.width(64.dp),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            rightAction?.invoke()
         }
     }
 }

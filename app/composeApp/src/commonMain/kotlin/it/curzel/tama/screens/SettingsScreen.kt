@@ -58,6 +58,18 @@ fun SettingsScreen() {
             singleLine = true
         )
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Server Override")
+            Switch(
+                checked = serverOverride,
+                onCheckedChange = { serverOverride = it }
+            )
+        }
+
         OutlinedTextField(
             value = serversText,
             onValueChange = { serversText = it },
@@ -85,22 +97,15 @@ fun SettingsScreen() {
                         selected = themePreference == preference,
                         onClick = { themePreference = preference },
                         label = { Text(preference.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        shape = MaterialTheme.shapes.extraSmall,
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     )
                 }
             }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Server Override")
-            Switch(
-                checked = serverOverride,
-                onCheckedChange = { serverOverride = it }
-            )
         }
 
         TamaButton(

@@ -112,29 +112,69 @@ fun MidiComposerScreen(
             )
 
             Text(
-                text = "Format: [duration][note][octave]",
+                text = "Format: [duration][#][note][octave][waveform][.volume]",
                 style = MaterialTheme.typography.bodySmall
             )
 
             Text(
-                text = "Duration: 1=whole, 2=half, 4=quarter, 8=eighth, 16=sixteenth",
+                text = "Duration: 1=whole, 2=half, 4=quarter, 8=eighth, 16=sixteenth, 32=32nd",
                 style = MaterialTheme.typography.bodySmall
             )
 
             Text(
-                text = "Note: c, d, e, f, g, a, b (add # for sharp)",
+                text = "Note: c, d, e, f, g, a, b (add # for sharp, - for rest)",
                 style = MaterialTheme.typography.bodySmall
             )
 
             Text(
-                text = "Octave: 3, 4, 5, etc. (default: 4)",
+                text = "Octave: 1-8 (default: 4)",
                 style = MaterialTheme.typography.bodySmall
             )
 
             Text(
-                text = "Example: 4c 4e 4g 2c5",
+                text = "Waveform: q=square, t=triangle, s=sawtooth, p=pulse",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Text(
+                text = "Volume: .0 to .9 (e.g., 4c.5 = 50% volume)",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Text(
+                text = "Flags: --bpm [tempo], --volume [0.0-1.0], --adsr, --vibrato",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Text(
+                text = "Multi-channel: --channel [notes] --channel [notes]",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Text(
+                text = "Examples:",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary
+            )
+
+            Text(
+                text = "Basic: 4c 4e 4g 2c5",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Text(
+                text = "Waveforms: 4ct 4et 4gt (triangle wave)",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Text(
+                text = "Effects: --adsr --vibrato 2c 2e 2g",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Text(
+                text = "Multi-ch: --channel 4c 4e --channel 4e 4g",
+                style = MaterialTheme.typography.bodySmall
             )
         }
         }

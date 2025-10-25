@@ -17,6 +17,12 @@ interface NativeMidiPlayer {
     fun stop()
 }
 
+interface NativeMidiComposer {
+    fun play(samples: FloatArray, sampleRate: Int, loop: Boolean)
+    fun stop()
+    fun isPlaying(): Boolean
+}
+
 object MidiPlayer {
     lateinit var provider: NativeMidiPlayer
 
@@ -36,5 +42,25 @@ object MidiPlayer {
 
     fun midiNoteToFrequency(note: Int): Double {
         return 440.0 * 2.0.pow((note - 69) / 12.0)
+    }
+}
+
+object MidiComposer {
+    lateinit var backend: NativeMidiComposer
+
+    fun play(composition: String, loop: Boolean = true) {
+        val samples = MidiSynthesizer.generateAudioBuffer(composition)
+        if (samples.isEmpty()) {
+            throw IllegalArgumentException("No valid notes in composition")
+        }
+        backend.play(samples, MidiSynthesizer.SAMPLE_RATE, loop)
+    }
+
+    fun stop() {
+        backend.stop()
+    }
+
+    fun isPlaying(): Boolean {
+        return backend.isPlaying()
     }
 }

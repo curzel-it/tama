@@ -10,6 +10,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class FeedViewModel {
+    companion object {
+        private var sessionFeedLoaded = false
+        private var sessionFeedItems = mutableListOf<FeedItem>()
+        private var sessionConfigHash: Int? = null
+
+        // Clear cached feed data (useful when settings change)
+        fun clearSessionCache() {
+            sessionFeedLoaded = false
+            sessionFeedItems.clear()
+            sessionConfigHash = null
+        }
+    }
+
     var feedItems by mutableStateOf<List<FeedItem>>(emptyList())
         private set
 
@@ -39,9 +52,29 @@ class FeedViewModel {
 
     fun loadFeed() {
         CoroutineScope(Dispatchers.Default).launch {
+            // Load config to check if it has changed
+            val config = it.curzel.tama.storage.ConfigStorage.loadConfig()
+                ?: it.curzel.tama.model.TamaConfig()
+            val currentConfigHash = config.hashCode()
+
+            // If config changed, clear cache
+            if (sessionConfigHash != null && sessionConfigHash != currentConfigHash) {
+                clearSessionCache()
+            }
+
+            // If feed was already loaded with same config, use cached data
+            if (sessionFeedLoaded && sessionConfigHash == currentConfigHash) {
+                feedItems = sessionFeedItems.toList()
+                isLoading = false
+                return@launch
+            }
+
+            sessionConfigHash = currentConfigHash
+
             FeedUseCase.loadFeedFromServers(
                 onItemsLoaded = { items ->
                     feedItems = feedItems + items
+                    sessionFeedItems.addAll(items)
                 },
                 onServerLoading = { server ->
                     loadingServers = loadingServers + server
@@ -50,6 +83,7 @@ class FeedViewModel {
                     loadingServers = loadingServers - server
                     if (loadingServers.isEmpty()) {
                         isLoading = false
+                        sessionFeedLoaded = true
                     }
                 },
                 onError = { message ->
