@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import it.curzel.tama.ContentEditorScreen
-import it.curzel.tama.FeedScreen
+import it.curzel.tama.screens.ContentEditorScreen
+import it.curzel.tama.feed.FeedScreen
 import it.curzel.tama.screens.SettingsScreen
 
 enum class Tab(val title: String) {

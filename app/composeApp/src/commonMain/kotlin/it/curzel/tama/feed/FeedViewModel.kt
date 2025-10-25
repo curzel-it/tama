@@ -145,6 +145,24 @@ class FeedViewModel {
         }
     }
 
+    fun reportCurrentContent(reason: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        currentItem?.let { item ->
+            CoroutineScope(Dispatchers.Default).launch {
+                val config = it.curzel.tama.storage.ConfigStorage.loadConfig()
+                    ?: it.curzel.tama.model.TamaConfig()
+
+                val client = it.curzel.tama.api.ApiManager.getClient(config.server_url)
+                val result = client.reportContent(item.content.id, reason)
+
+                if (result.isSuccess) {
+                    onSuccess()
+                } else {
+                    onError(result.exceptionOrNull()?.message ?: "Failed to report content")
+                }
+            }
+        }
+    }
+
     fun playCurrentAudio() {
         stopAudio()
         currentItem?.let { item ->

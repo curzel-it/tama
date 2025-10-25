@@ -50,6 +50,9 @@
                     <input type="password" id="authPassword" required>
                 </div>
                 <button type="submit">Continue</button>
+                <p style="text-align: center; margin-top: 15px;">
+                    <a href="https://tama.curzel.it/privacy-policy.html" target="_blank" rel="noopener noreferrer" style="font-weight: bold; text-decoration: none;">Privacy Policy</a>
+                </p>
             </form>
         </div>
     </div>
@@ -97,6 +100,29 @@
                 <button onclick="toggleMute()" id="muteButton">Mute</button>
             </div>
             <button onclick="nextContent()">Next →</button>
+        </div>
+        <div class="content-menu">
+            <button onclick="toggleContentMenu()" class="kebab-button">⋮</button>
+            <div id="contentMenuDropdown" class="menu-dropdown" style="display: none;">
+                <button onclick="shareContent()">Share</button>
+                <button onclick="showReportModal()">Report</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideReportModal()">&times;</span>
+            <h2>Report Content</h2>
+            <div id="reportError" class="error" style="display: none;"></div>
+            <div id="reportSuccess" style="display: none; color: green; margin-bottom: 15px;">Thank you for your report. We will review this content.</div>
+            <form id="reportForm" onsubmit="handleReport(event)">
+                <div class="form-group">
+                    <label for="reportReason">Why are you reporting this content?</label>
+                    <textarea id="reportReason" rows="4" required placeholder="Please describe the issue..."></textarea>
+                </div>
+                <button type="submit">Submit Report</button>
+            </form>
         </div>
     </div>
 

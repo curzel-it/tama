@@ -312,6 +312,55 @@ a.button, button, .modal a.button, .modal button, .file-button {
     text-align: center;
 }
 
+/* Content Menu (Kebab) */
+.content-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.kebab-button {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.kebab-button:hover {
+    opacity: 0.7;
+}
+
+.menu-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: var(--modal-content-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    min-width: 150px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    margin-top: 5px;
+}
+
+.menu-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.menu-dropdown button:hover {
+    background-color: var(--background-secondary);
+}
+
 /* Zoom Controls */
 .zoom-controls {
     display: flex;

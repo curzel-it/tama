@@ -58,7 +58,8 @@ fun SettingsScreen() {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         MyNavigationBar(
             title = "Settings"
@@ -66,189 +67,188 @@ fun SettingsScreen() {
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .widthIn(max = 600.dp)
                 .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-        Text(
-            text = "Server Configuration",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        OutlinedTextField(
-            value = serverUrl,
-            onValueChange = { serverUrl = it },
-            label = { Text("Server URL") },
-            placeholder = { Text("https://example.com") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Server Override")
-            Switch(
-                checked = serverOverride,
-                onCheckedChange = { serverOverride = it }
-            )
-        }
-
-        OutlinedTextField(
-            value = serversText,
-            onValueChange = { serversText = it },
-            label = { Text("Servers (one per line)") },
-            placeholder = { Text("https://server1.com\nhttps://server2.com") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            minLines = 5,
-            maxLines = 5
-        )
-
-        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "Theme",
+                text = "Server Configuration",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
+                fontWeight = FontWeight.Bold
             )
+
+            OutlinedTextField(
+                value = serverUrl,
+                onValueChange = { serverUrl = it },
+                label = { Text("Server URL") },
+                placeholder = { Text("https://example.com") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                ThemePreference.entries.forEach { preference ->
-                    FilterChip(
-                        selected = themePreference == preference,
-                        onClick = { themePreference = preference },
-                        label = { Text(preference.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.extraSmall,
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
-                }
-            }
-        }
-
-        TamaButton(
-            onClick = {
-                scope.launch {
-                    isSaving = true
-                    saveMessage = null
-                    try {
-                        val servers = serversText
-                            .split("\n")
-                            .map { it.trim() }
-                            .filter { it.isNotEmpty() }
-
-                        val config = TamaConfig(
-                            server_url = serverUrl,
-                            servers = servers,
-                            server_override = serverOverride,
-                            theme = themePreference.name
-                        )
-
-                        val validation = config.validate()
-                        if (validation.isSuccess) {
-                            ConfigStorage.saveConfig(config)
-                            ThemeManager.setThemePreference(themePreference)
-                            saveMessage = "Settings saved successfully"
-                        } else {
-                            saveMessage = "Error: ${validation.exceptionOrNull()?.message}"
-                        }
-                    } catch (e: Exception) {
-                        saveMessage = "Error saving settings: ${e.message}"
-                    } finally {
-                        isSaving = false
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isSaving
-        ) {
-            if (isSaving) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            } else {
-                Text("Save Settings")
-            }
-        }
-
-        saveMessage?.let { message ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (message.startsWith("Error")) {
-                        MaterialTheme.colorScheme.errorContainer
-                    } else {
-                        MaterialTheme.colorScheme.primaryContainer
-                    }
-                )
-            ) {
-                Text(
-                    text = message,
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyMedium
+                Text("Use custom list of servers")
+                Switch(
+                    checked = serverOverride,
+                    onCheckedChange = { serverOverride = it }
                 )
             }
-        }
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-        Text(
-            text = "Account",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        if (isLoggedIn && channelName != null) {
-            Text(
-                text = "Logged in as: $channelName",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            OutlinedTextField(
+                value = serversText,
+                onValueChange = { serversText = it },
+                label = { Text("Servers (one per line)") },
+                placeholder = { Text("https://server1.com\nhttps://server2.com") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                minLines = 5,
+                maxLines = 5
             )
-        }
 
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Theme",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ThemePreference.entries.forEach { preference ->
+                        FilterChip(
+                            selected = themePreference == preference,
+                            onClick = { themePreference = preference },
+                            label = { Text(preference.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.extraSmall,
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
+                }
+            }
+
             TamaButton(
                 onClick = {
-                    PrivacyPolicyManager.opener.openPrivacyPolicy(
-                        onShowWebView = { showWebView = true }
-                    )
-                }
-            ) {
-                Text("Privacy Policy")
-            }
+                    scope.launch {
+                        isSaving = true
+                        saveMessage = null
+                        try {
+                            val servers = serversText
+                                .split("\n")
+                                .map { it.trim() }
+                                .filter { it.isNotEmpty() }
 
-            if (isLoggedIn) {
-                TamaButton(
-                    onClick = {
-                        scope.launch {
-                            ConfigStorage.clearToken()
-                            ConfigStorage.clearChannelInfo()
-                            isLoggedIn = false
-                            channelName = null
-                            saveMessage = "Logged out successfully"
+                            val config = TamaConfig(
+                                server_url = serverUrl,
+                                servers = servers,
+                                server_override = serverOverride,
+                                theme = themePreference.name
+                            )
+
+                            val validation = config.validate()
+                            if (validation.isSuccess) {
+                                ConfigStorage.saveConfig(config)
+                                ThemeManager.setThemePreference(themePreference)
+                                saveMessage = "Settings saved successfully"
+                            } else {
+                                saveMessage = "Error: ${validation.exceptionOrNull()?.message}"
+                            }
+                        } catch (e: Exception) {
+                            saveMessage = "Error saving settings: ${e.message}"
+                        } finally {
+                            isSaving = false
                         }
                     }
-                ) {
-                    Text("Logout")
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isSaving
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                } else {
+                    Text("Save Settings")
                 }
             }
-        }
+
+            saveMessage?.let { message ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (message.startsWith("Error")) {
+                            MaterialTheme.colorScheme.errorContainer
+                        } else {
+                            MaterialTheme.colorScheme.primaryContainer
+                        }
+                    )
+                ) {
+                    Text(
+                        text = message,
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Text(
+                text = "Account",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            if (isLoggedIn && channelName != null) {
+                Text(
+                    text = "Logged in as: $channelName",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TamaButton(
+                    onClick = {
+                        PrivacyPolicyManager.opener.openPrivacyPolicy(
+                            onShowWebView = { showWebView = true }
+                        )
+                    }
+                ) {
+                    Text("Privacy Policy")
+                }
+
+                if (isLoggedIn) {
+                    TamaButton(
+                        onClick = {
+                            scope.launch {
+                                ConfigStorage.clearToken()
+                                ConfigStorage.clearChannelInfo()
+                                isLoggedIn = false
+                                channelName = null
+                                saveMessage = "Logged out successfully"
+                            }
+                        }
+                    ) {
+                        Text("Logout")
+                    }
+                }
+            }
         }
     }
 }

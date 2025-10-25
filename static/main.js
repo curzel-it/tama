@@ -194,3 +194,99 @@ window.addEventListener('beforeunload', () => {
     animationController.stop();
     midiPlayer.stop();
 });
+
+// Kebab menu functionality
+window.toggleContentMenu = function() {
+    const dropdown = document.getElementById('contentMenuDropdown');
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+window.shareContent = function() {
+    const dropdown = document.getElementById('contentMenuDropdown');
+    dropdown.style.display = 'none';
+
+    if (!feedData || feedData.length === 0) return;
+
+    const item = feedData[currentIndex];
+    const shareUrl = `${window.location.origin}/view/content/${item.content.id}`;
+
+    if (navigator.share) {
+        navigator.share({
+            title: `Content by ${item.channel.name}`,
+            text: `Check out this content from ${item.channel.name}`,
+            url: shareUrl
+        }).catch(err => console.log('Error sharing:', err));
+    } else {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert('Link copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+        });
+    }
+}
+
+window.showReportModal = function() {
+    const dropdown = document.getElementById('contentMenuDropdown');
+    dropdown.style.display = 'none';
+
+    const modal = document.getElementById('reportModal');
+    modal.style.display = 'flex';
+}
+
+window.hideReportModal = function() {
+    const modal = document.getElementById('reportModal');
+    modal.style.display = 'none';
+
+    document.getElementById('reportReason').value = '';
+    const errorDiv = document.getElementById('reportError');
+    errorDiv.textContent = '';
+    errorDiv.style.display = 'none';
+
+    const successDiv = document.getElementById('reportSuccess');
+    successDiv.style.display = 'none';
+}
+
+window.handleReport = async function(event) {
+    event.preventDefault();
+
+    if (!feedData || feedData.length === 0) return;
+
+    const item = feedData[currentIndex];
+    const reason = document.getElementById('reportReason').value;
+    const errorDiv = document.getElementById('reportError');
+    const successDiv = document.getElementById('reportSuccess');
+
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+
+    try {
+        const response = await httpPost(`/content/${item.content.id}/report`, {
+            reason: reason
+        });
+
+        if (response.ok) {
+            successDiv.style.display = 'block';
+            document.getElementById('reportReason').value = '';
+            setTimeout(() => {
+                hideReportModal();
+            }, 2000);
+        } else {
+            const error = await response.json().catch(() => ({ error: 'Failed to submit report' }));
+            errorDiv.textContent = error.error || 'Failed to submit report';
+            errorDiv.style.display = 'block';
+        }
+    } catch (error) {
+        errorDiv.textContent = 'Failed to submit report: ' + error.message;
+        errorDiv.style.display = 'block';
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('contentMenuDropdown');
+    const kebabButton = event.target.closest('.kebab-button');
+
+    if (!kebabButton && dropdown && !dropdown.contains(event.target)) {
+        dropdown.style.display = 'none';
+    }
+});

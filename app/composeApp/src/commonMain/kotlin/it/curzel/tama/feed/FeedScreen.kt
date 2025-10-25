@@ -1,6 +1,8 @@
 package it.curzel.tama.feed
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,12 +12,16 @@ import it.curzel.tama.api.FeedItem
 import it.curzel.tama.canvas.AsciiContentWithTv
 import it.curzel.tama.canvas.generateTvStatic
 import it.curzel.tama.theme.MyNavigationBar
-import it.curzel.tama.theme.ShareButton
 import it.curzel.tama.theme.TamaButton
 import kotlinx.coroutines.delay
 
 @Composable
 fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
+    var showReportDialog by remember { mutableStateOf(false) }
+    var reportReason by remember { mutableStateOf("") }
+    var reportError by remember { mutableStateOf<String?>(null) }
+    var showReportSuccess by remember { mutableStateOf(false) }
+    var isReporting by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         viewModel.loadFeed()
     }
@@ -35,14 +41,59 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
         }
     }
 
+    if (showReportDialog) {
+        ReportContentDialog(
+            reason = reportReason,
+            onReasonChange = { reportReason = it },
+            onDismiss = {
+                showReportDialog = false
+                reportReason = ""
+                reportError = null
+            },
+            onConfirm = {
+                isReporting = true
+                reportError = null
+                viewModel.reportCurrentContent(
+                    reason = reportReason,
+                    onSuccess = {
+                        isReporting = false
+                        showReportDialog = false
+                        reportReason = ""
+                        showReportSuccess = true
+                    },
+                    onError = { error ->
+                        isReporting = false
+                        reportError = error
+                    }
+                )
+            },
+            isLoading = isReporting,
+            errorMessage = reportError
+        )
+    }
+
+    if (showReportSuccess) {
+        AlertDialog(
+            onDismissRequest = { showReportSuccess = false },
+            title = { Text("Report Submitted") },
+            text = { Text("Thank you for your report. We will review this content.") },
+            confirmButton = {
+                TextButton(onClick = { showReportSuccess = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         MyNavigationBar(
             title = "Tama Feed",
             rightAction = {
-                ShareButton(
-                    onClick = { viewModel.shareCurrentContent() },
+                ContentKebabMenu(
+                    onShareClick = { viewModel.shareCurrentContent() },
+                    onReportClick = { showReportDialog = true },
                     enabled = viewModel.currentItem != null && !viewModel.isShowingStatic
                 )
             }
@@ -156,4 +207,103 @@ fun FeedItemView(item: FeedItem, isShowingStatic: Boolean) {
             style = MaterialTheme.typography.bodyMedium
         )
     }
+}
+
+@Composable
+fun ContentKebabMenu(
+    onShareClick: () -> Unit,
+    onReportClick: () -> Unit,
+    enabled: Boolean
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(
+            onClick = { expanded = true },
+            enabled = enabled
+        ) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = "More options"
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Share") },
+                onClick = {
+                    expanded = false
+                    onShareClick()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Report") },
+                onClick = {
+                    expanded = false
+                    onReportClick()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun ReportContentDialog(
+    reason: String,
+    onReasonChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    isLoading: Boolean,
+    errorMessage: String?
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text("Report Content") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Why are you reporting this content?")
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = onReasonChange,
+                    label = { Text("Reason") },
+                    placeholder = { Text("Please describe the issue...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    maxLines = 5,
+                    enabled = !isLoading,
+                    isError = errorMessage != null
+                )
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = reason.isNotBlank() && !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                } else {
+                    Text("Submit Report")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
 }

@@ -129,6 +129,17 @@ class ApiClient(
         Result.failure(e)
     }
 
+    suspend fun reportContent(contentId: Long, reason: String): Result<Unit> = try {
+        val request = mapOf("reason" to reason)
+        client.post("$baseUrl/content/$contentId/report") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
     fun close() {
         client.close()
     }
