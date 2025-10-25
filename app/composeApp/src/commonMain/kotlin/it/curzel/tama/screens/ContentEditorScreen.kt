@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.midi.MidiComposerScreen
@@ -62,7 +63,8 @@ fun MainEditorScreen(
     val scrollState = rememberScrollState()
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         MyNavigationBar(
             title = "Content Editor"
@@ -70,6 +72,7 @@ fun MainEditorScreen(
 
         Column(
             modifier = Modifier
+                .widthIn(max = 600.dp)
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(16.dp),

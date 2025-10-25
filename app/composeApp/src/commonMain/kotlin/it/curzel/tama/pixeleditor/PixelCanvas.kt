@@ -38,7 +38,8 @@ fun PixelCanvas(
     val density = LocalDensity.current
     val availableWidthPx = with(density) { availableWidth.toPx() }
     val cellSize = availableWidthPx / frame.width
-    val canvasHeight = (cellSize * frame.height).dp
+    val canvasHeightPx = cellSize * frame.height
+    val canvasHeight = with(density) { canvasHeightPx.toDp() }
 
     Canvas(
         modifier = modifier
@@ -77,9 +78,12 @@ fun PixelCanvas(
                 )
             }
     ) {
+        val canvasWidthPx = frame.width * cellSize
+        val canvasHeightPx = frame.height * cellSize
+
         drawRect(
             color = backgroundColor,
-            size = size
+            size = Size(canvasWidthPx, canvasHeightPx)
         )
 
         for (y in 0 until frame.height) {
@@ -98,7 +102,7 @@ fun PixelCanvas(
             drawLine(
                 color = gridColor,
                 start = Offset(x * cellSize, 0f),
-                end = Offset(x * cellSize, size.height),
+                end = Offset(x * cellSize, canvasHeightPx),
                 strokeWidth = 1f
             )
         }
@@ -106,7 +110,7 @@ fun PixelCanvas(
             drawLine(
                 color = gridColor,
                 start = Offset(0f, y * cellSize),
-                end = Offset(size.width, y * cellSize),
+                end = Offset(canvasWidthPx, y * cellSize),
                 strokeWidth = 1f
             )
         }

@@ -51,7 +51,7 @@ fun TamaButton(
         ),
         border = BorderStroke(1.dp, borderColor),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp)
     ) {
         content()
     }

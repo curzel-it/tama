@@ -49,7 +49,7 @@ fun MidiComposerScreen(
                     .fillMaxWidth()
                     .height(200.dp),
                 placeholder = {
-                    Text("Enter MIDI notes (e.g., 4c 4e 4g 2c5)")
+                    Text("Enter MIDI notes (e.g., 4c 4e 4g 2c5)", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 },
                 enabled = !viewModel.isPlaying
             )

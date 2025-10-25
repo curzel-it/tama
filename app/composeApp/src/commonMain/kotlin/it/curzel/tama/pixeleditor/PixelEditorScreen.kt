@@ -6,6 +6,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -67,8 +68,19 @@ private fun CanvasSettingsSection(viewModel: PixelEditorViewModel) {
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            OutlinedTextField(
+                value = viewModel.fps.toString(),
+                onValueChange = { value ->
+                    value.toFloatOrNull()?.let { viewModel.updateFps(it) }
+                },
+                label = { Text("FPS (1-30)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.width(150.dp).padding(end = 16.dp),
+                singleLine = true
+            )
+
             OutlinedTextField(
                 value = viewModel.canvasWidth.toString(),
                 onValueChange = { value ->
@@ -76,7 +88,7 @@ private fun CanvasSettingsSection(viewModel: PixelEditorViewModel) {
                 },
                 label = { Text("Width (px)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.width(150.dp),
                 singleLine = true
             )
 
@@ -87,32 +99,18 @@ private fun CanvasSettingsSection(viewModel: PixelEditorViewModel) {
                 },
                 label = { Text("Height (px)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                singleLine = true
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = viewModel.fps.toString(),
-                onValueChange = { value ->
-                    value.toFloatOrNull()?.let { viewModel.updateFps(it) }
-                },
-                label = { Text("FPS (1-30)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.width(150.dp),
                 singleLine = true
             )
 
             TamaButton(
                 onClick = { viewModel.resizeCanvas() },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.padding(top = 8.dp),
             ) {
                 Text("Resize")
             }
+
+            Spacer(modifier = Modifier.weight(1f))
         }
 
         if (viewModel.validationError != null) {
