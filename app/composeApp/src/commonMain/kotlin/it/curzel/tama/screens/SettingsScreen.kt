@@ -73,59 +73,6 @@ fun SettingsScreen() {
         ) {
 
         Text(
-            text = "Account",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-
-        if (isLoggedIn && channelName != null) {
-            Text(
-                text = "Logged in as: $channelName",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (isLoggedIn) {
-                TamaButton(
-                    onClick = {
-                        scope.launch {
-                            ConfigStorage.clearToken()
-                            ConfigStorage.clearChannelInfo()
-                            isLoggedIn = false
-                            channelName = null
-                            saveMessage = "Logged out successfully"
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Logout")
-                }
-            }
-
-            TextButton(
-                onClick = {
-                    PrivacyPolicyManager.opener.openPrivacyPolicy(
-                        onShowWebView = { showWebView = true }
-                    )
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = "Privacy Policy",
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-        Text(
             text = "Server Configuration",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
@@ -252,6 +199,54 @@ fun SettingsScreen() {
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.bodyMedium
                 )
+            }
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+        Text(
+            text = "Account",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        if (isLoggedIn && channelName != null) {
+            Text(
+                text = "Logged in as: $channelName",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TamaButton(
+                onClick = {
+                    PrivacyPolicyManager.opener.openPrivacyPolicy(
+                        onShowWebView = { showWebView = true }
+                    )
+                }
+            ) {
+                Text("Privacy Policy")
+            }
+
+            if (isLoggedIn) {
+                TamaButton(
+                    onClick = {
+                        scope.launch {
+                            ConfigStorage.clearToken()
+                            ConfigStorage.clearChannelInfo()
+                            isLoggedIn = false
+                            channelName = null
+                            saveMessage = "Logged out successfully"
+                        }
+                    }
+                ) {
+                    Text("Logout")
+                }
             }
         }
         }
