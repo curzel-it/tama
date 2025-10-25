@@ -6,6 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import it.curzel.tama.api.FeedItem
 import it.curzel.tama.midi.MidiComposer
+import it.curzel.tama.model.TamaConfig
+import it.curzel.tama.sharing.ContentSharingManager
+import it.curzel.tama.storage.ConfigStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -137,11 +140,13 @@ class FeedViewModel {
         }
     }
 
-    fun shareCurrentContent() {
+    fun shareCurrentContent(onCopied: () -> Unit) {
         currentItem?.let { item ->
-            // TODO: Implement platform-specific sharing
-            // This will be implemented using expect/actual pattern
-            println("Sharing content: ${item.channel.name} - ID: ${item.content.id}")
+            CoroutineScope(Dispatchers.Default).launch {
+                val config = ConfigStorage.loadConfig() ?: TamaConfig()
+                val shareUrl = "${config.server_url}/content/${item.content.id}"
+                ContentSharingManager.sharer.shareContent(shareUrl, onCopied)
+            }
         }
     }
 

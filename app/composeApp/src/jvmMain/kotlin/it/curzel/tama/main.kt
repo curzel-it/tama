@@ -12,6 +12,8 @@ import it.curzel.tama.storage.ReportedContentStorage
 import it.curzel.tama.storage.ReportedContentStorageJvm
 import it.curzel.tama.utils.PrivacyPolicyManager
 import it.curzel.tama.utils.PrivacyPolicyOpenerJvm
+import it.curzel.tama.sharing.ContentSharingManager
+import it.curzel.tama.sharing.ContentSharerJvm
 
 fun main() = application {
     MidiPlayer.provider = MidiPlayerJvm()
@@ -19,6 +21,7 @@ fun main() = application {
     ConfigStorage.provider = ConfigStorageJvm()
     ReportedContentStorage.provider = ReportedContentStorageJvm()
     PrivacyPolicyManager.opener = PrivacyPolicyOpenerJvm()
+    ContentSharingManager.sharer = ContentSharerJvm()
 
     Window(
         onCloseRequest = ::exitApplication,

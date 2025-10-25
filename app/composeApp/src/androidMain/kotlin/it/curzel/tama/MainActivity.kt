@@ -16,6 +16,8 @@ import it.curzel.tama.storage.ReportedContentStorage
 import it.curzel.tama.storage.ReportedContentStorageAndroid
 import it.curzel.tama.utils.PrivacyPolicyManager
 import it.curzel.tama.utils.PrivacyPolicyOpenerAndroid
+import it.curzel.tama.sharing.ContentSharingManager
+import it.curzel.tama.sharing.ContentSharerAndroid
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,6 +29,7 @@ class MainActivity : ComponentActivity() {
         ConfigStorage.provider = ConfigStorageAndroid(applicationContext)
         ReportedContentStorage.provider = ReportedContentStorageAndroid(applicationContext)
         PrivacyPolicyManager.opener = PrivacyPolicyOpenerAndroid()
+        ContentSharingManager.sharer = ContentSharerAndroid(applicationContext)
 
         setContent {
             App()

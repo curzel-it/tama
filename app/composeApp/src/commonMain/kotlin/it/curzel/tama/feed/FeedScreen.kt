@@ -19,6 +19,7 @@ import it.curzel.tama.canvas.generateTvStatic
 import it.curzel.tama.theme.MyNavigationBar
 import it.curzel.tama.theme.TamaButton
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
@@ -28,12 +29,13 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
     var showReportSuccess by remember { mutableStateOf(false) }
     var isReporting by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         viewModel.loadFeed()
     }
 
-    LaunchedEffect(viewModel.currentIndex, viewModel.isShowingStatic) {
+    LaunchedEffect(viewModel.currentIndex, viewModel.isShowingStatic, viewModel.currentItem) {
         if (viewModel.isShowingStatic) {
             viewModel.stopAudio()
         } else {
@@ -99,7 +101,16 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
             title = "Tama Feed",
             rightAction = {
                 ContentKebabMenu(
-                    onShareClick = { viewModel.shareCurrentContent() },
+                    onShareClick = {
+                        viewModel.shareCurrentContent {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Link copied to clipboard",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        }
+                    },
                     onReportClick = { showReportDialog = true },
                     enabled = viewModel.currentItem != null && !viewModel.isShowingStatic
                 )

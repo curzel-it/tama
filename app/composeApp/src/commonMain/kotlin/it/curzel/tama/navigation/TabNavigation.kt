@@ -1,12 +1,19 @@
 package it.curzel.tama.navigation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.unit.dp
 import it.curzel.tama.screens.ContentEditorScreen
 import it.curzel.tama.feed.FeedScreen
 import it.curzel.tama.screens.SettingsScreen
+import org.jetbrains.compose.resources.painterResource
+import tama.composeapp.generated.resources.*
 
 enum class Tab(val title: String) {
     Feed("Feed"),
@@ -17,16 +24,46 @@ enum class Tab(val title: String) {
 @Composable
 fun TabNavigationScreen() {
     var selectedTab by remember { mutableStateOf(Tab.Feed) }
+    val colorScheme = MaterialTheme.colorScheme
+
+    val selectedColor = Color(0xFF88C070)
+    val unselectedColor = Color(0xFF4A6A40)
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = colorScheme.background,
+                contentColor = colorScheme.onBackground
+            ) {
                 Tab.entries.forEach { tab ->
+                    val isSelected = selectedTab == tab
+                    val iconTint = if (isSelected) selectedColor else unselectedColor
+
                     NavigationBarItem(
-                        icon = { Text(tab.title.first().toString()) },
-                        label = { Text(tab.title) },
-                        selected = selectedTab == tab,
-                        onClick = { selectedTab = tab }
+                        icon = {
+                            val iconRes = when (tab) {
+                                Tab.Feed -> Res.drawable.icon_feed
+                                Tab.Create -> Res.drawable.icon_add
+                                Tab.Settings -> Res.drawable.icon_settings
+                            }
+                            Image(
+                                painter = painterResource(iconRes),
+                                contentDescription = tab.title,
+                                colorFilter = ColorFilter.tint(iconTint),
+                                modifier = Modifier.size(32.dp),
+                                filterQuality = FilterQuality.None
+                            )
+                        },
+                        label = { Text(tab.title, color = iconTint) },
+                        selected = isSelected,
+                        onClick = { selectedTab = tab },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = selectedColor,
+                            unselectedIconColor = unselectedColor,
+                            selectedTextColor = selectedColor,
+                            unselectedTextColor = unselectedColor,
+                            indicatorColor = Color.Transparent
+                        )
                     )
                 }
             }
