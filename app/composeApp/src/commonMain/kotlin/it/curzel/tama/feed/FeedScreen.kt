@@ -1,13 +1,18 @@
 package it.curzel.tama.feed
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import it.curzel.tama.api.FeedItem
 import it.curzel.tama.canvas.AsciiContentWithTv
 import it.curzel.tama.canvas.generateTvStatic
@@ -22,6 +27,8 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
     var reportError by remember { mutableStateOf<String?>(null) }
     var showReportSuccess by remember { mutableStateOf(false) }
     var isReporting by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
         viewModel.loadFeed()
     }
@@ -32,6 +39,16 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
         } else {
             delay(250)
             viewModel.playCurrentAudio()
+        }
+    }
+
+    LaunchedEffect(showReportSuccess) {
+        if (showReportSuccess) {
+            snackbarHostState.showSnackbar(
+                message = "Thank you for your report. We will review this content.",
+                duration = SnackbarDuration.Short
+            )
+            showReportSuccess = false
         }
     }
 
@@ -72,19 +89,9 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
         )
     }
 
-    if (showReportSuccess) {
-        AlertDialog(
-            onDismissRequest = { showReportSuccess = false },
-            title = { Text("Report Submitted") },
-            text = { Text("Thank you for your report. We will review this content.") },
-            confirmButton = {
-                TextButton(onClick = { showReportSuccess = false }) {
-                    Text("OK")
-                }
-            }
-        )
-    }
-
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -195,6 +202,12 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
         }
         }
     }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
 }
 
 @Composable
@@ -259,51 +272,98 @@ fun ReportContentDialog(
     isLoading: Boolean,
     errorMessage: String?
 ) {
-    AlertDialog(
-        onDismissRequest = { if (!isLoading) onDismiss() },
-        title = { Text("Report Content") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Use MaterialTheme colors which respect the app's theme preference
+    val colorScheme = MaterialTheme.colorScheme
+
+    // Match style.css modal colors
+    // Light: modal-bg=#F0FAF0, border=#081820
+    // Dark: modal-bg=#081820, border=#88C070
+    val modalBg = colorScheme.background
+    val modalBorder = colorScheme.outline
+    val closeColor = colorScheme.outline
+    val borderColor = colorScheme.outline
+
+    Dialog(onDismissRequest = { if (!isLoading) onDismiss() }) {
+        Surface(
+            modifier = Modifier
+                .widthIn(max = 400.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            shape = RoundedCornerShape(4.dp),
+            color = modalBg,
+            border = BorderStroke(1.dp, modalBorder)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = "Report Content",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    IconButton(
+                        onClick = { if (!isLoading) onDismiss() },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Text(
+                            text = "×",
+                            fontSize = 28.sp,
+                            color = closeColor
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 Text("Why are you reporting this content?")
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = reason,
                     onValueChange = onReasonChange,
-                    label = { Text("Reason") },
                     placeholder = { Text("Please describe the issue...") },
                     modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
+                    minLines = 4,
                     maxLines = 5,
                     enabled = !isLoading,
-                    isError = errorMessage != null
+                    isError = errorMessage != null,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = borderColor,
+                        unfocusedBorderColor = borderColor
+                    )
                 )
+
                 if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = errorMessage,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                enabled = reason.isNotBlank() && !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                } else {
-                    Text("Submit Report")
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                TamaButton(
+                    onClick = onConfirm,
+                    enabled = reason.isNotBlank() && !isLoading,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = borderColor
+                        )
+                    } else {
+                        Text("Submit Report")
+                    }
                 }
             }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                enabled = !isLoading
-            ) {
-                Text("Cancel")
-            }
         }
-    )
+    }
 }
