@@ -36,7 +36,8 @@
       "Bash(python3:*)",
       "Bash(taskkill:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(./gradlew build:*)"
     ],
     "deny": [],
     "ask": []

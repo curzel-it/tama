@@ -1,12 +1,71 @@
+/*
+================================================================================
+CSS Variables & Theme Setup
+================================================================================
+*/
+
+:root {
+    /* Dark theme (default) */
+    --background: #081820;
+    --background-secondary: #0a1f2a;
+    --text-primary: #88c070;
+    --text-secondary: #6a9858;
+    --border-color: #88c070;
+    --link-color: white;
+    --button-bg: #081820;
+    --button-text: white;
+    --button-border: #88c070;
+    --button-hover-bg: #a0e080;
+    --input-bg: rgba(255,255,255,0.03);
+    --input-text: white;
+    --input-focus-border: #a0e080;
+    --error-color: #ff6b6b;
+    --modal-bg: rgba(0, 0, 0, 0.7);
+    --modal-content-bg: #081820;
+    --modal-content-border: #88c070;
+    --close-color: #88c070;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --background: #f0faf0;
+        --background-secondary: #e8f5e9;
+        --text-primary: #081820;
+        --text-secondary: #4a6a40;
+        --border-color: #081820;
+        --link-color: #68b040;
+        --button-bg: #88c070;
+        --button-text: #081820;
+        --button-border: #081820;
+        --button-hover-bg: #68b040;
+        --input-bg: white;
+        --input-text: #081820;
+        --input-focus-border: #88c070;
+        --error-color: #d63031;
+        --modal-bg: rgba(255, 255, 255, 0.8);
+        --modal-content-bg: #f0faf0;
+        --modal-content-border: #081820;
+        --close-color: #081820;
+    }
+}
+
+/*
+================================================================================
+Base Styles
+================================================================================
+*/
+
 * {
     font-family: 'Fira Code', monospace;
 }
 
 html {
     height: 100%;
+    background-color: var(--background);
+    color: var(--text-primary);
 }
 
-body {    
+body {
     padding: 20px;
     margin: 0;
     display: flex;
@@ -15,6 +74,8 @@ body {
     justify-content: center;
     height: 100%;
     font-size: 14px;
+    background-color: var(--background);
+    color: var(--text-primary);
 }
 
 i {
@@ -24,7 +85,14 @@ i {
 a {
     font-weight: bold;
     text-decoration: none;
+    color: var(--link-color);
 }
+
+/*
+================================================================================
+Layout Components
+================================================================================
+*/
 
 #navigationControls {
     max-width: 800px;
@@ -58,6 +126,136 @@ a {
     padding-top: 20px;
 }
 
+/* Editor Container */
+.editor-container {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.editor-container > h1 {
+    margin-bottom: 20px;
+}
+
+/* Sections (Collapsible) */
+.section {
+    margin: 20px 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.section-toggle {
+    font-size: 20px;
+    transition: transform 0.3s;
+}
+
+.section-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
+.section-content {
+    padding: 20px 0px 20px 0px;
+    display: block;
+}
+
+.section-content.collapsed {
+    display: none;
+}
+
+/*
+================================================================================
+Forms
+================================================================================
+*/
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 2px;
+    box-sizing: border-box;
+    font-family: 'Fira Code', monospace;
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border: 1px solid var(--border-color);
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea {
+    max-width: 600px;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+}
+
+#midiComposition {
+    max-width: 100%;
+}
+
+/* Inline Form Groups */
+.form-group-inline {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-group-inline input[type="number"] {
+    width: 80px;
+    height: 2rem;
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border: 1px solid var(--border-color);
+}
+
+/*
+================================================================================
+Buttons & Controls
+================================================================================
+*/
+
 button {
     padding: 10px 20px;
     cursor: pointer;
@@ -69,41 +267,72 @@ button:disabled {
     cursor: not-allowed;
 }
 
-a.button, button {
+a.button, button, .modal a.button, .modal button, .file-button {
     font-weight: normal;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: 1px solid var(--button-border);
+    border-radius: 2px;
 }
 
-.loading,
-.error {
-    text-align: center;
-    padding: 50px;
-}
-
-#clickToContinueOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+.button-row {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
+    gap: 10px;
+    margin: 15px 0;
+    flex-wrap: wrap;
 }
 
-#clickToContinueOverlay * {
+.file-button {
+    display: inline-block;
+    text-align: center;
+    padding: 15px 30px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* Volume Controls */
+#volumeControls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#volumeControls button {
+    padding: 5px 10px;
+    font-size: 12px;
+    min-width: auto;
+}
+
+#volumeDisplay {
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    letter-spacing: 1px;
+    white-space: pre;
+    min-width: 11ch;
     text-align: center;
 }
 
-#clickToContinueOverlay.hidden {
-    display: none;
+/* Zoom Controls */
+.zoom-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.zoom-button {
+    padding: 5px 10px;
+    font-size: 12px;
+    min-width: 40px;
+}
+
+.zoom-button.active {
+    background: var(--button-hover-bg);
+    border-color: var(--button-hover-bg);
 }
 
 /*
---------------------------------------------------------------------------------
+================================================================================
 Auth UI
---------------------------------------------------------------------------------
+================================================================================
 */
 
 #authControls {
@@ -130,6 +359,7 @@ Auth UI
     height: 100%;
     align-items: center;
     justify-content: center;
+    background-color: var(--modal-bg);
 }
 
 .modal-content {
@@ -140,6 +370,8 @@ Auth UI
     max-width: 400px;
     width: 100%;
     position: relative;
+    background-color: var(--modal-content-bg);
+    border: 1px solid var(--modal-content-border);
 }
 
 .close {
@@ -150,6 +382,7 @@ Auth UI
     font-weight: bold;
     cursor: pointer;
     line-height: 1;
+    color: var(--close-color);
 }
 
 .modal-content .close {
@@ -162,40 +395,10 @@ Auth UI
     opacity: 0.7;
 }
 
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.form-group small {
-    display: block;
-    margin-top: 4px;
-    font-size: 12px;
-    opacity: 0.7;
-}
-
-.form-group input,
-.form-group textarea {
-    width: 100%;
-    padding: 10px;
-    font-size: 14px;
-    border-radius: 2px;
-    box-sizing: border-box;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-    outline: none;
-}
-
 .error {
     margin-bottom: 15px;
     font-size: 14px;
+    color: var(--error-color);
 }
 
 .auth-switch {
@@ -207,6 +410,7 @@ Auth UI
 .auth-switch a {
     text-decoration: underline;
     cursor: pointer;
+    color: var(--text-primary);
 }
 
 .auth-switch a:hover {
@@ -218,179 +422,188 @@ Auth UI
     margin-bottom: 20px;
 }
 
+/*
+================================================================================
+Frames & Canvas
+================================================================================
+*/
+
+/* Frames Container */
+.frames-container {
+    margin: 20px 0;
+}
+
+.frames-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.frames-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    border-radius: 4px;
+    min-height: 80px;
+    align-items: flex-start;
+}
+
+/* Frame Items */
 .frame-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
     border-radius: 4px;
 }
 
-/*
---------------------------------------------------------------------------------
-Color palette
---------------------------------------------------------------------------------
-*/
-
-html, body, canvas, #clickToContinueOverlay {
-    background-color: #081820;
-    color: #88c070;
+.frame-item.dragging {
+    opacity: 0.5;
 }
 
-a {
-    color: white;
-}
-
-a.button, button, .modal a.button, .modal button, .file-button {
-    background-color: #081820;
-    color: white;
-    border: 1px solid #88c070;
-    border-radius: 2px;
-}
-
-.modal {
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
-.modal-content {
-    background-color: #081820;
-    border: 1px solid #88c070;
-}
-
-.close {
-    color: #88c070;
-}
-
-.form-group-inline input,
-.form-group input,
-.form-group textarea {
-    background-color: rgba(255,255,255,0.03);
-    color: white;
-    border: 1px solid #88c070;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-    border-color: #a0e080;
-}
-
-.error {
-    color: #ff6b6b;
-}
-
-.auth-switch a {
-    color: #88c070;
-}
-
-#midiInput {
-    background-color: #1a1a1a;
-    color: #88c070;
-    border: 1px solid #88c070;
-}
-
-.help {
-    background-color: #1a2a1a;
-    border: 1px solid #88c070;
-}
-
-.help code {
-    background-color: #0a1a0a;
-}
-
-.preview-panel {
-    background: #081820;
+.frame-number {
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    min-width: 20px;
+    text-align: center;
 }
 
 .frame-item {
-    border: 1px solid #88c070;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--background);
+    cursor: grab;
+    transition: border-color 0.2s, transform 0.1s;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 
 .frame-item.selected {
-    border: 2px solid white;
+    border: 2px solid var(--border-color);
 }
 
-@media (prefers-color-scheme: light) {
-    html, body, canvas, #clickToContinueOverlay {
-        background-color: #f0faf0;
-        color: #081820;
-    }
+.frame-preview:active {
+    cursor: grabbing;
+}
 
-    a.button, button, .modal a.button, .modal button, .file-button {
-        background-color: #88c070;
-        color: #081820;
-        border: 1px solid #081820;
-        border-radius: 2px;
-    }
+.add-frame-button,
+.delete-frame-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 64px;
+    border: 1px dashed var(--border-color);
+    border-radius: 2px;
+    background: var(--background);
+    cursor: pointer;
+    font-size: 24px;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    flex-shrink: 0;
+    width: 32px;
+}
 
-    a {
-        color: #68b040;
-    }
+.delete-frame-button {
+    color: #d9534f;
+}
 
-    .modal {
-        background-color: rgba(255, 255, 255, 0.8);
-    }
+/* Canvas */
+.canvas-tools-container {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    margin: 20px 0;
+}
 
-    .modal-content {
-        background-color: #f0faf0;
-        color: #081820;
-        border: 1px solid #081820;
-    }
+.canvas-container {
+    border: 2px solid var(--border-color);
+    display: inline-block;
+    border-radius: 4px;
+}
 
-    .close {
-        color: #081820;
-    }
+.tools-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 
-    .form-group-inline input,
-    .form-group input,
-    .form-group textarea {
-        background-color: white;
-        color: #081820;
-        border: 1px solid #081820;
-    }
+.tools-panel button {
+    white-space: nowrap;
+}
 
-    .form-group input:focus,
-    .form-group textarea:focus {
-        border-color: #88c070;
-    }
+#pixelCanvas {
+    cursor: crosshair;
+    display: block;
+}
 
-    .error {
-        color: #d63031;
-    }
+/* Preview Panel */
+.preview-panel {
+    position: fixed;
+    top: 100px;
+    right: 50px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: none;
+    width: fit-content;
+    background: var(--background);
+}
 
-    .auth-switch a {
-        color: #081820;
-    }
+.preview-panel.visible {
+    display: block;
+}
 
-    #midiInput {
-        background-color: white;
-        color: #081820;
-        border: 1px solid #081820;
-    }
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    cursor: move;
+}
 
-    .help {
-        background-color: #e8f5e9;
-        border: 1px solid #081820;
-    }
+.preview-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
 
-    .help code {
-        background-color: #c8e6c9;
-    }
+.preview-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
 
-    .preview-panel {
-        background: #F0FAF0;
-    }
+.preview-canvas-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    background: var(--background);
+    border-radius: 4px;
+}
 
-    .frame-item {
-        border: 1px solid #081820;
-    }
-
-    .frame-item.selected {
-        border: 2px solid #88c070;
-    }
+#previewCanvas {
+    image-rendering: pixelated;
+    display: block;
 }
 
 /*
---------------------------------------------------------------------------------
-Pixel Editor
---------------------------------------------------------------------------------
+================================================================================
+Feature-Specific Styles
+================================================================================
 */
 
+/* Pixel Editor */
 #pixelCanvas {
     border: 2px solid;
     cursor: crosshair;
@@ -416,12 +629,7 @@ Pixel Editor
     margin: 0;
 }
 
-/*
---------------------------------------------------------------------------------
-MIDI Composer
---------------------------------------------------------------------------------
-*/
-
+/* MIDI Composer */
 .midi-container {
     width: 100%;
     max-width: 800px;
@@ -447,6 +655,9 @@ MIDI Composer
     border-radius: 4px;
     box-sizing: border-box;
     resize: vertical;
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 
 .midi-controls {
@@ -461,6 +672,8 @@ MIDI Composer
     border-radius: 4px;
     font-size: 12px;
     line-height: 1.6;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
 }
 
 .help h3 {
@@ -470,39 +683,58 @@ MIDI Composer
 .help code {
     padding: 2px 4px;
     border-radius: 2px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: light) {
+    .help code {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
 }
 
 /*
---------------------------------------------------------------------------------
-Volume Controls
---------------------------------------------------------------------------------
+================================================================================
+Utility Classes
+================================================================================
 */
 
-#volumeControls {
+.loading,
+.error {
+    text-align: center;
+    padding: 50px;
+}
+
+#clickToContinueOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    z-index: 9999;
+    background-color: var(--background);
 }
 
-#volumeControls button {
-    padding: 5px 10px;
-    font-size: 12px;
-    min-width: auto;
-}
-
-#volumeDisplay {
-    font-family: 'Fira Code', monospace;
-    font-size: 14px;
-    letter-spacing: 1px;
-    white-space: pre;
-    min-width: 11ch;
+#clickToContinueOverlay * {
     text-align: center;
 }
 
+#clickToContinueOverlay.hidden {
+    display: none;
+}
+
+#publishError {
+    color: red;
+    margin-top: 10px;
+}
+
 /*
---------------------------------------------------------------------------------
-Mobile Styles
---------------------------------------------------------------------------------
+================================================================================
+Media Queries
+================================================================================
 */
 
 @media (max-width: 768px) {
@@ -522,4 +754,12 @@ Mobile Styles
         padding: 10px;
         padding-top: 60px;
     }
+}
+
+/* Content Editor specific body override */
+body:has(.editor-container) {
+    display: block;
+    height: auto;
+    justify-content: flex-start;
+    padding: 20px;
 }
