@@ -20,6 +20,21 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
         viewModel.loadFeed()
     }
 
+    LaunchedEffect(viewModel.currentIndex, viewModel.isShowingStatic) {
+        if (viewModel.isShowingStatic) {
+            viewModel.stopAudio()
+        } else {
+            delay(250)
+            viewModel.playCurrentAudio()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.onDispose()
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {

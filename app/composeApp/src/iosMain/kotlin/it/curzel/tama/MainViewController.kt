@@ -7,10 +7,13 @@ import it.curzel.tama.midi.MidiPlayer
 import it.curzel.tama.midi.MidiPlayerIos
 import it.curzel.tama.storage.ConfigStorage
 import it.curzel.tama.storage.ConfigStorageIos
+import it.curzel.tama.utils.PrivacyPolicyManager
+import it.curzel.tama.utils.PrivacyPolicyOpenerIos
 
 fun MainViewController() = ComposeUIViewController {
     MidiPlayer.provider = MidiPlayerIos()
     MidiComposer.backend = MidiComposerIos()
     ConfigStorage.provider = ConfigStorageIos()
+    PrivacyPolicyManager.opener = PrivacyPolicyOpenerIos()
     App()
 }

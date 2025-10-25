@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import it.curzel.tama.api.FeedItem
+import it.curzel.tama.midi.MidiComposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -142,5 +143,30 @@ class FeedViewModel {
             // This will be implemented using expect/actual pattern
             println("Sharing content: ${item.channel.name} - ID: ${item.content.id}")
         }
+    }
+
+    fun playCurrentAudio() {
+        stopAudio()
+        currentItem?.let { item ->
+            if (!isShowingStatic && item.content.midiComposition.isNotBlank()) {
+                try {
+                    MidiComposer.play(item.content.midiComposition, loop = true)
+                } catch (e: Exception) {
+                    println("Failed to play audio: ${e.message}")
+                }
+            }
+        }
+    }
+
+    fun stopAudio() {
+        try {
+            MidiComposer.stop()
+        } catch (e: Exception) {
+            println("Failed to stop audio: ${e.message}")
+        }
+    }
+
+    fun onDispose() {
+        stopAudio()
     }
 }
