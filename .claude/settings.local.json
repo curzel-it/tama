@@ -37,7 +37,9 @@
       "Bash(taskkill:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(./gradlew build:*)"
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

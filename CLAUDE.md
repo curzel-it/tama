@@ -28,3 +28,38 @@ Ideally, new features are "wired up" with jus a few lines of code for configurat
 
 ### User Interface
 Implement the cleanest and simplest possible version of the ui.
+
+## Building the KMP app
+You can build and run the Kotlin Multilplatform app like this:
+```bash 
+cd app && ./gradlew jvmRun -DmainClass=it.curzel.tama.MainKt
+```
+
+## Native dependencies in KMP app
+Do not ever use actual/expect.
+Use a dump dependency-injection approach, for example:
+
+in composeApp/commonMain/SomeUseCase.kt
+```
+interface SomeDependency {
+    fun foo()
+}
+
+object SomeUseCase {
+    lateinit var someDependency: SomeDependency // Set during app init by native code
+}
+```
+
+in composeApp/iosMain/SomeDependencyImpl.kt
+```
+// If needed, this wil lbe implemented in Swift or whatever later
+interface SomeDependencyNative {
+    fun foo()
+}
+
+class SomeDependencyImpl(val thing: SomeDependencyNative) : SomeDependency {
+    ...
+}
+```
+
+in "main" SomeUseCase.someDependency = SomeDependencyImpl(...)
