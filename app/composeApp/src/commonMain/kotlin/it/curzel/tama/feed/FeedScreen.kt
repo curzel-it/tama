@@ -9,6 +9,8 @@ import androidx.compose.ui.unit.dp
 import it.curzel.tama.api.FeedItem
 import it.curzel.tama.canvas.AsciiContentWithTv
 import it.curzel.tama.canvas.generateTvStatic
+import it.curzel.tama.theme.MyNavigationBar
+import it.curzel.tama.theme.ShareButton
 import it.curzel.tama.theme.TamaButton
 import kotlinx.coroutines.delay
 
@@ -19,10 +21,23 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
+        MyNavigationBar(
+            title = "Tama Feed",
+            rightAction = {
+                ShareButton(
+                    onClick = { viewModel.shareCurrentContent() },
+                    enabled = viewModel.currentItem != null && !viewModel.isShowingStatic
+                )
+            }
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
         when {
             viewModel.isLoading && viewModel.feedItems.isEmpty() -> {
                 Box(
@@ -111,6 +126,7 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
                     }
                 }
             }
+        }
         }
     }
 }

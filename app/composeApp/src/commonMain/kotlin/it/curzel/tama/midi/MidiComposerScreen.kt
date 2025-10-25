@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import it.curzel.tama.theme.MyNavigationBar
 import it.curzel.tama.theme.TamaButton
 
 @Composable
@@ -17,25 +18,20 @@ fun MidiComposerScreen(
     val scrollState = rememberScrollState()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "MIDI Composer",
-                style = MaterialTheme.typography.headlineMedium
-            )
+        MyNavigationBar(
+            title = "MIDI Composer",
+            onBackClick = onBack
+        )
 
-            TextButton(onClick = onBack) {
-                Text("Back")
-            }
-        }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -140,6 +136,7 @@ fun MidiComposerScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary
             )
+        }
         }
     }
 }

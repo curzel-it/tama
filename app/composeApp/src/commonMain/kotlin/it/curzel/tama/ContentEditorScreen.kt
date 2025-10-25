@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.midi.MidiComposerScreen
+import it.curzel.tama.theme.MyNavigationBar
 import it.curzel.tama.theme.TamaButton
 
 enum class EditorScreen {
@@ -32,13 +33,19 @@ fun ContentEditorScreen() {
         EditorScreen.PixelEditor -> {
             // TODO: Implement Pixel Editor Screen
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+                modifier = Modifier.fillMaxSize()
             ) {
-                Text("Pixel Editor - Coming Soon")
-                TextButton(onClick = { currentScreen = EditorScreen.Main }) {
-                    Text("Back")
+                MyNavigationBar(
+                    title = "Pixel Editor",
+                    onBackClick = { currentScreen = EditorScreen.Main }
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    Text("Pixel Editor - Coming Soon")
                 }
             }
         }
@@ -53,23 +60,26 @@ fun MainEditorScreen(
     val scrollState = rememberScrollState()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
-        Text(
-            text = "Content Editor",
-            style = MaterialTheme.typography.headlineMedium
+        MyNavigationBar(
+            title = "Content Editor"
         )
 
-        FileSection()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            FileSection()
 
-        EditorToolsSection(
-            onNavigateToMidi = onNavigateToMidi,
-            onNavigateToPixel = onNavigateToPixel
-        )
+            EditorToolsSection(
+                onNavigateToMidi = onNavigateToMidi,
+                onNavigateToPixel = onNavigateToPixel
+            )
+        }
     }
 }
 

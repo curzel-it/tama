@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import it.curzel.tama.model.TamaConfig
 import it.curzel.tama.model.ThemePreference
 import it.curzel.tama.storage.ConfigStorage
+import it.curzel.tama.theme.MyNavigationBar
 import it.curzel.tama.theme.ThemeManager
 import it.curzel.tama.theme.TamaButton
 import kotlinx.coroutines.launch
@@ -35,15 +36,18 @@ fun SettingsScreen() {
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineMedium
+        MyNavigationBar(
+            title = "Settings"
         )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
 
         OutlinedTextField(
             value = serverUrl,
@@ -162,6 +166,7 @@ fun SettingsScreen() {
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+        }
         }
     }
 }

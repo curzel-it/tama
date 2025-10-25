@@ -101,4 +101,12 @@ class FeedViewModel {
             }
         }
     }
+
+    fun shareCurrentContent() {
+        currentItem?.let { item ->
+            // TODO: Implement platform-specific sharing
+            // This will be implemented using expect/actual pattern
+            println("Sharing content: ${item.channel.name} - ID: ${item.content.id}")
+        }
+    }
 }
