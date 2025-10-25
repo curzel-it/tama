@@ -7,7 +7,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.model.TamaConfig
+import it.curzel.tama.model.ThemePreference
 import it.curzel.tama.storage.ConfigStorage
+import it.curzel.tama.theme.ThemeManager
+import it.curzel.tama.theme.TamaButton
 import kotlinx.coroutines.launch
 
 @Composable
@@ -15,6 +18,7 @@ fun SettingsScreen() {
     var serverUrl by remember { mutableStateOf("") }
     var serversText by remember { mutableStateOf("") }
     var serverOverride by remember { mutableStateOf(false) }
+    var themePreference by remember { mutableStateOf(ThemePreference.SYSTEM) }
     var isSaving by remember { mutableStateOf(false) }
     var saveMessage by remember { mutableStateOf<String?>(null) }
 
@@ -26,6 +30,7 @@ fun SettingsScreen() {
             serverUrl = config.server_url
             serversText = config.servers.joinToString("\n")
             serverOverride = config.server_override
+            themePreference = config.getThemePreference()
         }
     }
 
@@ -61,6 +66,27 @@ fun SettingsScreen() {
             maxLines = 5
         )
 
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Theme",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ThemePreference.entries.forEach { preference ->
+                    FilterChip(
+                        selected = themePreference == preference,
+                        onClick = { themePreference = preference },
+                        label = { Text(preference.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -73,7 +99,7 @@ fun SettingsScreen() {
             )
         }
 
-        Button(
+        TamaButton(
             onClick = {
                 scope.launch {
                     isSaving = true
@@ -87,12 +113,14 @@ fun SettingsScreen() {
                         val config = TamaConfig(
                             server_url = serverUrl,
                             servers = servers,
-                            server_override = serverOverride
+                            server_override = serverOverride,
+                            theme = themePreference.name
                         )
 
                         val validation = config.validate()
                         if (validation.isSuccess) {
                             ConfigStorage.saveConfig(config)
+                            ThemeManager.setThemePreference(themePreference)
                             saveMessage = "Settings saved successfully"
                         } else {
                             saveMessage = "Error: ${validation.exceptionOrNull()?.message}"
@@ -110,7 +138,7 @@ fun SettingsScreen() {
             if (isSaving) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             } else {
                 Text("Save Settings")
