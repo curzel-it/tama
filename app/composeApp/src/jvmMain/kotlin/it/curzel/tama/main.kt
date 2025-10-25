@@ -8,6 +8,8 @@ import it.curzel.tama.midi.MidiPlayer
 import it.curzel.tama.midi.MidiPlayerJvm
 import it.curzel.tama.storage.ConfigStorage
 import it.curzel.tama.storage.ConfigStorageJvm
+import it.curzel.tama.storage.ReportedContentStorage
+import it.curzel.tama.storage.ReportedContentStorageJvm
 import it.curzel.tama.utils.PrivacyPolicyManager
 import it.curzel.tama.utils.PrivacyPolicyOpenerJvm
 
@@ -15,6 +17,7 @@ fun main() = application {
     MidiPlayer.provider = MidiPlayerJvm()
     MidiComposer.backend = MidiComposerJvm()
     ConfigStorage.provider = ConfigStorageJvm()
+    ReportedContentStorage.provider = ReportedContentStorageJvm()
     PrivacyPolicyManager.opener = PrivacyPolicyOpenerJvm()
 
     Window(

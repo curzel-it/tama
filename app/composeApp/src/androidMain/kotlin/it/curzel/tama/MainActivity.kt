@@ -12,6 +12,8 @@ import it.curzel.tama.midi.MidiPlayer
 import it.curzel.tama.midi.MidiPlayerAndroid
 import it.curzel.tama.storage.ConfigStorage
 import it.curzel.tama.storage.ConfigStorageAndroid
+import it.curzel.tama.storage.ReportedContentStorage
+import it.curzel.tama.storage.ReportedContentStorageAndroid
 import it.curzel.tama.utils.PrivacyPolicyManager
 import it.curzel.tama.utils.PrivacyPolicyOpenerAndroid
 
@@ -23,6 +25,7 @@ class MainActivity : ComponentActivity() {
         MidiPlayer.provider = MidiPlayerAndroid()
         MidiComposer.backend = MidiComposerAndroid()
         ConfigStorage.provider = ConfigStorageAndroid(applicationContext)
+        ReportedContentStorage.provider = ReportedContentStorageAndroid(applicationContext)
         PrivacyPolicyManager.opener = PrivacyPolicyOpenerAndroid()
 
         setContent {

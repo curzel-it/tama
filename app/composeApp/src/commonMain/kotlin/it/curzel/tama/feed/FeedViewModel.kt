@@ -155,6 +155,18 @@ class FeedViewModel {
                 val result = client.reportContent(item.content.id, reason)
 
                 if (result.isSuccess) {
+                    it.curzel.tama.storage.ReportedContentStorage.addReportedContent(
+                        item.serverUrl,
+                        item.content.id
+                    )
+
+                    feedItems = feedItems.filterIndexed { index, _ -> index != currentIndex }
+                    sessionFeedItems.removeAt(currentIndex)
+
+                    if (currentIndex >= feedItems.size && feedItems.isNotEmpty()) {
+                        currentIndex = feedItems.size - 1
+                    }
+
                     onSuccess()
                 } else {
                     onError(result.exceptionOrNull()?.message ?: "Failed to report content")

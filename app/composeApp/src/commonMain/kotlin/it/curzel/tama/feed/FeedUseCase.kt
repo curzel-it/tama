@@ -4,6 +4,7 @@ import it.curzel.tama.api.ApiManager
 import it.curzel.tama.api.FeedItem
 import it.curzel.tama.model.TamaConfig
 import it.curzel.tama.storage.ConfigStorage
+import it.curzel.tama.storage.ReportedContentStorage
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -52,7 +53,13 @@ object FeedUseCase {
                             if (feedResult.isSuccess) {
                                 val items = feedResult.getOrNull() ?: emptyList()
                                 if (items.isNotEmpty()) {
-                                    onItemsLoaded(items)
+                                    val itemsWithServer = items.map { it.copy(serverUrl = serverUrl) }
+                                    val filteredItems = itemsWithServer.filter { item ->
+                                        !ReportedContentStorage.isContentReported(item.serverUrl, item.content.id)
+                                    }
+                                    if (filteredItems.isNotEmpty()) {
+                                        onItemsLoaded(filteredItems)
+                                    }
                                 }
                             }
                         } catch (e: Exception) {

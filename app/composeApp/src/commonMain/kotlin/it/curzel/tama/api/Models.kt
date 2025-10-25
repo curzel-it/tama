@@ -20,7 +20,8 @@ data class ContentData(
 @Serializable
 data class FeedItem(
     val channel: ChannelInfo,
-    val content: ContentData
+    val content: ContentData,
+    val serverUrl: String = ""
 )
 
 @Serializable
