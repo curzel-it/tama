@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import it.curzel.tama.screens.ContentEditorScreen
 import it.curzel.tama.feed.FeedScreen
 import it.curzel.tama.screens.SettingsScreen
+import it.curzel.tama.utils.isLandscape
 import org.jetbrains.compose.resources.painterResource
 import tama.composeapp.generated.resources.*
 
@@ -25,12 +26,16 @@ enum class Tab(val title: String) {
 fun TabNavigationScreen() {
     var selectedTab by remember { mutableStateOf(Tab.Feed) }
     val colorScheme = MaterialTheme.colorScheme
+    val isLandscapeMode = isLandscape()
 
     val selectedColor = Color(0xFF88C070)
     val unselectedColor = Color(0xFF4A6A40)
 
+    val shouldHideTabBar = isLandscapeMode && selectedTab == Tab.Feed
+
     Scaffold(
         bottomBar = {
+          if (!shouldHideTabBar) {
             NavigationBar(
                 containerColor = colorScheme.background,
                 contentColor = colorScheme.onBackground
@@ -66,11 +71,12 @@ fun TabNavigationScreen() {
                     )
                 }
             }
+          }
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
+        Box(modifier = Modifier.padding(if (shouldHideTabBar) PaddingValues(0.dp) else paddingValues)) {
             when (selectedTab) {
-                Tab.Feed -> FeedScreen()
+                Tab.Feed -> FeedScreen(isLandscape = isLandscapeMode)
                 Tab.Create -> ContentEditorScreen()
                 Tab.Settings -> SettingsScreen()
             }

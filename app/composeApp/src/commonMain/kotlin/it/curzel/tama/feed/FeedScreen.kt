@@ -1,6 +1,8 @@
 package it.curzel.tama.feed
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,7 +24,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
+fun FeedScreen(
+    viewModel: FeedViewModel = remember { FeedViewModel() },
+    isLandscape: Boolean = false
+) {
     var showReportDialog by remember { mutableStateOf(false) }
     var reportReason by remember { mutableStateOf("") }
     var reportError by remember { mutableStateOf<String?>(null) }
@@ -97,25 +102,27 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        MyNavigationBar(
-            title = "Tama Feed",
-            rightAction = {
-                ContentKebabMenu(
-                    onShareClick = {
-                        viewModel.shareCurrentContent {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Link copied to clipboard",
-                                    duration = SnackbarDuration.Short
-                                )
+        if (!isLandscape) {
+            MyNavigationBar(
+                title = "Tama Feed",
+                rightAction = {
+                    ContentKebabMenu(
+                        onShareClick = {
+                            viewModel.shareCurrentContent {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Link copied to clipboard",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
                             }
-                        }
-                    },
-                    onReportClick = { showReportDialog = true },
-                    enabled = viewModel.currentItem != null && !viewModel.isShowingStatic
-                )
-            }
-        )
+                        },
+                        onReportClick = { showReportDialog = true },
+                        enabled = viewModel.currentItem != null && !viewModel.isShowingStatic
+                    )
+                }
+            )
+        }
 
         Column(
             modifier = Modifier
@@ -164,10 +171,25 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
+                            val availableWidth = if (isLandscape) {
+                                // In landscape, calculate width based on fitting TV vertically
+                                // TV is approximately 14 chars tall with border (10 content + frame)
+                                // Reserve space for buttons and metadata (~200.dp)
+                                val availableHeightForTv = maxHeight - 200.dp
+                                val tvCharsHigh = 14f
+                                val charHeight = availableHeightForTv / tvCharsHigh
+                                val charWidth = charHeight / 2f // 1:2 aspect ratio
+                                val tvCharsWide = 36 // 32 + 4 for borders
+                                (charWidth * tvCharsWide).coerceAtMost(maxWidth)
+                            } else {
+                                // In portrait, cap at 400.dp
+                                maxWidth.coerceAtMost(400.dp)
+                            }
+
                             AsciiContentWithTv(
                                 content = if (viewModel.isShowingStatic) staticFrame else item.content.art,
                                 fps = if (viewModel.isShowingStatic) 1f else item.content.fps,
-                                availableWidthDp = maxWidth.coerceAtMost(400.dp)
+                                availableWidthDp = availableWidth
                             )
                         }
 
@@ -245,6 +267,7 @@ fun ContentKebabMenu(
     enabled: Boolean
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val colorScheme = MaterialTheme.colorScheme
 
     Box {
         IconButton(
@@ -259,7 +282,11 @@ fun ContentKebabMenu(
 
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(colorScheme.background)
+                .border(BorderStroke(1.dp, colorScheme.outline), RoundedCornerShape(2.dp)),
+            shape = RoundedCornerShape(2.dp)
         ) {
             DropdownMenuItem(
                 text = { Text("Share") },

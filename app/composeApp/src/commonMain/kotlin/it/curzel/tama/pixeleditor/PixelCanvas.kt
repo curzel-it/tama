@@ -3,6 +3,7 @@ package it.curzel.tama.pixeleditor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +22,12 @@ fun PixelCanvas(
     frame: PixelFrame?,
     onPixelChange: (x: Int, y: Int, value: Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    availableWidth: Dp
+    availableWidth: Dp,
+    availableHeight: Dp,
+    zoomLevel: Float = 1f,
+    panOffset: Offset = Offset.Zero,
+    onPanOffsetChange: (Offset) -> Unit = {},
+    isPanMode: Boolean = false
 ) {
     val isLightMode = MaterialTheme.colorScheme.background.luminance() > 0.5f
     val pixelColor = if (isLightMode) Color(0xFF081820) else Color(0xFF88C070)
@@ -37,52 +43,85 @@ fun PixelCanvas(
 
     val density = LocalDensity.current
     val availableWidthPx = with(density) { availableWidth.toPx() }
-    val cellSize = availableWidthPx / frame.width
-    val canvasHeightPx = cellSize * frame.height
-    val canvasHeight = with(density) { canvasHeightPx.toDp() }
+    val availableHeightPx = with(density) { availableHeight.toPx() }
+
+    val baseCellSize = minOf(
+        availableWidthPx / frame.width,
+        availableHeightPx / frame.height
+    )
+    val cellSize = baseCellSize * zoomLevel
+    val canvasWidthPx = frame.width * cellSize
+    val canvasHeightPx = frame.height * cellSize
+
+    val centerOffsetX = (availableWidthPx - canvasWidthPx) / 2f
+    val centerOffsetY = (availableHeightPx - canvasHeightPx) / 2f
 
     Canvas(
         modifier = modifier
-            .fillMaxWidth()
-            .height(canvasHeight)
-            .pointerInput(frame) {
-                detectTapGestures { offset ->
-                    val x = (offset.x / cellSize).toInt().coerceIn(0, frame.width - 1)
-                    val y = (offset.y / cellSize).toInt().coerceIn(0, frame.height - 1)
-                    val currentValue = frame.pixels[y][x]
-                    onPixelChange(x, y, !currentValue)
+            .fillMaxSize()
+            .pointerInput(frame, isPanMode, zoomLevel, panOffset) {
+                if (isPanMode) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        onPanOffsetChange(panOffset + dragAmount)
+                    }
+                } else {
+                    detectTapGestures { offset ->
+                        val adjustedX = offset.x - centerOffsetX - panOffset.x
+                        val adjustedY = offset.y - centerOffsetY - panOffset.y
+
+                        if (adjustedX >= 0 && adjustedY >= 0 &&
+                            adjustedX < canvasWidthPx && adjustedY < canvasHeightPx) {
+                            val x = (adjustedX / cellSize).toInt().coerceIn(0, frame.width - 1)
+                            val y = (adjustedY / cellSize).toInt().coerceIn(0, frame.height - 1)
+                            val currentValue = frame.pixels[y][x]
+                            onPixelChange(x, y, !currentValue)
+                        }
+                    }
                 }
             }
-            .pointerInput(frame) {
-                detectDragGestures(
-                    onDragStart = { offset ->
-                        isDrawing = true
-                        val x = (offset.x / cellSize).toInt().coerceIn(0, frame.width - 1)
-                        val y = (offset.y / cellSize).toInt().coerceIn(0, frame.height - 1)
-                        drawMode = !frame.pixels[y][x]
-                        onPixelChange(x, y, drawMode)
-                    },
-                    onDrag = { change, _ ->
-                        if (isDrawing) {
-                            val x = (change.position.x / cellSize).toInt().coerceIn(0, frame.width - 1)
-                            val y = (change.position.y / cellSize).toInt().coerceIn(0, frame.height - 1)
-                            onPixelChange(x, y, drawMode)
+            .pointerInput(frame, isPanMode, zoomLevel, panOffset) {
+                if (!isPanMode) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            val adjustedX = offset.x - centerOffsetX - panOffset.x
+                            val adjustedY = offset.y - centerOffsetY - panOffset.y
+
+                            if (adjustedX >= 0 && adjustedY >= 0 &&
+                                adjustedX < canvasWidthPx && adjustedY < canvasHeightPx) {
+                                isDrawing = true
+                                val x = (adjustedX / cellSize).toInt().coerceIn(0, frame.width - 1)
+                                val y = (adjustedY / cellSize).toInt().coerceIn(0, frame.height - 1)
+                                drawMode = !frame.pixels[y][x]
+                                onPixelChange(x, y, drawMode)
+                            }
+                        },
+                        onDrag = { change, _ ->
+                            if (isDrawing) {
+                                val adjustedX = change.position.x - centerOffsetX - panOffset.x
+                                val adjustedY = change.position.y - centerOffsetY - panOffset.y
+
+                                if (adjustedX >= 0 && adjustedY >= 0 &&
+                                    adjustedX < canvasWidthPx && adjustedY < canvasHeightPx) {
+                                    val x = (adjustedX / cellSize).toInt().coerceIn(0, frame.width - 1)
+                                    val y = (adjustedY / cellSize).toInt().coerceIn(0, frame.height - 1)
+                                    onPixelChange(x, y, drawMode)
+                                }
+                            }
+                        },
+                        onDragEnd = {
+                            isDrawing = false
+                        },
+                        onDragCancel = {
+                            isDrawing = false
                         }
-                    },
-                    onDragEnd = {
-                        isDrawing = false
-                    },
-                    onDragCancel = {
-                        isDrawing = false
-                    }
-                )
+                    )
+                }
             }
     ) {
-        val canvasWidthPx = frame.width * cellSize
-        val canvasHeightPx = frame.height * cellSize
-
         drawRect(
             color = backgroundColor,
+            topLeft = Offset(centerOffsetX + panOffset.x, centerOffsetY + panOffset.y),
             size = Size(canvasWidthPx, canvasHeightPx)
         )
 
@@ -91,7 +130,10 @@ fun PixelCanvas(
                 if (frame.pixels[y][x]) {
                     drawRect(
                         color = pixelColor,
-                        topLeft = Offset(x * cellSize, y * cellSize),
+                        topLeft = Offset(
+                            centerOffsetX + panOffset.x + x * cellSize,
+                            centerOffsetY + panOffset.y + y * cellSize
+                        ),
                         size = Size(cellSize, cellSize)
                     )
                 }
@@ -101,16 +143,16 @@ fun PixelCanvas(
         for (x in 0..frame.width) {
             drawLine(
                 color = gridColor,
-                start = Offset(x * cellSize, 0f),
-                end = Offset(x * cellSize, canvasHeightPx),
+                start = Offset(centerOffsetX + panOffset.x + x * cellSize, centerOffsetY + panOffset.y),
+                end = Offset(centerOffsetX + panOffset.x + x * cellSize, centerOffsetY + panOffset.y + canvasHeightPx),
                 strokeWidth = 1f
             )
         }
         for (y in 0..frame.height) {
             drawLine(
                 color = gridColor,
-                start = Offset(0f, y * cellSize),
-                end = Offset(canvasWidthPx, y * cellSize),
+                start = Offset(centerOffsetX + panOffset.x, centerOffsetY + panOffset.y + y * cellSize),
+                end = Offset(centerOffsetX + panOffset.x + canvasWidthPx, centerOffsetY + panOffset.y + y * cellSize),
                 strokeWidth = 1f
             )
         }

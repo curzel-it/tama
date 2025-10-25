@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 
 class PixelEditorViewModel {
     var canvasWidth by mutableIntStateOf(64)
@@ -23,6 +24,20 @@ class PixelEditorViewModel {
         private set
 
     var validationError by mutableStateOf<String?>(null)
+        private set
+
+    var zoomLevel by mutableFloatStateOf(1f)
+        private set
+    var panOffset by mutableStateOf(Offset.Zero)
+        private set
+    var isPanMode by mutableStateOf(false)
+        private set
+
+    var showToolsMenu by mutableStateOf(false)
+        private set
+    var showSettingsMenu by mutableStateOf(false)
+        private set
+    var showFramesMenu by mutableStateOf(false)
         private set
 
     val currentFrame: PixelFrame?
@@ -134,6 +149,59 @@ class PixelEditorViewModel {
 
     fun loadFromText(content: String) {
         // TODO: Implement loading from text file
+    }
+
+    fun zoomIn() {
+        val levels = listOf(0.5f, 1f, 2f, 4f, 8f)
+        val currentIndex = levels.indexOfFirst { it >= zoomLevel }
+        if (currentIndex < levels.size - 1) {
+            zoomLevel = levels[currentIndex + 1]
+        }
+    }
+
+    fun zoomOut() {
+        val levels = listOf(0.5f, 1f, 2f, 4f, 8f)
+        val currentIndex = levels.indexOfLast { it <= zoomLevel }
+        if (currentIndex > 0) {
+            zoomLevel = levels[currentIndex - 1]
+        }
+    }
+
+    fun resetZoom() {
+        zoomLevel = 1f
+        panOffset = Offset.Zero
+    }
+
+    fun updatePanOffset(offset: Offset) {
+        panOffset = offset
+    }
+
+    fun togglePanMode() {
+        isPanMode = !isPanMode
+    }
+
+    fun openToolsMenu() {
+        showToolsMenu = true
+    }
+
+    fun closeToolsMenu() {
+        showToolsMenu = false
+    }
+
+    fun openSettingsMenu() {
+        showSettingsMenu = true
+    }
+
+    fun closeSettingsMenu() {
+        showSettingsMenu = false
+    }
+
+    fun openFramesMenu() {
+        showFramesMenu = true
+    }
+
+    fun closeFramesMenu() {
+        showFramesMenu = false
     }
 
     private fun validateCurrentDimensions() {
