@@ -160,11 +160,16 @@ fun FeedScreen(viewModel: FeedViewModel = remember { FeedViewModel() }) {
                     viewModel.currentItem?.let { item ->
                         val staticFrame = remember { generateTvStatic() }
 
-                        AsciiContentWithTv(
-                            content = if (viewModel.isShowingStatic) staticFrame else item.content.art,
-                            fps = if (viewModel.isShowingStatic) 1f else item.content.fps,
-                            modifier = Modifier.widthIn(max = 400.dp)
-                        )
+                        BoxWithConstraints(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsciiContentWithTv(
+                                content = if (viewModel.isShowingStatic) staticFrame else item.content.art,
+                                fps = if (viewModel.isShowingStatic) 1f else item.content.fps,
+                                availableWidthDp = maxWidth.coerceAtMost(400.dp)
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(24.dp))
 
@@ -299,7 +304,7 @@ fun ReportContentDialog(
             modifier = Modifier
                 .widthIn(max = 400.dp)
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 8.dp),
             shape = RoundedCornerShape(4.dp),
             color = modalBg,
             border = BorderStroke(1.dp, modalBorder)
@@ -337,7 +342,7 @@ fun ReportContentDialog(
                 OutlinedTextField(
                     value = reason,
                     onValueChange = onReasonChange,
-                    placeholder = { Text("Please describe the issue...") },
+                    placeholder = { Text("Please describe the issue...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 4,
                     maxLines = 5,

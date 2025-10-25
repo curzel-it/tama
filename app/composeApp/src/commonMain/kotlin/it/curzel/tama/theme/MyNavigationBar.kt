@@ -7,6 +7,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.painterResource
+import tama.composeapp.generated.resources.Res
+import tama.composeapp.generated.resources.icon_back
 
 @Composable
 fun MyNavigationBar(
@@ -30,8 +33,12 @@ fun MyNavigationBar(
             horizontalArrangement = Arrangement.Start
         ) {
             if (onBackClick != null) {
-                TextButton(onClick = onBackClick) {
-                    Text("← Back")
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        painter = painterResource(Res.drawable.icon_back),
+                        contentDescription = "Back",
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
 

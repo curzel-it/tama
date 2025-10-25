@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.midi.MidiComposerScreen
+import it.curzel.tama.pixeleditor.PixelEditorScreen
 import it.curzel.tama.storage.ConfigStorage
 import it.curzel.tama.theme.MyNavigationBar
 import it.curzel.tama.theme.TamaButton
@@ -47,25 +48,9 @@ fun ContentEditorScreen() {
             onBack = { currentScreen = EditorScreen.Main }
         )
 
-        EditorScreen.PixelEditor -> {
-            // TODO: Implement Pixel Editor Screen
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                MyNavigationBar(
-                    title = "Pixel Editor",
-                    onBackClick = { currentScreen = EditorScreen.Main }
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                ) {
-                    Text("Pixel Editor - Coming Soon")
-                }
-            }
-        }
+        EditorScreen.PixelEditor -> PixelEditorScreen(
+            onBack = { currentScreen = EditorScreen.Main }
+        )
     }
 }
 

@@ -3,7 +3,12 @@ package it.curzel.tama.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -12,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.api.ApiManager
@@ -25,6 +32,7 @@ import kotlinx.coroutines.launch
 fun LoginScreen(onLoginSuccess: () -> Unit) {
     var channelName by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showWebView by remember { mutableStateOf(false) }
@@ -78,7 +86,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 value = channelName,
                 onValueChange = { channelName = it },
                 label = { Text("Channel Name") },
-                placeholder = { Text("Enter your channel name") },
+                placeholder = { Text("Enter your channel name", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 singleLine = true,
                 enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth(),
@@ -91,11 +99,20 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Password") },
-                placeholder = { Text("Enter your password") },
+                placeholder = { Text("Enter your password", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 singleLine = true,
                 enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth(),
-                isError = errorMessage != null
+                isError = errorMessage != null,
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                        )
+                    }
+                }
             )
 
             if (errorMessage != null) {

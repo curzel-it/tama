@@ -82,7 +82,7 @@ fun SettingsScreen() {
                 value = serverUrl,
                 onValueChange = { serverUrl = it },
                 label = { Text("Server URL") },
-                placeholder = { Text("https://example.com") },
+                placeholder = { Text("https://example.com", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -103,7 +103,7 @@ fun SettingsScreen() {
                 value = serversText,
                 onValueChange = { serversText = it },
                 label = { Text("Servers (one per line)") },
-                placeholder = { Text("https://server1.com\nhttps://server2.com") },
+                placeholder = { Text("https://server1.com\nhttps://server2.com", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),

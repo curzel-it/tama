@@ -23,6 +23,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.curzel.tama.theme.firaCodeFontFamily
@@ -38,6 +39,37 @@ const val CHAR_WIDTH = 9f
 const val CHAR_HEIGHT = 18f
 const val CHARACTER_SPACING = 1.5f
 const val LINE_SPACING = 3f
+
+/**
+ * Calculate optimal character dimensions to fit TV in available width
+ * Maintains 1:2 aspect ratio (width:height)
+ *
+ * @param availableWidthPx Available width in pixels
+ * @param density Screen pixel density
+ * @param tvCharsWide Number of characters wide (including TV border)
+ * @param minCharHeight Minimum character height
+ */
+fun calculateOptimalCharDimensions(
+    availableWidthPx: Float,
+    density: Float,
+    tvCharsWide: Int = 36,  // 32 + 4 for borders
+    minCharHeight: Float = 8f
+): Pair<Float, Float> {
+    // Calculate spacing ratio relative to char width
+    val spacingRatio = CHARACTER_SPACING / CHAR_WIDTH
+
+    // Account for density: charWidth values get multiplied by density during rendering
+    // So we need: (tvCharsWide * (charWidth + spacing)) * density = availableWidthPx
+    // Therefore: charWidth = (availableWidthPx / density) / (tvCharsWide + (tvCharsWide - 1) * spacingRatio)
+    val availableWidthDensityIndependent = availableWidthPx / density
+    val maxCharWidth = availableWidthDensityIndependent / (tvCharsWide + (tvCharsWide - 1) * spacingRatio)
+
+    // Calculate char height maintaining 1:2 aspect ratio
+    val charHeight = (maxCharWidth * 2f).coerceAtLeast(minCharHeight)
+    val charWidth = charHeight / 2f
+
+    return Pair(charWidth, charHeight)
+}
 
 /**
  * Parse ASCII art sprite-sheet format.
@@ -323,12 +355,33 @@ fun AsciiCanvas(
 fun AsciiContentWithTv(
     content: String,
     fps: Float = 12f,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    availableWidthDp: Dp? = null
 ) {
+    // Calculate optimal dimensions if available space is provided
+    val (charWidth, charHeight) = if (availableWidthDp != null) {
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        with(density) {
+            calculateOptimalCharDimensions(
+                availableWidthPx = availableWidthDp.toPx(),
+                density = this.density
+            )
+        }
+    } else {
+        Pair(CHAR_WIDTH, CHAR_HEIGHT)
+    }
+
+    // Scale spacing proportionally
+    val scaleFactor = charWidth / CHAR_WIDTH
+
     AsciiContentView(
         content = content,
         fps = fps,
         showTvFrame = true,
+        charWidth = charWidth,
+        charHeight = charHeight,
+        characterSpacing = CHARACTER_SPACING * scaleFactor,
+        lineSpacing = LINE_SPACING * scaleFactor,
         modifier = modifier
     )
 }
