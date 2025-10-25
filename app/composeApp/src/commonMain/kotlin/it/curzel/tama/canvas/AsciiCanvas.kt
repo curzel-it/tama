@@ -252,26 +252,32 @@ fun AsciiCanvas(
     backgroundColor: Color,
     modifier: Modifier = Modifier
 ) {
+    // Validate and sanitize input parameters to avoid constraint errors
+    val safeCharWidth = charWidth.coerceAtLeast(1f)
+    val safeCharHeight = charHeight.coerceAtLeast(1f)
+    val safeCharSpacing = characterSpacing.coerceAtLeast(0f)
+    val safeLineSpacing = lineSpacing.coerceAtLeast(0f)
+
     val textMeasurer = rememberTextMeasurer()
     val firaCode = firaCodeFontFamily()
-    val lines = content.split('\n')
+    val lines = content.split('\n').filter { it.isNotEmpty() }
     val maxLineLength = lines.maxOfOrNull { it.length } ?: 0
 
-    // Calculate canvas dimensions in pixels
-    val canvasWidthPx = maxLineLength * (charWidth + characterSpacing)
-    val canvasHeightPx = lines.size * (charHeight + lineSpacing)
+    // Calculate canvas dimensions in dp with minimum size
+    val canvasWidthDp = (maxLineLength * (safeCharWidth + safeCharSpacing)).coerceAtLeast(10f).dp
+    val canvasHeightDp = (lines.size * (safeCharHeight + safeLineSpacing)).coerceAtLeast(10f).dp
 
-    // Text style for rendering characters
+    // Text style for rendering characters with validated font size
     val textStyle = TextStyle(
         fontFamily = firaCode,
-        fontSize = charHeight.sp,
+        fontSize = safeCharHeight.coerceAtLeast(8f).sp,
         color = textColor
     )
 
     Canvas(
         modifier = modifier
-            .width(canvasWidthPx.dp)
-            .height(canvasHeightPx.dp)
+            .width(canvasWidthDp)
+            .height(canvasHeightDp)
     ) {
         // Fill background
         drawRect(
@@ -279,20 +285,32 @@ fun AsciiCanvas(
             size = size
         )
 
-        // Draw each character at precise position
-        // This mimics the JavaScript implementation where each character
-        // is drawn individually at x * (charWidth + spacing), y * (charHeight + spacing)
-        lines.forEachIndexed { lineIndex, line ->
-            line.forEachIndexed { charIndex, char ->
-                val x = charIndex * (charWidth + characterSpacing) * density
-                val y = lineIndex * (charHeight + lineSpacing) * density
+        // Only draw if we have valid content and dimensions
+        if (maxLineLength > 0 && lines.isNotEmpty() &&
+            size.width > 0f && size.height > 0f &&
+            density > 0f) {
+            // Draw each character at precise position
+            lines.forEachIndexed { lineIndex, line ->
+                line.forEachIndexed { charIndex, char ->
+                    if (char.isWhitespace() && char != ' ') return@forEachIndexed
 
-                drawText(
-                    textMeasurer = textMeasurer,
-                    text = char.toString(),
-                    topLeft = Offset(x, y),
-                    style = textStyle
-                )
+                    val x = charIndex * (safeCharWidth + safeCharSpacing) * density
+                    val y = lineIndex * (safeCharHeight + safeLineSpacing) * density
+
+                    // Only draw if position is within canvas bounds
+                    if (x >= 0f && y >= 0f && x < size.width && y < size.height) {
+                        try {
+                            drawText(
+                                textMeasurer = textMeasurer,
+                                text = char.toString(),
+                                topLeft = Offset(x, y),
+                                style = textStyle
+                            )
+                        } catch (e: IllegalArgumentException) {
+                            // Skip this character if drawing fails
+                        }
+                    }
+                }
             }
         }
     }

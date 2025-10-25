@@ -51,7 +51,6 @@ fun TabNavigationScreen() {
                                 contentDescription = tab.title,
                                 colorFilter = ColorFilter.tint(iconTint),
                                 modifier = Modifier.size(32.dp),
-                                filterQuality = FilterQuality.None
                             )
                         },
                         label = { Text(tab.title, color = iconTint) },
