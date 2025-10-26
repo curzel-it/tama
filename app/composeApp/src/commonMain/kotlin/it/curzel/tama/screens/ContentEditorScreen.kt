@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import it.curzel.tama.content.ContentWipUseCase
 import it.curzel.tama.midi.MidiComposerScreen
 import it.curzel.tama.pixeleditor.PixelEditorScreen
 import it.curzel.tama.storage.ConfigStorage
@@ -45,18 +46,27 @@ fun ContentEditorScreen(
         return
     }
 
+    var refreshTrigger by remember { mutableIntStateOf(0) }
+
     when (currentScreen) {
         EditorScreen.Main -> MainEditorScreen(
             onNavigateToMidi = { currentScreen = EditorScreen.MidiComposer },
-            onNavigateToPixel = { currentScreen = EditorScreen.PixelEditor }
+            onNavigateToPixel = { currentScreen = EditorScreen.PixelEditor },
+            refreshTrigger = refreshTrigger
         )
 
         EditorScreen.MidiComposer -> MidiComposerScreen(
-            onBack = { currentScreen = EditorScreen.Main }
+            onBack = {
+                currentScreen = EditorScreen.Main
+                refreshTrigger++
+            }
         )
 
         EditorScreen.PixelEditor -> PixelEditorScreen(
-            onBack = { currentScreen = EditorScreen.Main }
+            onBack = {
+                currentScreen = EditorScreen.Main
+                refreshTrigger++
+            }
         )
     }
 }
@@ -64,7 +74,8 @@ fun ContentEditorScreen(
 @Composable
 fun MainEditorScreen(
     onNavigateToMidi: () -> Unit,
-    onNavigateToPixel: () -> Unit
+    onNavigateToPixel: () -> Unit,
+    refreshTrigger: Int = 0
 ) {
     val scrollState = rememberScrollState()
 
@@ -85,6 +96,8 @@ fun MainEditorScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             FileSection()
+
+            ContentPreviewSection(refreshTrigger = refreshTrigger)
 
             EditorToolsSection(
                 onNavigateToMidi = onNavigateToMidi,

@@ -5,6 +5,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import it.curzel.tama.content.ContentWipStorageJvm
+import it.curzel.tama.content.ContentWipUseCase
 import it.curzel.tama.midi.MidiComposer
 import it.curzel.tama.midi.MidiComposerJvm
 import it.curzel.tama.midi.MidiPlayer
@@ -25,6 +27,7 @@ fun main() = application {
     ReportedContentStorage.provider = ReportedContentStorageJvm()
     PrivacyPolicyManager.opener = PrivacyPolicyOpenerJvm()
     ContentSharingManager.sharer = ContentSharerJvm()
+    ContentWipUseCase.storageProvider = ContentWipStorageJvm()
 
     Window(
         onCloseRequest = ::exitApplication,

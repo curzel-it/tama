@@ -3,6 +3,7 @@ package it.curzel.tama.midi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import it.curzel.tama.content.ContentWipUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,9 +18,31 @@ class MidiComposerViewModel {
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
+    private val scope = CoroutineScope(Dispatchers.Default)
+
+    init {
+        loadFromWip()
+    }
+
+    private fun loadFromWip() {
+        scope.launch {
+            val loadedComposition = ContentWipUseCase.loadMidiComposition()
+            if (loadedComposition != null) {
+                composition = loadedComposition
+            }
+        }
+    }
+
+    private fun saveWip() {
+        scope.launch {
+            ContentWipUseCase.saveMidi(composition)
+        }
+    }
+
     fun updateComposition(newComposition: String) {
         composition = newComposition
         errorMessage = null
+        saveWip()
     }
 
     fun play() {

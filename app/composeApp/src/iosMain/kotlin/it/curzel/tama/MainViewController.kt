@@ -1,6 +1,8 @@
 package it.curzel.tama
 
 import androidx.compose.ui.window.ComposeUIViewController
+import it.curzel.tama.content.ContentWipStorageIos
+import it.curzel.tama.content.ContentWipUseCase
 import it.curzel.tama.midi.MidiComposer
 import it.curzel.tama.midi.MidiComposerIos
 import it.curzel.tama.midi.MidiPlayer
@@ -21,5 +23,6 @@ fun MainViewController() = ComposeUIViewController {
     ReportedContentStorage.provider = ReportedContentStorageIos()
     PrivacyPolicyManager.opener = PrivacyPolicyOpenerIos()
     ContentSharingManager.sharer = ContentSharerIos()
+    ContentWipUseCase.storageProvider = ContentWipStorageIos()
     App()
 }

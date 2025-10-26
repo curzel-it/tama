@@ -6,6 +6,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import it.curzel.tama.content.ContentWipUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 enum class ToolType {
     PENCIL,
@@ -58,8 +62,34 @@ class PixelEditorViewModel {
     val canRedo: Boolean
         get() = undoRedoManager.canRedo()
 
+    private val scope = CoroutineScope(Dispatchers.Default)
+
     init {
-        addFrame()
+        loadFromWip()
+    }
+
+    private fun loadFromWip() {
+        scope.launch {
+            val wipData = ContentWipUseCase.loadPixelArtFrames()
+            if (wipData != null) {
+                val (loadedFrames, loadedWidth, loadedFps) = wipData
+                if (loadedFrames.isNotEmpty()) {
+                    frames = loadedFrames
+                    currentFrameIndex = 0
+                    canvasWidth = loadedWidth
+                    canvasHeight = loadedFrames[0].height
+                    fps = loadedFps
+                    return@launch
+                }
+            }
+            addFrame()
+        }
+    }
+
+    private fun saveWip() {
+        scope.launch {
+            ContentWipUseCase.savePixelArt(frames, fps)
+        }
     }
 
     fun updateCanvasWidth(width: Int) {
@@ -78,6 +108,7 @@ class PixelEditorViewModel {
             is ValidationResult.Valid -> validationError = null
             is ValidationResult.Invalid -> validationError = result.message
         }
+        saveWip()
     }
 
     fun resizeCanvas() {
@@ -230,6 +261,7 @@ class PixelEditorViewModel {
             fps = fps
         )
         undoRedoManager.saveState(state)
+        saveWip()
     }
 
     private fun restoreState(state: EditorState) {
@@ -238,6 +270,7 @@ class PixelEditorViewModel {
         canvasWidth = state.canvasWidth
         canvasHeight = state.canvasHeight
         fps = state.fps
+        saveWip()
     }
 
     private fun validateCurrentDimensions() {

@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import it.curzel.tama.content.ContentWipStorageAndroid
+import it.curzel.tama.content.ContentWipUseCase
 import it.curzel.tama.midi.MidiComposer
 import it.curzel.tama.midi.MidiComposerAndroid
 import it.curzel.tama.midi.MidiPlayer
@@ -30,6 +32,7 @@ class MainActivity : ComponentActivity() {
         ReportedContentStorage.provider = ReportedContentStorageAndroid(applicationContext)
         PrivacyPolicyManager.opener = PrivacyPolicyOpenerAndroid()
         ContentSharingManager.sharer = ContentSharerAndroid(applicationContext)
+        ContentWipUseCase.storageProvider = ContentWipStorageAndroid(applicationContext)
 
         setContent {
             App()
