@@ -14,7 +14,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.*
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -24,7 +23,6 @@ import kotlin.math.abs
 
 private const val TAG = "PixelCanvas"
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PixelCanvas(
     viewModel: PixelEditorViewModel,
@@ -61,18 +59,36 @@ fun PixelCanvas(
     Canvas(
         modifier = modifier
             .fillMaxSize()
-            .onPointerEvent(PointerEventType.Scroll) { event ->
-                val scrollDelta = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
-                if (scrollDelta != 0f) {
-                    val zoomFactor = if (scrollDelta > 0) 0.9f else 1.1f
-                    val center = event.changes.firstOrNull()?.position
-                    if (center != null) {
-                        viewModel.onZoom(zoomFactor, center.x, center.y)
-                    }
-                }
-            }
-            .pointerInput(viewModel.currentTool, cellSize, centerOffsetX, centerOffsetY) {
+            // TODO: onPointerEvent is desktop-only and cannot be used in commonMain
+            // Need to implement cross-platform zoom handling
+            // .onPointerEvent(PointerEventType.Scroll) { event ->
+            //     val scrollDelta = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
+            //     if (scrollDelta != 0f) {
+            //         val zoomFactor = if (scrollDelta > 0) 0.9f else 1.1f
+            //         val center = event.changes.firstOrNull()?.position
+            //         if (center != null) {
+            //             viewModel.onZoom(zoomFactor, center.x, center.y)
+            //         }
+            //     }
+            // }
+            .pointerInput(viewModel.currentTool) {
                 awaitEachGesture {
+                    // Calculate base cell size once per gesture
+                    val baseCellSize = minOf(
+                        size.width / frame.width.toFloat(),
+                        size.height / frame.height.toFloat()
+                    )
+
+                    // Helper function to get current transform values
+                    fun getCurrentTransform(): Triple<Float, Float, Float> {
+                        val currentCellSize = baseCellSize * viewModel.zoomLevel
+                        val currentCanvasWidth = frame.width * currentCellSize
+                        val currentCanvasHeight = frame.height * currentCellSize
+                        val currentCenterOffsetX = (size.width - currentCanvasWidth) / 2f
+                        val currentCenterOffsetY = (size.height - currentCanvasHeight) / 2f
+                        return Triple(currentCellSize, currentCenterOffsetX, currentCenterOffsetY)
+                    }
+
                     // State for drawing
                     var lastDrawnCell: Pair<Int, Int>? = null
 
@@ -93,8 +109,9 @@ fun PixelCanvas(
 
                     // Process the down event for drawing
                     if (viewModel.currentTool == ToolType.PENCIL || viewModel.currentTool == ToolType.ERASER) {
-                        val canvasX = (downPosition.x - centerOffsetX - viewModel.panOffset.x) / cellSize
-                        val canvasY = (downPosition.y - centerOffsetY - viewModel.panOffset.y) / cellSize
+                        val (currentCellSize, currentCenterOffsetX, currentCenterOffsetY) = getCurrentTransform()
+                        val canvasX = (downPosition.x - currentCenterOffsetX - viewModel.panOffset.x) / currentCellSize
+                        val canvasY = (downPosition.y - currentCenterOffsetY - viewModel.panOffset.y) / currentCellSize
 
                         println("[$TAG] First down: pos=$downPosition, canvas=($canvasX,$canvasY)")
 
@@ -119,8 +136,8 @@ fun PixelCanvas(
                             println("[$TAG] Pointers: total=${pointers.size}, active=${activePointers.size}")
 
                             when {
-                                // Multi-touch (zoom/pan)
-                                activePointers.size >= 2 -> {
+                                // Multi-touch (zoom/pan) - only when Move tool is selected
+                                activePointers.size >= 2 && viewModel.currentTool == ToolType.MOVE -> {
                                     wasMultiTouch = true
                                     lastDrawnCell = null // Stop drawing
 
@@ -149,6 +166,14 @@ fun PixelCanvas(
                                     pointers.forEach { it.consume() }
                                 }
 
+                                // Multi-touch with Pencil/Eraser - ignore and stop drawing
+                                activePointers.size >= 2 -> {
+                                    wasMultiTouch = true
+                                    lastDrawnCell = null
+                                    println("[$TAG] Multi-touch while drawing - ignoring")
+                                    pointers.forEach { it.consume() }
+                                }
+
                                 // Single touch
                                 activePointers.size == 1 && !wasMultiTouch -> {
                                     val pointer = activePointers[0]
@@ -167,8 +192,9 @@ fun PixelCanvas(
                                         }
 
                                         ToolType.PENCIL, ToolType.ERASER -> {
-                                            val canvasX = (position.x - centerOffsetX - viewModel.panOffset.x) / cellSize
-                                            val canvasY = (position.y - centerOffsetY - viewModel.panOffset.y) / cellSize
+                                            val (currentCellSize, currentCenterOffsetX, currentCenterOffsetY) = getCurrentTransform()
+                                            val canvasX = (position.x - currentCenterOffsetX - viewModel.panOffset.x) / currentCellSize
+                                            val canvasY = (position.y - currentCenterOffsetY - viewModel.panOffset.y) / currentCellSize
 
                                             if (canvasX >= 0 && canvasY >= 0 && canvasX < frame.width && canvasY < frame.height) {
                                                 val x = canvasX.toInt().coerceIn(0, frame.width - 1)

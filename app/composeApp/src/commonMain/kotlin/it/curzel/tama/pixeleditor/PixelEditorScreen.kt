@@ -29,60 +29,47 @@ fun PixelEditorScreen(
         val isLandscape = maxWidth > maxHeight
 
         if (isLandscape) {
-            PixelEditorLandscapeLayout(
-                viewModel = viewModel,
-                onBack = onBack
-            )
+            PixelEditorLandscapeLayout(viewModel = viewModel)
         } else {
-            PixelEditorPortraitLayout(
-                viewModel = viewModel,
-                onBack = onBack
-            )
+            PixelEditorPortraitLayout(viewModel = viewModel, onBack = onBack)
         }
     }
 }
 
 @Composable
-fun PixelEditorLandscapeLayout(
-    viewModel: PixelEditorViewModel,
-    onBack: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        EditorNavigationBar(onBack = onBack)
-
-        Row(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.width(100.dp)
-            ) {
-                FrameListView(
-                    frames = viewModel.frames,
-                    currentFrameIndex = viewModel.currentFrameIndex,
-                    onFrameSelect = { viewModel.selectFrame(it) },
-                    onFrameDelete = { viewModel.deleteFrame(it) },
-                    onAddFrame = { viewModel.addFrame() },
-                    isLandscape = true,
-                    canvasWidth = viewModel.canvasWidth,
-                    canvasHeight = viewModel.canvasHeight,
-                    fps = viewModel.fps
-                )
-            }
-
-            CanvasWithZoomDisplay(
-                viewModel = viewModel,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-            )
-
-            ToolsPanelView(
+fun PixelEditorLandscapeLayout(viewModel: PixelEditorViewModel) {
+    Row(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.width(100.dp)
+        ) {
+            FrameListView(
+                frames = viewModel.frames,
+                currentFrameIndex = viewModel.currentFrameIndex,
+                onFrameSelect = { viewModel.selectFrame(it) },
+                onFrameDelete = { viewModel.deleteFrame(it) },
+                onAddFrame = { viewModel.addFrame() },
                 isLandscape = true,
-                currentTool = viewModel.currentTool,
-                onSelectTool = { viewModel.selectTool(it) },
-                onClearCanvas = { viewModel.clearCurrentFrame() },
-                onFillCanvas = { viewModel.fillCurrentFrame() },
-                onOpenCanvasSettings = { viewModel.openSettingsMenu() },
+                canvasWidth = viewModel.canvasWidth,
+                canvasHeight = viewModel.canvasHeight,
+                fps = viewModel.fps
             )
         }
+
+        CanvasWithZoomDisplay(
+            viewModel = viewModel,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+        )
+
+        ToolsPanelView(
+            isLandscape = true,
+            currentTool = viewModel.currentTool,
+            onSelectTool = { viewModel.selectTool(it) },
+            onClearCanvas = { viewModel.clearCurrentFrame() },
+            onFillCanvas = { viewModel.fillCurrentFrame() },
+            onOpenCanvasSettings = { viewModel.openSettingsMenu() },
+        )
     }
 }
 

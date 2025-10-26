@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -39,19 +41,19 @@ fun FrameListView(
         maxSize = 80f
     )
 
-    val baseModifier = modifier.background(MaterialTheme.colorScheme.surface).padding(8.dp)
+    val baseModifier = modifier.background(MaterialTheme.colorScheme.surface)
     val stackModifier = if (isLandscape) {
-        baseModifier.width(100.dp).fillMaxHeight()
+        baseModifier.fillMaxHeight()
     } else {
-        baseModifier.fillMaxWidth().height(100.dp)
+        baseModifier.fillMaxWidth()
     }
+
 
     Stack(
         orientation = if (isLandscape) StackOrientation.Vertical else StackOrientation.Horizontal,
         modifier = stackModifier,
-        spacing = 8.dp
     ) {
-        item {
+        Box(modifier = Modifier.padding(8.dp)) {
             AnimatedPreviewView(
                 frames = frames,
                 fps = fps,
@@ -61,25 +63,58 @@ fun FrameListView(
             )
         }
 
-        itemsIndexed(frames) { index, frame ->
-            FrameThumbnail(
-                frame = frame,
-                isSelected = index == currentFrameIndex,
-                onSelect = { onFrameSelect(index) },
-                onDelete = if (index == currentFrameIndex && frames.size > 1) {
-                    { onFrameDelete(index) }
-                } else null,
-                thumbnailWidth = thumbWidth,
-                thumbnailHeight = thumbHeight
-            )
-        }
+        if (isLandscape) {
+            LazyColumn(
+                modifier = Modifier.padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                itemsIndexed(frames) { index, frame ->
+                    FrameThumbnail(
+                        frame = frame,
+                        isSelected = index == currentFrameIndex,
+                        onSelect = { onFrameSelect(index) },
+                        onDelete = if (index == currentFrameIndex && frames.size > 1) {
+                            { onFrameDelete(index) }
+                        } else null,
+                        thumbnailWidth = thumbWidth,
+                        thumbnailHeight = thumbHeight
+                    )
+                }
 
-        item {
-            AddFrameButton(
-                onClick = onAddFrame,
-                width = thumbWidth,
-                height = thumbHeight
-            )
+                item {
+                    AddFrameButton(
+                        onClick = onAddFrame,
+                        width = thumbWidth,
+                        height = thumbHeight
+                    )
+                }
+            }
+        } else {
+            LazyRow(
+                modifier = Modifier.padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                itemsIndexed(frames) { index, frame ->
+                    FrameThumbnail(
+                        frame = frame,
+                        isSelected = index == currentFrameIndex,
+                        onSelect = { onFrameSelect(index) },
+                        onDelete = if (index == currentFrameIndex && frames.size > 1) {
+                            { onFrameDelete(index) }
+                        } else null,
+                        thumbnailWidth = thumbWidth,
+                        thumbnailHeight = thumbHeight
+                    )
+                }
+
+                item {
+                    AddFrameButton(
+                        onClick = onAddFrame,
+                        width = thumbWidth,
+                        height = thumbHeight
+                    )
+                }
+            }
         }
     }
 }
@@ -190,7 +225,7 @@ private fun AddFrameButton(
             .border(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.outline,
-                shape = RoundedCornerShape(4.dp)
+                shape = RoundedCornerShape(4.dp),
             )
             .clip(RoundedCornerShape(4.dp))
             .clickable { onClick() }
