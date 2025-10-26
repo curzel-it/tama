@@ -34,10 +34,22 @@ Implement the cleanest and simplest possible version of the ui.
 Have dedicated files for `SomethingView`, `SomethingViewModel` and `SomethingUseCase` where applicable.
 For example, should we need a special "account" icon with badges, profile image, login/logout states, I would expect something like: ProfileIconView, ProfileIconViewModel and ProfileIconUseCase
 
-## Building the KMP app
-You can build and run the Kotlin Multilplatform app like this:
+## Building
+Only build/run the Kotlin in jvm / Desktop. Do not ever attempt to build any other way, as it will not work and you will waste a ton of time ;)
 ```bash 
 cd app && ./gradlew jvmRun -DmainClass=it.curzel.tama.MainKt
+```
+Rust Server:
+```bash 
+cargo run --bin server
+```
+Rust CLI:
+```bash 
+cargo run --bin tama
+```
+Rust Midi Composer:
+```bash 
+cargo run --bin midi_composer
 ```
 
 ## Native dependencies in KMP app

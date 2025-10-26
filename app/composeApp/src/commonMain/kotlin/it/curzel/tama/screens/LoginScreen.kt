@@ -35,15 +35,25 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var showWebView by remember { mutableStateOf(false) }
+    var showPrivacyWebView by remember { mutableStateOf(false) }
+    var showTermsWebView by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
 
-    if (showWebView) {
+    if (showPrivacyWebView) {
         WebViewScreen(
             url = PrivacyPolicyManager.PRIVACY_POLICY_URL,
             title = "Privacy Policy",
-            onBack = { showWebView = false }
+            onBack = { showPrivacyWebView = false }
+        )
+        return
+    }
+
+    if (showTermsWebView) {
+        WebViewScreen(
+            url = PrivacyPolicyManager.TERMS_AND_CONDITIONS_URL,
+            title = "Terms and Conditions",
+            onBack = { showTermsWebView = false }
         )
         return
     }
@@ -169,17 +179,42 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            TextButton(
-                onClick = {
-                    PrivacyPolicyManager.opener.openPrivacyPolicy(
-                        onShowWebView = { showWebView = true }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = {
+                        PrivacyPolicyManager.opener.openPrivacyPolicy(
+                            onShowWebView = { showPrivacyWebView = true }
+                        )
+                    }
+                ) {
+                    Text(
+                        text = "Privacy Policy",
+                        fontWeight = FontWeight.Bold
                     )
                 }
-            ) {
+
                 Text(
-                    text = "Privacy Policy",
-                    fontWeight = FontWeight.Bold
+                    text = " • ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                TextButton(
+                    onClick = {
+                        PrivacyPolicyManager.opener.openTermsAndConditions(
+                            onShowWebView = { showTermsWebView = true }
+                        )
+                    }
+                ) {
+                    Text(
+                        text = "Terms and Conditions",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

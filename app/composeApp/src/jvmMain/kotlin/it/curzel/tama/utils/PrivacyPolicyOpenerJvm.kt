@@ -13,4 +13,14 @@ class PrivacyPolicyOpenerJvm : PrivacyPolicyOpener {
             e.printStackTrace()
         }
     }
+
+    override fun openTermsAndConditions(onShowWebView: () -> Unit) {
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(URI(PrivacyPolicyManager.TERMS_AND_CONDITIONS_URL))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

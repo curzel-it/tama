@@ -3,6 +3,7 @@ package it.curzel.tama.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewState
@@ -24,9 +25,22 @@ fun WebViewScreen(
             onBackClick = onBack
         )
 
-        WebView(
-            state = state,
+        Box(
             modifier = Modifier.fillMaxSize()
-        )
+        ) {
+            WebView(
+                state = state,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            if (state.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
     }
 }

@@ -21,10 +21,16 @@ enum class EditorScreen {
 }
 
 @Composable
-fun ContentEditorScreen() {
+fun ContentEditorScreen(
+    onSubScreenChange: (Boolean) -> Unit = {}
+) {
     var currentScreen by remember { mutableStateOf(EditorScreen.Main) }
     var isLoggedIn by remember { mutableStateOf(false) }
     var checkLoginTrigger by remember { mutableStateOf(0) }
+
+    LaunchedEffect(currentScreen) {
+        onSubScreenChange(currentScreen != EditorScreen.Main)
+    }
 
     LaunchedEffect(checkLoginTrigger) {
         val channel = ConfigStorage.loadChannelInfo()

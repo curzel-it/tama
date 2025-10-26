@@ -2,8 +2,6 @@ package it.curzel.tama.pixeleditor
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,24 +16,6 @@ fun PixelEditorScreen(
     viewModel: PixelEditorViewModel = remember { PixelEditorViewModel() },
     onBack: () -> Unit
 ) {
-    var showKebabMenu by remember { mutableStateOf(false) }
-
-    AnimatedPreviewPanel(
-        frames = viewModel.frames,
-        fps = viewModel.fps,
-        charWidth = viewModel.charWidth,
-        charHeight = viewModel.charHeight,
-        visible = viewModel.showPreview,
-        onClose = { viewModel.togglePreview() }
-    )
-
-    if (viewModel.showToolsMenu) {
-        ToolsDialog(
-            viewModel = viewModel,
-            onDismiss = { viewModel.closeToolsMenu() }
-        )
-    }
-
     if (viewModel.showSettingsMenu) {
         CanvasSettingsDialog(
             viewModel = viewModel,
@@ -43,198 +23,135 @@ fun PixelEditorScreen(
         )
     }
 
-    if (viewModel.showFramesMenu) {
-        FramesDialog(
-            viewModel = viewModel,
-            onDismiss = { viewModel.closeFramesMenu() }
-        )
-    }
-
-    Column(
+    BoxWithConstraints(
         modifier = Modifier.fillMaxSize()
     ) {
-        Box {
-            MyNavigationBar(
-                title = "Pixel Art Editor",
-                onBackClick = onBack
+        val isLandscape = maxWidth > maxHeight
+
+        if (isLandscape) {
+            PixelEditorLandscapeLayout(
+                viewModel = viewModel,
+                onBack = onBack
+            )
+        } else {
+            PixelEditorPortraitLayout(
+                viewModel = viewModel,
+                onBack = onBack
+            )
+        }
+    }
+}
+
+@Composable
+fun PixelEditorLandscapeLayout(
+    viewModel: PixelEditorViewModel,
+    onBack: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        EditorNavigationBar(onBack = onBack)
+
+        Row(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.width(100.dp)
+            ) {
+                FrameListView(
+                    frames = viewModel.frames,
+                    currentFrameIndex = viewModel.currentFrameIndex,
+                    onFrameSelect = { viewModel.selectFrame(it) },
+                    onFrameDelete = { viewModel.deleteFrame(it) },
+                    onAddFrame = { viewModel.addFrame() },
+                    isLandscape = true,
+                    canvasWidth = viewModel.canvasWidth,
+                    canvasHeight = viewModel.canvasHeight,
+                    fps = viewModel.fps
+                )
+            }
+
+            CanvasWithZoomDisplay(
+                viewModel = viewModel,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
             )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                IconButton(
-                    onClick = { showKebabMenu = true },
-                    modifier = Modifier.padding(end = 8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Menu"
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = showKebabMenu,
-                    onDismissRequest = { showKebabMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Tools") },
-                        onClick = {
-                            showKebabMenu = false
-                            viewModel.openToolsMenu()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Canvas Settings") },
-                        onClick = {
-                            showKebabMenu = false
-                            viewModel.openSettingsMenu()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Frames") },
-                        onClick = {
-                            showKebabMenu = false
-                            viewModel.openFramesMenu()
-                        }
-                    )
-                }
-            }
+            ToolsPanelView(
+                isLandscape = true,
+                onClearCanvas = { viewModel.clearCurrentFrame() },
+                onFillCanvas = { viewModel.fillCurrentFrame() },
+                onOpenCanvasSettings = { viewModel.openSettingsMenu() },
+            )
         }
+    }
+}
+
+@Composable
+fun PixelEditorPortraitLayout(
+    viewModel: PixelEditorViewModel,
+    onBack: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        EditorNavigationBar(onBack = onBack)
+
+        ToolsPanelView(
+            isLandscape = false,
+            onClearCanvas = { viewModel.clearCurrentFrame() },
+            onFillCanvas = { viewModel.fillCurrentFrame() },
+            onOpenCanvasSettings = { viewModel.openSettingsMenu() },
+        )
+
+        CanvasWithZoomDisplay(
+            viewModel = viewModel,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
+
+        FrameListView(
+            frames = viewModel.frames,
+            currentFrameIndex = viewModel.currentFrameIndex,
+            onFrameSelect = { viewModel.selectFrame(it) },
+            onFrameDelete = { viewModel.deleteFrame(it) },
+            onAddFrame = { viewModel.addFrame() },
+            isLandscape = false,
+            canvasWidth = viewModel.canvasWidth,
+            canvasHeight = viewModel.canvasHeight,
+            fps = viewModel.fps
+        )
+    }
+}
+
+@Composable
+fun EditorNavigationBar(onBack: () -> Unit) {
+    MyNavigationBar(
+        title = "Pixel Art Editor",
+        onBackClick = onBack
+    )
+}
+
+@Composable
+fun CanvasWithZoomDisplay(
+    viewModel: PixelEditorViewModel,
+    modifier: Modifier = Modifier
+) {
+    BoxWithConstraints(modifier = modifier) {
+        PixelCanvas(
+            viewModel = viewModel,
+            availableWidth = maxWidth,
+            availableHeight = maxHeight,
+            modifier = Modifier.fillMaxSize()
+        )
 
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .weight(1f),
-            contentAlignment = Alignment.Center
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
         ) {
-            FullScreenCanvasWithControls(viewModel)
-        }
-    }
-}
-
-@Composable
-private fun FullScreenCanvasWithControls(viewModel: PixelEditorViewModel) {
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        BoxWithConstraints(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            PixelCanvas(
-                frame = viewModel.currentFrame,
-                onPixelChange = { x, y, value ->
-                    viewModel.setPixel(x, y, value)
-                },
-                availableWidth = maxWidth,
-                availableHeight = maxHeight,
-                zoomLevel = viewModel.zoomLevel,
-                panOffset = viewModel.panOffset,
-                onPanOffsetChange = { viewModel.updatePanOffset(it) },
-                isPanMode = viewModel.isPanMode,
-                modifier = Modifier.fillMaxSize()
+            Text(
+                text = "Zoom: ${kotlin.math.round(viewModel.zoomLevel * 10) / 10.0}x",
+                style = MaterialTheme.typography.bodySmall
             )
         }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FloatingActionButton(
-                onClick = { viewModel.togglePanMode() },
-                containerColor = if (viewModel.isPanMode)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Text(if (viewModel.isPanMode) "Draw" else "Pan")
-            }
-
-            FloatingActionButton(
-                onClick = { viewModel.zoomIn() }
-            ) {
-                Text("+")
-            }
-
-            FloatingActionButton(
-                onClick = { viewModel.zoomOut() }
-            ) {
-                Text("-")
-            }
-
-            FloatingActionButton(
-                onClick = { viewModel.resetZoom() }
-            ) {
-                Text("Reset")
-            }
-        }
-
-        Text(
-            text = "Zoom: ${kotlin.math.round(viewModel.zoomLevel * 10) / 10.0}x",
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp),
-            style = MaterialTheme.typography.bodySmall
-        )
     }
-}
-
-@Composable
-private fun ToolsDialog(
-    viewModel: PixelEditorViewModel,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Tools") },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TamaButton(
-                    onClick = {
-                        viewModel.clearCurrentFrame()
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = viewModel.currentFrame != null
-                ) {
-                    Text("Clear Canvas")
-                }
-
-                TamaButton(
-                    onClick = {
-                        viewModel.fillCurrentFrame()
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = viewModel.currentFrame != null
-                ) {
-                    Text("Fill Canvas")
-                }
-
-                TamaButton(
-                    onClick = {
-                        viewModel.togglePreview()
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = viewModel.frames.isNotEmpty()
-                ) {
-                    Text(if (viewModel.showPreview) "Hide Preview" else "Show Preview")
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
 }
 
 @Composable
@@ -312,27 +229,3 @@ private fun CanvasSettingsDialog(
     )
 }
 
-@Composable
-private fun FramesDialog(
-    viewModel: PixelEditorViewModel,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Frames") },
-        text = {
-            FrameListView(
-                frames = viewModel.frames,
-                currentFrameIndex = viewModel.currentFrameIndex,
-                onFrameSelect = { index -> viewModel.selectFrame(index) },
-                onFrameDelete = { index -> viewModel.deleteFrame(index) },
-                onAddFrame = { viewModel.addFrame() }
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
-}

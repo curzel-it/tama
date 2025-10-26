@@ -25,13 +25,15 @@ enum class Tab(val title: String) {
 @Composable
 fun TabNavigationScreen() {
     var selectedTab by remember { mutableStateOf(Tab.Feed) }
+    var isInSubScreen by remember { mutableStateOf(false) }
     val colorScheme = MaterialTheme.colorScheme
     val isLandscapeMode = isLandscape()
 
     val selectedColor = Color(0xFF88C070)
     val unselectedColor = Color(0xFF4A6A40)
 
-    val shouldHideTabBar = isLandscapeMode && selectedTab == Tab.Feed
+    val shouldHideTabBar = (isLandscapeMode && selectedTab == Tab.Feed) ||
+                           (selectedTab == Tab.Create && isInSubScreen)
 
     Scaffold(
         bottomBar = {
@@ -77,7 +79,9 @@ fun TabNavigationScreen() {
         Box(modifier = Modifier.padding(if (shouldHideTabBar) PaddingValues(0.dp) else paddingValues)) {
             when (selectedTab) {
                 Tab.Feed -> FeedScreen(isLandscape = isLandscapeMode)
-                Tab.Create -> ContentEditorScreen()
+                Tab.Create -> ContentEditorScreen(
+                    onSubScreenChange = { inSubScreen -> isInSubScreen = inSubScreen }
+                )
                 Tab.Settings -> SettingsScreen()
             }
         }

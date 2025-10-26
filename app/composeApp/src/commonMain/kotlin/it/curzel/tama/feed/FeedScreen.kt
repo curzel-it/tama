@@ -124,186 +124,255 @@ fun FeedScreen(
                 )
             }
 
-            Column(
+            FeedContent(
+                viewModel = viewModel,
+                isLandscape = isLandscape,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
-            ) {
-                when {
-                    viewModel.isLoading && viewModel.feedItems.isEmpty() -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-
-                    viewModel.errorMessage != null && viewModel.feedItems.isEmpty() -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "Error: ${viewModel.errorMessage}",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-
-                    viewModel.feedItems.isEmpty() && !viewModel.isLoading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("Nothing to see here, please check back later")
-                        }
-                    }
-
-                    else -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            viewModel.currentItem?.let { item ->
-                                val staticFrame = remember { generateTvStatic() }
-
-                                if (isLandscape) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Spacer(modifier = Modifier.weight(1f))
-
-                                        BoxWithConstraints {
-                                            val buttonColumnWidth = 140.dp
-                                            val horizontalSpacing = 32.dp
-                                            val verticalSpacingNeeds = 90.dp
-
-                                            // TV dimensions in characters
-                                            val tvCharsWide = 36f
-                                            val tvCharsHigh = 14f
-
-                                            // Calculate available space accounting for layout elements
-                                            val availableHeight = maxHeight - verticalSpacingNeeds
-                                            val availableWidth = maxWidth - buttonColumnWidth - horizontalSpacing
-
-                                            // Calculate TV size constrained by height
-                                            val charHeightFromVertical = availableHeight / tvCharsHigh
-                                            val charWidthFromVertical = charHeightFromVertical / 2f
-                                            val tvWidthFromHeight = charWidthFromVertical * tvCharsWide
-
-                                            // Calculate TV size constrained by width
-                                            val charWidthFromHorizontal = availableWidth / tvCharsWide
-                                            val charHeightFromHorizontal = charWidthFromHorizontal * 2f
-                                            val tvHeightFromWidth = charHeightFromHorizontal * tvCharsHigh
-
-                                            // Use whichever constraint is tighter
-                                            val tvWidth = if (tvHeightFromWidth <= availableHeight) {
-                                                availableWidth
-                                            } else {
-                                                tvWidthFromHeight
-                                            }
-
-                                            AsciiContentWithTv(
-                                                content = if (viewModel.isShowingStatic) staticFrame else item.content.art,
-                                                fps = if (viewModel.isShowingStatic) 1f else item.content.fps,
-                                                availableWidthDp = tvWidth,
-                                            )
-                                        }
-
-                                        Spacer(modifier = Modifier.weight(1f))
-
-                                        Column(
-                                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                                            modifier = Modifier.width(140.dp)
-                                        ) {
-                                            TamaButton(
-                                                onClick = { viewModel.next() },
-                                                enabled = !viewModel.isShowingStatic,
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Text("Next →")
-                                            }
-                                            TamaButton(
-                                                onClick = { viewModel.previous() },
-                                                enabled = !viewModel.isShowingStatic,
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Text("← Previous")
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    // Portrait layout: vertical stack
-                                    BoxWithConstraints(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        val availableWidth = maxWidth.coerceAtMost(400.dp)
-
-                                        AsciiContentWithTv(
-                                            content = if (viewModel.isShowingStatic) staticFrame else item.content.art,
-                                            fps = if (viewModel.isShowingStatic) 1f else item.content.fps,
-                                            availableWidthDp = availableWidth
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.height(24.dp))
-
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        TamaButton(
-                                            onClick = { viewModel.previous() },
-                                            enabled = !viewModel.isShowingStatic
-                                        ) {
-                                            Text("← Previous")
-                                        }
-
-                                        TamaButton(
-                                            onClick = { viewModel.next() },
-                                            enabled = !viewModel.isShowingStatic
-                                        ) {
-                                            Text("Next →")
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(16.dp))
-
-                                    FeedItemView(item, viewModel.isShowingStatic)
-                                }
-                            }
-
-                            if (viewModel.loadingServers.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Row(
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "Loading from ${viewModel.loadingServers.size} more server(s)...",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            )
         }
 
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
+    }
+}
+
+@Composable
+fun FeedContent(
+    viewModel: FeedViewModel,
+    isLandscape: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        when {
+            viewModel.isLoading && viewModel.feedItems.isEmpty() -> {
+                FeedLoadingState()
+            }
+
+            viewModel.errorMessage != null && viewModel.feedItems.isEmpty() -> {
+                FeedErrorState(errorMessage = viewModel.errorMessage!!)
+            }
+
+            viewModel.feedItems.isEmpty() && !viewModel.isLoading -> {
+                FeedEmptyState()
+            }
+
+            else -> {
+                FeedItemWithControls(
+                    viewModel = viewModel,
+                    isLandscape = isLandscape
+                )
+
+                FeedLoadingIndicator(
+                    loadingServers = viewModel.loadingServers
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FeedLoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+fun FeedErrorState(errorMessage: String) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Error: $errorMessage",
+            color = MaterialTheme.colorScheme.error
+        )
+    }
+}
+
+@Composable
+fun FeedEmptyState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Nothing to see here, please check back later")
+    }
+}
+
+@Composable
+fun FeedItemWithControls(
+    viewModel: FeedViewModel,
+    isLandscape: Boolean
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        viewModel.currentItem?.let { item ->
+            val staticFrame = remember { generateTvStatic() }
+
+            if (isLandscape) {
+                FeedLandscapeLayout(
+                    item = item,
+                    staticFrame = staticFrame,
+                    viewModel = viewModel,
+                    isShowingStatic = viewModel.isShowingStatic
+                )
+            } else {
+                FeedPortraitLayout(
+                    item = item,
+                    staticFrame = staticFrame,
+                    viewModel = viewModel,
+                    isShowingStatic = viewModel.isShowingStatic
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FeedLoadingIndicator(loadingServers: Set<String>) {
+    if (loadingServers.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Loading from ${loadingServers.size} more server(s)...",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
+fun FeedPortraitLayout(
+    item: FeedItem,
+    staticFrame: String,
+    viewModel: FeedViewModel,
+    isShowingStatic: Boolean
+) {
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        val availableWidth = maxWidth.coerceAtMost(400.dp)
+
+        AsciiContentWithTv(
+            content = if (isShowingStatic) staticFrame else item.content.art,
+            fps = if (isShowingStatic) 1f else item.content.fps,
+            availableWidthDp = availableWidth
+        )
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TamaButton(
+            onClick = { viewModel.previous() },
+            enabled = !isShowingStatic
+        ) {
+            Text("← Previous")
+        }
+
+        TamaButton(
+            onClick = { viewModel.next() },
+            enabled = !isShowingStatic
+        ) {
+            Text("Next →")
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    FeedItemView(item, isShowingStatic)
+}
+
+@Composable
+fun FeedLandscapeLayout(
+    item: FeedItem,
+    staticFrame: String,
+    viewModel: FeedViewModel,
+    isShowingStatic: Boolean
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(modifier = Modifier.weight(1f))
+
+        BoxWithConstraints {
+            val buttonColumnWidth = 140.dp
+            val horizontalSpacing = 32.dp
+            val verticalSpacingNeeds = 90.dp
+
+            val tvCharsWide = 36f
+            val tvCharsHigh = 14f
+
+            val availableHeight = maxHeight - verticalSpacingNeeds
+            val availableWidth = maxWidth - buttonColumnWidth - horizontalSpacing
+
+            val charHeightFromVertical = availableHeight / tvCharsHigh
+            val charWidthFromVertical = charHeightFromVertical / 2f
+            val tvWidthFromHeight = charWidthFromVertical * tvCharsWide
+
+            val charWidthFromHorizontal = availableWidth / tvCharsWide
+            val charHeightFromHorizontal = charWidthFromHorizontal * 2f
+            val tvHeightFromWidth = charHeightFromHorizontal * tvCharsHigh
+
+            val tvWidth = if (tvHeightFromWidth <= availableHeight) {
+                availableWidth
+            } else {
+                tvWidthFromHeight
+            }
+
+            AsciiContentWithTv(
+                content = if (isShowingStatic) staticFrame else item.content.art,
+                fps = if (isShowingStatic) 1f else item.content.fps,
+                availableWidthDp = tvWidth,
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.width(140.dp)
+        ) {
+            TamaButton(
+                onClick = { viewModel.next() },
+                enabled = !isShowingStatic,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Next →")
+            }
+            TamaButton(
+                onClick = { viewModel.previous() },
+                enabled = !isShowingStatic,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("← Previous")
+            }
+        }
     }
 }
 

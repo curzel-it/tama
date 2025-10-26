@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -27,46 +26,92 @@ fun FrameListView(
     onFrameSelect: (Int) -> Unit,
     onFrameDelete: (Int) -> Unit,
     onAddFrame: () -> Unit,
+    isLandscape: Boolean,
+    canvasWidth: Int,
+    canvasHeight: Int,
+    fps: Float,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    val (thumbWidth, thumbHeight) = FrameListUseCase.calculateThumbnailSize(
+        isLandscape = isLandscape,
+        canvasWidth = canvasWidth,
+        canvasHeight = canvasHeight,
+        maxSize = 80f
+    )
+
+    val baseModifier = modifier.background(MaterialTheme.colorScheme.surface).padding(8.dp)
+    val stackModifier = if (isLandscape) {
+        baseModifier.width(100.dp).fillMaxHeight()
+    } else {
+        baseModifier.fillMaxWidth().height(100.dp)
+    }
+
+    Stack(
+        orientation = if (isLandscape) StackOrientation.Vertical else StackOrientation.Horizontal,
+        modifier = stackModifier,
+        spacing = 8.dp
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Frames",
-                style = MaterialTheme.typography.titleLarge
-            )
-            Text(
-                text = "${frames.size}",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        item {
+            AnimatedPreviewView(
+                frames = frames,
+                fps = fps,
+                canvasWidth = canvasWidth,
+                canvasHeight = canvasHeight,
+                isLandscape = isLandscape
             )
         }
 
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            itemsIndexed(frames) { index, frame ->
-                FrameThumbnail(
-                    frame = frame,
-                    frameNumber = index + 1,
-                    isSelected = index == currentFrameIndex,
-                    onSelect = { onFrameSelect(index) },
-                    onDelete = if (index == currentFrameIndex && frames.size > 1) {
-                        { onFrameDelete(index) }
-                    } else null
-                )
-            }
+        itemsIndexed(frames) { index, frame ->
+            FrameThumbnail(
+                frame = frame,
+                isSelected = index == currentFrameIndex,
+                onSelect = { onFrameSelect(index) },
+                onDelete = if (index == currentFrameIndex && frames.size > 1) {
+                    { onFrameDelete(index) }
+                } else null,
+                thumbnailWidth = thumbWidth,
+                thumbnailHeight = thumbHeight
+            )
+        }
 
-            item {
-                AddFrameButton(onClick = onAddFrame)
+        item {
+            AddFrameButton(
+                onClick = onAddFrame,
+                width = thumbWidth,
+                height = thumbHeight
+            )
+        }
+    }
+}
+
+@Composable
+internal fun FrameRenderer(
+    frame: PixelFrame,
+    modifier: Modifier = Modifier
+) {
+    val isLightMode = MaterialTheme.colorScheme.background.luminance() > 0.5f
+    val pixelColor = if (isLightMode) Color(0xFF081820) else Color(0xFF88C070)
+    val backgroundColor = if (isLightMode) Color(0xFFF0FAF0) else Color(0xFF081820)
+
+    Canvas(
+        modifier = modifier
+    ) {
+        drawRect(
+            color = backgroundColor,
+            size = size
+        )
+
+        val cellSize = size.width / frame.width
+
+        for (y in 0 until frame.height) {
+            for (x in 0 until frame.width) {
+                if (frame.pixels[y][x]) {
+                    drawRect(
+                        color = pixelColor,
+                        topLeft = Offset(x * cellSize, y * cellSize),
+                        size = Size(cellSize, cellSize)
+                    )
+                }
             }
         }
     }
@@ -75,15 +120,12 @@ fun FrameListView(
 @Composable
 private fun FrameThumbnail(
     frame: PixelFrame,
-    frameNumber: Int,
     isSelected: Boolean,
     onSelect: () -> Unit,
     onDelete: (() -> Unit)?,
-    thumbnailSize: Float = 64f
+    thumbnailWidth: Float,
+    thumbnailHeight: Float
 ) {
-    val isLightMode = MaterialTheme.colorScheme.background.luminance() > 0.5f
-    val pixelColor = if (isLightMode) Color(0xFF081820) else Color(0xFF88C070)
-    val backgroundColor = if (isLightMode) Color(0xFFF0FAF0) else Color(0xFF081820)
     val borderColor = if (isSelected) {
         MaterialTheme.colorScheme.primary
     } else {
@@ -92,9 +134,9 @@ private fun FrameThumbnail(
 
     Box(
         modifier = Modifier
-            .size(thumbnailSize.dp)
+            .size(width = thumbnailWidth.dp, height = thumbnailHeight.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .border(
@@ -105,42 +147,12 @@ private fun FrameThumbnail(
                 .clip(RoundedCornerShape(4.dp))
                 .clickable { onSelect() }
                 .padding(4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "$frameNumber",
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            FrameRenderer(
+                frame = frame,
+                modifier = Modifier.fillMaxSize()
             )
-
-            val scale = (thumbnailSize - 20f) / maxOf(frame.width, frame.height)
-            val thumbWidth = frame.width * scale
-            val thumbHeight = frame.height * scale
-
-            Canvas(
-                modifier = Modifier
-                    .width(thumbWidth.dp)
-                    .height(thumbHeight.dp)
-            ) {
-                drawRect(
-                    color = backgroundColor,
-                    size = size
-                )
-
-                val cellSize = size.width / frame.width
-
-                for (y in 0 until frame.height) {
-                    for (x in 0 until frame.width) {
-                        if (frame.pixels[y][x]) {
-                            drawRect(
-                                color = pixelColor,
-                                topLeft = Offset(x * cellSize, y * cellSize),
-                                size = Size(cellSize, cellSize)
-                            )
-                        }
-                    }
-                }
-            }
         }
 
         if (onDelete != null) {
@@ -168,11 +180,13 @@ private fun FrameThumbnail(
 
 @Composable
 private fun AddFrameButton(
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    width: Float,
+    height: Float
 ) {
     Box(
         modifier = Modifier
-            .size(64.dp)
+            .size(width = width.dp, height = height.dp)
             .border(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.outline,
@@ -185,7 +199,7 @@ private fun AddFrameButton(
     ) {
         Text(
             text = "+",
-            fontSize = 32.sp,
+            fontSize = 24.sp,
             color = MaterialTheme.colorScheme.primary
         )
     }

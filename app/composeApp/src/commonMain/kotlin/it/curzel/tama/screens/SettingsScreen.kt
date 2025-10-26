@@ -26,7 +26,8 @@ fun SettingsScreen() {
     var themePreference by remember { mutableStateOf(ThemePreference.SYSTEM) }
     var isSaving by remember { mutableStateOf(false) }
     var saveMessage by remember { mutableStateOf<String?>(null) }
-    var showWebView by remember { mutableStateOf(false) }
+    var showPrivacyWebView by remember { mutableStateOf(false) }
+    var showTermsWebView by remember { mutableStateOf(false) }
     var channelName by remember { mutableStateOf<String?>(null) }
     var isLoggedIn by remember { mutableStateOf(false) }
 
@@ -48,11 +49,20 @@ fun SettingsScreen() {
         channelName = channel?.name
     }
 
-    if (showWebView) {
+    if (showPrivacyWebView) {
         WebViewScreen(
             url = PrivacyPolicyManager.PRIVACY_POLICY_URL,
             title = "Privacy Policy",
-            onBack = { showWebView = false }
+            onBack = { showPrivacyWebView = false }
+        )
+        return
+    }
+
+    if (showTermsWebView) {
+        WebViewScreen(
+            url = PrivacyPolicyManager.TERMS_AND_CONDITIONS_URL,
+            title = "Terms and Conditions",
+            onBack = { showTermsWebView = false }
         )
         return
     }
@@ -226,11 +236,21 @@ fun SettingsScreen() {
                 TamaButton(
                     onClick = {
                         PrivacyPolicyManager.opener.openPrivacyPolicy(
-                            onShowWebView = { showWebView = true }
+                            onShowWebView = { showPrivacyWebView = true }
                         )
                     }
                 ) {
                     Text("Privacy Policy")
+                }
+
+                TamaButton(
+                    onClick = {
+                        PrivacyPolicyManager.opener.openTermsAndConditions(
+                            onShowWebView = { showTermsWebView = true }
+                        )
+                    }
+                ) {
+                    Text("Terms and Conditions")
                 }
 
                 if (isLoggedIn) {
