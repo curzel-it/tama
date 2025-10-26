@@ -76,6 +76,8 @@ fun PixelEditorLandscapeLayout(
 
             ToolsPanelView(
                 isLandscape = true,
+                currentTool = viewModel.currentTool,
+                onSelectTool = { viewModel.selectTool(it) },
                 onClearCanvas = { viewModel.clearCurrentFrame() },
                 onFillCanvas = { viewModel.fillCurrentFrame() },
                 onOpenCanvasSettings = { viewModel.openSettingsMenu() },
@@ -94,6 +96,8 @@ fun PixelEditorPortraitLayout(
 
         ToolsPanelView(
             isLandscape = false,
+            currentTool = viewModel.currentTool,
+            onSelectTool = { viewModel.selectTool(it) },
             onClearCanvas = { viewModel.clearCurrentFrame() },
             onFillCanvas = { viewModel.fillCurrentFrame() },
             onOpenCanvasSettings = { viewModel.openSettingsMenu() },

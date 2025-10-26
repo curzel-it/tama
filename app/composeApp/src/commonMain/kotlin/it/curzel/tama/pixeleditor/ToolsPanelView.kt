@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ToolsPanelView(
     isLandscape: Boolean,
+    currentTool: ToolType,
+    onSelectTool: (ToolType) -> Unit,
     onClearCanvas: () -> Unit,
     onFillCanvas: () -> Unit,
     onOpenCanvasSettings: () -> Unit,
@@ -40,6 +42,30 @@ fun ToolsPanelView(
         modifier = stackModifier,
         spacing = 8.dp
     ) {
+        item {
+            ToolButton(
+                text = "Pencil",
+                isActive = currentTool == ToolType.PENCIL,
+                onClick = { onSelectTool(ToolType.PENCIL) }
+            )
+        }
+        item {
+            ToolButton(
+                text = "Eraser",
+                isActive = currentTool == ToolType.ERASER,
+                onClick = { onSelectTool(ToolType.ERASER) }
+            )
+        }
+        item {
+            ToolButton(
+                text = "Move",
+                isActive = currentTool == ToolType.MOVE,
+                onClick = { onSelectTool(ToolType.MOVE) }
+            )
+        }
+        item {
+            Spacer(modifier = Modifier.width(8.dp).height(8.dp))
+        }
         item {
             ToolButton("Clear", onClick = onClearCanvas)
         }

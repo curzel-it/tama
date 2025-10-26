@@ -7,6 +7,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 
+enum class ToolType {
+    PENCIL,
+    ERASER,
+    MOVE
+}
+
 class PixelEditorViewModel {
     var canvasWidth by mutableIntStateOf(48)
         private set
@@ -29,6 +35,9 @@ class PixelEditorViewModel {
         private set
 
     var showSettingsMenu by mutableStateOf(false)
+        private set
+
+    var currentTool by mutableStateOf(ToolType.PENCIL)
         private set
 
     val currentFrame: PixelFrame?
@@ -104,12 +113,15 @@ class PixelEditorViewModel {
     }
 
     fun setPixel(x: Int, y: Int, value: Boolean) {
+        println("[PixelEditorViewModel] setPixel called: x=$x, y=$y, value=$value, hasFrame=${currentFrame != null}")
         currentFrame?.let { frame ->
+            println("[PixelEditorViewModel] Current pixel value at ($x,$y) = ${frame.pixels[y][x]}")
             val updatedFrame = PixelEditorUseCase.setPixel(frame, x, y, value)
             frames = frames.mapIndexed { index, f ->
                 if (index == currentFrameIndex) updatedFrame else f
             }
-        }
+            println("[PixelEditorViewModel] Pixel set successfully, new value = ${updatedFrame.pixels[y][x]}")
+        } ?: println("[PixelEditorViewModel] ERROR: currentFrame is null!")
     }
 
     fun clearCurrentFrame() {
@@ -139,7 +151,7 @@ class PixelEditorViewModel {
     }
 
     fun onZoom(zoomFactor: Float, centerX: Float, centerY: Float) {
-        val newZoom = (zoomLevel * zoomFactor).coerceIn(0.5f, 8f)
+        val newZoom = (zoomLevel * zoomFactor).coerceIn(1f, 8f)
 
         val zoomChange = newZoom / zoomLevel
         val adjustedPanX = centerX - (centerX - panOffset.x) * zoomChange
@@ -163,6 +175,11 @@ class PixelEditorViewModel {
 
     fun closeSettingsMenu() {
         showSettingsMenu = false
+    }
+
+    fun selectTool(tool: ToolType) {
+        println("[PixelEditorViewModel] Tool changed: $currentTool -> $tool")
+        currentTool = tool
     }
 
     private fun validateCurrentDimensions() {

@@ -1,9 +1,8 @@
 package it.curzel.tama.pixeleditor
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,13 +13,16 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.onPointerEvent
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.sqrt
+import kotlin.math.pow
+import kotlin.math.abs
+
+private const val TAG = "PixelCanvas"
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -35,9 +37,6 @@ fun PixelCanvas(
     val pixelColor = if (isLightMode) Color(0xFF081820) else Color(0xFF88C070)
     val backgroundColor = if (isLightMode) Color(0xFFF0FAF0) else Color(0xFF081820)
     val gridColor = pixelColor.copy(alpha = 0.2f)
-
-    var isDrawing by remember { mutableStateOf(false) }
-    var drawMode by remember { mutableStateOf(true) }
 
     if (frame == null) {
         return
@@ -55,6 +54,7 @@ fun PixelCanvas(
     val canvasWidthPx = frame.width * cellSize
     val canvasHeightPx = frame.height * cellSize
 
+    // Center offset changes with zoom, so recalculate it
     val centerOffsetX = (availableWidthPx - canvasWidthPx) / 2f
     val centerOffsetY = (availableHeightPx - canvasHeightPx) / 2f
 
@@ -71,65 +71,141 @@ fun PixelCanvas(
                     }
                 }
             }
-            .pointerInput(frame) {
-                detectTransformGestures { centroid, pan, zoom, _ ->
-                    if (zoom != 1f) {
-                        viewModel.onZoom(zoom, centroid.x, centroid.y)
-                    }
-                    if (pan != Offset.Zero) {
-                        viewModel.onPan(pan)
-                    }
-                }
-            }
-            .pointerInput(frame) {
-                detectTapGestures { offset ->
-                    val adjustedX = offset.x - centerOffsetX - viewModel.panOffset.x
-                    val adjustedY = offset.y - centerOffsetY - viewModel.panOffset.y
+            .pointerInput(viewModel.currentTool, cellSize, centerOffsetX, centerOffsetY) {
+                awaitEachGesture {
+                    // State for drawing
+                    var lastDrawnCell: Pair<Int, Int>? = null
 
-                    if (adjustedX >= 0 && adjustedY >= 0 &&
-                        adjustedX < canvasWidthPx && adjustedY < canvasHeightPx) {
-                        val x = (adjustedX / cellSize).toInt().coerceIn(0, frame.width - 1)
-                        val y = (adjustedY / cellSize).toInt().coerceIn(0, frame.height - 1)
-                        val currentValue = frame.pixels[y][x]
-                        viewModel.setPixel(x, y, !currentValue)
-                    }
-                }
-            }
-            .pointerInput(frame) {
-                detectDragGestures(
-                    onDragStart = { offset ->
-                        val adjustedX = offset.x - centerOffsetX - viewModel.panOffset.x
-                        val adjustedY = offset.y - centerOffsetY - viewModel.panOffset.y
+                    // State for multi-touch
+                    var previousDistance = 0f
+                    var previousCentroid = Offset.Zero
+                    var wasMultiTouch = false
 
-                        if (adjustedX >= 0 && adjustedY >= 0 &&
-                            adjustedX < canvasWidthPx && adjustedY < canvasHeightPx) {
-                            isDrawing = true
-                            val x = (adjustedX / cellSize).toInt().coerceIn(0, frame.width - 1)
-                            val y = (adjustedY / cellSize).toInt().coerceIn(0, frame.height - 1)
-                            drawMode = !frame.pixels[y][x]
-                            viewModel.setPixel(x, y, drawMode)
+                    // State for move tool
+                    var lastMovePosition = Offset.Zero
+
+                    println("[$TAG] Gesture started, tool=${viewModel.currentTool}")
+
+                    // Wait for first touch down
+                    val firstDown = awaitFirstDown(requireUnconsumed = false)
+                    val downPosition = firstDown.position
+                    lastMovePosition = downPosition
+
+                    // Process the down event for drawing
+                    if (viewModel.currentTool == ToolType.PENCIL || viewModel.currentTool == ToolType.ERASER) {
+                        val canvasX = (downPosition.x - centerOffsetX - viewModel.panOffset.x) / cellSize
+                        val canvasY = (downPosition.y - centerOffsetY - viewModel.panOffset.y) / cellSize
+
+                        println("[$TAG] First down: pos=$downPosition, canvas=($canvasX,$canvasY)")
+
+                        if (canvasX >= 0 && canvasY >= 0 && canvasX < frame.width && canvasY < frame.height) {
+                            val x = canvasX.toInt().coerceIn(0, frame.width - 1)
+                            val y = canvasY.toInt().coerceIn(0, frame.height - 1)
+                            val fillValue = viewModel.currentTool == ToolType.PENCIL
+
+                            println("[$TAG] TAP DRAW: cell=($x,$y), fillValue=$fillValue")
+                            viewModel.setPixel(x, y, fillValue)
+                            lastDrawnCell = Pair(x, y)
                         }
-                    },
-                    onDrag = { change, _ ->
-                        if (isDrawing) {
-                            val adjustedX = change.position.x - centerOffsetX - viewModel.panOffset.x
-                            val adjustedY = change.position.y - centerOffsetY - viewModel.panOffset.y
+                    }
 
-                            if (adjustedX >= 0 && adjustedY >= 0 &&
-                                adjustedX < canvasWidthPx && adjustedY < canvasHeightPx) {
-                                val x = (adjustedX / cellSize).toInt().coerceIn(0, frame.width - 1)
-                                val y = (adjustedY / cellSize).toInt().coerceIn(0, frame.height - 1)
-                                viewModel.setPixel(x, y, drawMode)
+                    // Track all events until all fingers are up
+                    try {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val pointers = event.changes
+                            val activePointers = pointers.filter { it.pressed }
+
+                            println("[$TAG] Pointers: total=${pointers.size}, active=${activePointers.size}")
+
+                            when {
+                                // Multi-touch (zoom/pan)
+                                activePointers.size >= 2 -> {
+                                    wasMultiTouch = true
+                                    lastDrawnCell = null // Stop drawing
+
+                                    val p1 = activePointers[0].position
+                                    val p2 = activePointers[1].position
+                                    val centroid = Offset((p1.x + p2.x) / 2f, (p1.y + p2.y) / 2f)
+                                    val distance = sqrt((p2.x - p1.x).pow(2) + (p2.y - p1.y).pow(2)).toFloat()
+
+                                    if (previousDistance > 0f) {
+                                        val zoomChange = distance / previousDistance
+                                        if (zoomChange != 1f) {
+                                            println("[$TAG] Zoom: $zoomChange")
+                                            viewModel.onZoom(zoomChange, centroid.x, centroid.y)
+                                        }
+
+                                        val panDelta = centroid - previousCentroid
+                                        val panDistance = sqrt(panDelta.x * panDelta.x + panDelta.y * panDelta.y)
+                                        if (viewModel.zoomLevel > 1f && panDistance > 1f) {
+                                            println("[$TAG] Pan: $panDelta")
+                                            viewModel.onPan(panDelta)
+                                        }
+                                    }
+
+                                    previousDistance = distance
+                                    previousCentroid = centroid
+                                    pointers.forEach { it.consume() }
+                                }
+
+                                // Single touch
+                                activePointers.size == 1 && !wasMultiTouch -> {
+                                    val pointer = activePointers[0]
+                                    val position = pointer.position
+
+                                    when (viewModel.currentTool) {
+                                        ToolType.MOVE -> {
+                                            val delta = position - lastMovePosition
+                                            val distanceSquared = delta.x * delta.x + delta.y * delta.y
+                                            if (distanceSquared > 25f) { // 5px threshold
+                                                println("[$TAG] Move tool pan: $delta")
+                                                viewModel.onPan(delta)
+                                                lastMovePosition = position
+                                            }
+                                            pointer.consume()
+                                        }
+
+                                        ToolType.PENCIL, ToolType.ERASER -> {
+                                            val canvasX = (position.x - centerOffsetX - viewModel.panOffset.x) / cellSize
+                                            val canvasY = (position.y - centerOffsetY - viewModel.panOffset.y) / cellSize
+
+                                            if (canvasX >= 0 && canvasY >= 0 && canvasX < frame.width && canvasY < frame.height) {
+                                                val x = canvasX.toInt().coerceIn(0, frame.width - 1)
+                                                val y = canvasY.toInt().coerceIn(0, frame.height - 1)
+                                                val cell = Pair(x, y)
+
+                                                if (cell != lastDrawnCell) {
+                                                    val fillValue = viewModel.currentTool == ToolType.PENCIL
+                                                    println("[$TAG] DRAG DRAW: cell=($x,$y)")
+                                                    viewModel.setPixel(x, y, fillValue)
+                                                    lastDrawnCell = cell
+                                                }
+                                            }
+                                            pointer.consume()
+                                        }
+                                    }
+                                }
+
+                                // After multi-touch, ignore single touch
+                                activePointers.size == 1 && wasMultiTouch -> {
+                                    println("[$TAG] Ignoring single touch after multi-touch")
+                                    pointers.forEach { it.consume() }
+                                }
+
+                                // All fingers up
+                                activePointers.isEmpty() -> {
+                                    println("[$TAG] All fingers up")
+                                    break
+                                }
                             }
                         }
-                    },
-                    onDragEnd = {
-                        isDrawing = false
-                    },
-                    onDragCancel = {
-                        isDrawing = false
+                    } catch (e: Exception) {
+                        println("[$TAG] Gesture exception: $e")
                     }
-                )
+
+                    println("[$TAG] Gesture ended")
+                }
             }
     ) {
         clipRect {

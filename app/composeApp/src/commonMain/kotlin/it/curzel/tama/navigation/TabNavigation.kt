@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.screens.ContentEditorScreen
 import it.curzel.tama.feed.FeedScreen
@@ -76,7 +77,18 @@ fun TabNavigationScreen() {
           }
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.padding(if (shouldHideTabBar) PaddingValues(0.dp) else paddingValues)) {
+        Box(modifier = Modifier.padding(
+            if (shouldHideTabBar) {
+                PaddingValues(
+                    top = paddingValues.calculateTopPadding(),
+                    start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
+                    end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
+                    bottom = 0.dp
+                )
+            } else {
+                paddingValues
+            }
+        )) {
             when (selectedTab) {
                 Tab.Feed -> FeedScreen(isLandscape = isLandscapeMode)
                 Tab.Create -> ContentEditorScreen(
