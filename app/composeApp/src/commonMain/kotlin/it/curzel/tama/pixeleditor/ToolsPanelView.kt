@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,49 +29,107 @@ fun ToolsPanelView(
     modifier: Modifier = Modifier
 ) {
     val baseModifier = modifier.background(MaterialTheme.colorScheme.surface)
-    val stackModifier = if (isLandscape) {
-        baseModifier
-            .fillMaxHeight()
-            .padding(8.dp)
+
+    if (isLandscape) {
+        LazyColumn(
+            modifier = baseModifier
+                .fillMaxHeight()
+                .padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                ToolButton(
+                    icon = Res.drawable.icon_pencil,
+                    contentDescription = "Pencil",
+                    isActive = currentTool == ToolType.PENCIL,
+                    onClick = { onSelectTool(ToolType.PENCIL) }
+                )
+            }
+
+            item {
+                ToolButton(
+                    icon = Res.drawable.icon_eraser,
+                    contentDescription = "Eraser",
+                    isActive = currentTool == ToolType.ERASER,
+                    onClick = { onSelectTool(ToolType.ERASER) }
+                )
+            }
+
+            item {
+                ToolButton(
+                    icon = Res.drawable.icon_move,
+                    contentDescription = "Move",
+                    isActive = currentTool == ToolType.MOVE,
+                    onClick = { onSelectTool(ToolType.MOVE) }
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            item {
+                ToolButton(icon = Res.drawable.icon_clear, contentDescription = "Clear", onClick = onClearCanvas)
+            }
+
+            item {
+                ToolButton(icon = Res.drawable.icon_fill, contentDescription = "Fill", onClick = onFillCanvas)
+            }
+
+            item {
+                ToolButton(icon = Res.drawable.icon_settings, contentDescription = "Settings", onClick = onOpenCanvasSettings)
+            }
+        }
     } else {
-        baseModifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp)
-    }
+        LazyRow(
+            modifier = baseModifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                ToolButton(
+                    icon = Res.drawable.icon_pencil,
+                    contentDescription = "Pencil",
+                    isActive = currentTool == ToolType.PENCIL,
+                    onClick = { onSelectTool(ToolType.PENCIL) }
+                )
+            }
 
-    Stack(
-        orientation = if (isLandscape) StackOrientation.Vertical else StackOrientation.Horizontal,
-        modifier = stackModifier,
-        spacing = 8.dp
-    ) {
-        ToolButton(
-            icon = Res.drawable.icon_pencil,
-            contentDescription = "Pencil",
-            isActive = currentTool == ToolType.PENCIL,
-            onClick = { onSelectTool(ToolType.PENCIL) }
-        )
+            item {
+                ToolButton(
+                    icon = Res.drawable.icon_eraser,
+                    contentDescription = "Eraser",
+                    isActive = currentTool == ToolType.ERASER,
+                    onClick = { onSelectTool(ToolType.ERASER) }
+                )
+            }
 
-        ToolButton(
-            icon = Res.drawable.icon_eraser,
-            contentDescription = "Eraser",
-            isActive = currentTool == ToolType.ERASER,
-            onClick = { onSelectTool(ToolType.ERASER) }
-        )
+            item {
+                ToolButton(
+                    icon = Res.drawable.icon_move,
+                    contentDescription = "Move",
+                    isActive = currentTool == ToolType.MOVE,
+                    onClick = { onSelectTool(ToolType.MOVE) }
+                )
+            }
 
-        ToolButton(
-            icon = Res.drawable.icon_move,
-            contentDescription = "Move",
-            isActive = currentTool == ToolType.MOVE,
-            onClick = { onSelectTool(ToolType.MOVE) }
-        )
+            item {
+                Spacer(modifier = Modifier.width(8.dp))
+            }
 
-        Spacer(modifier = Modifier.width(8.dp).height(8.dp))
+            item {
+                ToolButton(icon = Res.drawable.icon_clear, contentDescription = "Clear", onClick = onClearCanvas)
+            }
 
-        ToolButton(icon = Res.drawable.icon_clear, contentDescription = "Clear", onClick = onClearCanvas)
+            item {
+                ToolButton(icon = Res.drawable.icon_fill, contentDescription = "Fill", onClick = onFillCanvas)
+            }
 
-        ToolButton(icon = Res.drawable.icon_fill, contentDescription = "Fill", onClick = onFillCanvas)
-
-        ToolButton(icon = Res.drawable.icon_settings, contentDescription = "Settings", onClick = onOpenCanvasSettings)
+            item {
+                ToolButton(icon = Res.drawable.icon_settings, contentDescription = "Settings", onClick = onOpenCanvasSettings)
+            }
+        }
     }
 }
 

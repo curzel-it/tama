@@ -1,6 +1,8 @@
 package it.curzel.tama.pixeleditor
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -8,6 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import it.curzel.tama.theme.MyNavigationBar
 import it.curzel.tama.theme.TamaButton
 
@@ -150,13 +154,48 @@ private fun CanvasSettingsDialog(
     viewModel: PixelEditorViewModel,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Canvas Settings") },
-        text = {
+    val colorScheme = MaterialTheme.colorScheme
+    val modalBg = colorScheme.background
+    val modalBorder = colorScheme.outline
+    val closeColor = colorScheme.outline
+    val borderColor = colorScheme.outline
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .widthIn(max = 400.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            shape = RoundedCornerShape(4.dp),
+            color = modalBg,
+            border = BorderStroke(1.dp, modalBorder)
+        ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.padding(20.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = "Canvas Settings",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Text(
+                            text = "×",
+                            fontSize = 28.sp,
+                            color = closeColor
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 OutlinedTextField(
                     value = viewModel.fps.toString(),
                     onValueChange = { value ->
@@ -165,8 +204,14 @@ private fun CanvasSettingsDialog(
                     label = { Text("FPS (1-30)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = borderColor,
+                        unfocusedBorderColor = borderColor
+                    )
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = viewModel.canvasWidth.toString(),
@@ -176,8 +221,14 @@ private fun CanvasSettingsDialog(
                     label = { Text("Width (px)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = borderColor,
+                        unfocusedBorderColor = borderColor
+                    )
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = viewModel.canvasHeight.toString(),
@@ -187,17 +238,15 @@ private fun CanvasSettingsDialog(
                     label = { Text("Height (px)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = borderColor,
+                        unfocusedBorderColor = borderColor
+                    )
                 )
 
-                TamaButton(
-                    onClick = { viewModel.resizeCanvas() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Resize Canvas")
-                }
-
                 if (viewModel.validationError != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = viewModel.validationError ?: "",
                         color = MaterialTheme.colorScheme.error,
@@ -205,18 +254,24 @@ private fun CanvasSettingsDialog(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
                     text = "Canvas: ${viewModel.canvasWidth}×${viewModel.canvasHeight} pixels (${viewModel.charWidth}×${viewModel.charHeight} chars)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                TamaButton(
+                    onClick = { viewModel.resizeCanvas() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Resize Canvas")
+                }
             }
         }
-    )
+    }
 }
 
