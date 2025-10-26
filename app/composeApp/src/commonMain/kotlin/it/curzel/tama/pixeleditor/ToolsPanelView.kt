@@ -26,6 +26,10 @@ fun ToolsPanelView(
     onClearCanvas: () -> Unit,
     onFillCanvas: () -> Unit,
     onOpenCanvasSettings: () -> Unit,
+    canUndo: Boolean,
+    canRedo: Boolean,
+    onUndo: () -> Unit,
+    onRedo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val baseModifier = modifier.background(MaterialTheme.colorScheme.surface)
@@ -37,6 +41,32 @@ fun ToolsPanelView(
                 .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            if (canUndo) {
+                item {
+                    ToolButton(
+                        icon = Res.drawable.icon_undo,
+                        contentDescription = "Undo",
+                        onClick = onUndo
+                    )
+                }
+            }
+
+            if (canRedo) {
+                item {
+                    ToolButton(
+                        icon = Res.drawable.icon_redo,
+                        contentDescription = "Redo",
+                        onClick = onRedo
+                    )
+                }
+            }
+
+            if (canUndo || canRedo) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+
             item {
                 ToolButton(
                     icon = Res.drawable.icon_pencil,
@@ -87,6 +117,32 @@ fun ToolsPanelView(
                 .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            if (canUndo) {
+                item {
+                    ToolButton(
+                        icon = Res.drawable.icon_undo,
+                        contentDescription = "Undo",
+                        onClick = onUndo
+                    )
+                }
+            }
+
+            if (canRedo) {
+                item {
+                    ToolButton(
+                        icon = Res.drawable.icon_redo,
+                        contentDescription = "Redo",
+                        onClick = onRedo
+                    )
+                }
+            }
+
+            if (canUndo || canRedo) {
+                item {
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+            }
+
             item {
                 ToolButton(
                     icon = Res.drawable.icon_pencil,

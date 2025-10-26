@@ -91,6 +91,7 @@ fun PixelCanvas(
 
                     // State for drawing
                     var lastDrawnCell: Pair<Int, Int>? = null
+                    var hasDrawnAnyPixels = false
 
                     // State for multi-touch
                     var previousDistance = 0f
@@ -109,6 +110,7 @@ fun PixelCanvas(
 
                     // Process the down event for drawing
                     if (viewModel.currentTool == ToolType.PENCIL || viewModel.currentTool == ToolType.ERASER) {
+                        viewModel.startDrawing()
                         val (currentCellSize, currentCenterOffsetX, currentCenterOffsetY) = getCurrentTransform()
                         val canvasX = (downPosition.x - currentCenterOffsetX - viewModel.panOffset.x) / currentCellSize
                         val canvasY = (downPosition.y - currentCenterOffsetY - viewModel.panOffset.y) / currentCellSize
@@ -123,6 +125,7 @@ fun PixelCanvas(
                             println("[$TAG] TAP DRAW: cell=($x,$y), fillValue=$fillValue")
                             viewModel.setPixel(x, y, fillValue)
                             lastDrawnCell = Pair(x, y)
+                            hasDrawnAnyPixels = true
                         }
                     }
 
@@ -206,6 +209,7 @@ fun PixelCanvas(
                                                     println("[$TAG] DRAG DRAW: cell=($x,$y)")
                                                     viewModel.setPixel(x, y, fillValue)
                                                     lastDrawnCell = cell
+                                                    hasDrawnAnyPixels = true
                                                 }
                                             }
                                             pointer.consume()
@@ -228,6 +232,10 @@ fun PixelCanvas(
                         }
                     } catch (e: Exception) {
                         println("[$TAG] Gesture exception: $e")
+                    }
+
+                    if (hasDrawnAnyPixels) {
+                        viewModel.commitDrawingAction()
                     }
 
                     println("[$TAG] Gesture ended")

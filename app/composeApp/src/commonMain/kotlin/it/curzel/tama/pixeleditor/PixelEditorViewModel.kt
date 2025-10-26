@@ -40,6 +40,9 @@ class PixelEditorViewModel {
     var currentTool by mutableStateOf(ToolType.PENCIL)
         private set
 
+    private val undoRedoManager = UndoRedoManager(maxHistorySize = 20)
+    private var isDrawing = false
+
     val currentFrame: PixelFrame?
         get() = frames.getOrNull(currentFrameIndex)
 
@@ -48,6 +51,12 @@ class PixelEditorViewModel {
 
     val charHeight: Int
         get() = canvasHeight / 4
+
+    val canUndo: Boolean
+        get() = undoRedoManager.canUndo()
+
+    val canRedo: Boolean
+        get() = undoRedoManager.canRedo()
 
     init {
         addFrame()
@@ -79,6 +88,7 @@ class PixelEditorViewModel {
                     PixelEditorUseCase.resizeFrame(frame, canvasWidth, canvasHeight)
                 }
                 frames = resizedFrames
+                saveStateToHistory()
             }
             is ValidationResult.Invalid -> {
                 validationError = result.message
@@ -90,6 +100,7 @@ class PixelEditorViewModel {
         val newFrame = PixelEditorUseCase.createEmptyFrame(canvasWidth, canvasHeight)
         frames = frames + newFrame
         currentFrameIndex = frames.size - 1
+        saveStateToHistory()
     }
 
     fun deleteFrame(index: Int) {
@@ -104,11 +115,14 @@ class PixelEditorViewModel {
         } else if (currentFrameIndex > index) {
             currentFrameIndex--
         }
+
+        saveStateToHistory()
     }
 
     fun selectFrame(index: Int) {
         if (index in frames.indices) {
             currentFrameIndex = index
+            saveStateToHistory()
         }
     }
 
@@ -130,6 +144,7 @@ class PixelEditorViewModel {
             frames = frames.mapIndexed { index, f ->
                 if (index == currentFrameIndex) clearedFrame else f
             }
+            saveStateToHistory()
         }
     }
 
@@ -139,6 +154,7 @@ class PixelEditorViewModel {
             frames = frames.mapIndexed { index, f ->
                 if (index == currentFrameIndex) filledFrame else f
             }
+            saveStateToHistory()
         }
     }
 
@@ -180,6 +196,48 @@ class PixelEditorViewModel {
     fun selectTool(tool: ToolType) {
         println("[PixelEditorViewModel] Tool changed: $currentTool -> $tool")
         currentTool = tool
+    }
+
+    fun undo() {
+        undoRedoManager.undo()?.let { state ->
+            restoreState(state)
+        }
+    }
+
+    fun redo() {
+        undoRedoManager.redo()?.let { state ->
+            restoreState(state)
+        }
+    }
+
+    fun startDrawing() {
+        isDrawing = true
+    }
+
+    fun commitDrawingAction() {
+        if (isDrawing) {
+            isDrawing = false
+            saveStateToHistory()
+        }
+    }
+
+    private fun saveStateToHistory() {
+        val state = EditorState(
+            frames = frames,
+            currentFrameIndex = currentFrameIndex,
+            canvasWidth = canvasWidth,
+            canvasHeight = canvasHeight,
+            fps = fps
+        )
+        undoRedoManager.saveState(state)
+    }
+
+    private fun restoreState(state: EditorState) {
+        frames = state.frames
+        currentFrameIndex = state.currentFrameIndex
+        canvasWidth = state.canvasWidth
+        canvasHeight = state.canvasHeight
+        fps = state.fps
     }
 
     private fun validateCurrentDimensions() {

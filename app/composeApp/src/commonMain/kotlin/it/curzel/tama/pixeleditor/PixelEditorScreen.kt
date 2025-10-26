@@ -73,6 +73,10 @@ fun PixelEditorLandscapeLayout(viewModel: PixelEditorViewModel) {
             onClearCanvas = { viewModel.clearCurrentFrame() },
             onFillCanvas = { viewModel.fillCurrentFrame() },
             onOpenCanvasSettings = { viewModel.openSettingsMenu() },
+            canUndo = viewModel.canUndo,
+            canRedo = viewModel.canRedo,
+            onUndo = { viewModel.undo() },
+            onRedo = { viewModel.redo() }
         )
     }
 }
@@ -92,6 +96,10 @@ fun PixelEditorPortraitLayout(
             onClearCanvas = { viewModel.clearCurrentFrame() },
             onFillCanvas = { viewModel.fillCurrentFrame() },
             onOpenCanvasSettings = { viewModel.openSettingsMenu() },
+            canUndo = viewModel.canUndo,
+            canRedo = viewModel.canRedo,
+            onUndo = { viewModel.undo() },
+            onRedo = { viewModel.redo() }
         )
 
         CanvasWithZoomDisplay(
