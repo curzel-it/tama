@@ -99,147 +99,206 @@ fun FeedScreen(
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        if (!isLandscape) {
-            MyNavigationBar(
-                title = "Tama Feed",
-                rightAction = {
-                    ContentKebabMenu(
-                        onShareClick = {
-                            viewModel.shareCurrentContent {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Link copied to clipboard",
-                                        duration = SnackbarDuration.Short
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            if (!isLandscape) {
+                MyNavigationBar(
+                    title = "Tama Feed",
+                    rightAction = {
+                        ContentKebabMenu(
+                            onShareClick = {
+                                viewModel.shareCurrentContent {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Link copied to clipboard",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                }
+                            },
+                            onReportClick = { showReportDialog = true },
+                            enabled = viewModel.currentItem != null && !viewModel.isShowingStatic
+                        )
+                    }
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                when {
+                    viewModel.isLoading && viewModel.feedItems.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    viewModel.errorMessage != null && viewModel.feedItems.isEmpty() -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Error: ${viewModel.errorMessage}",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+
+                    viewModel.feedItems.isEmpty() && !viewModel.isLoading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Nothing to see here, please check back later")
+                        }
+                    }
+
+                    else -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            viewModel.currentItem?.let { item ->
+                                val staticFrame = remember { generateTvStatic() }
+
+                                if (isLandscape) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Spacer(modifier = Modifier.weight(1f))
+
+                                        BoxWithConstraints {
+                                            val buttonColumnWidth = 140.dp
+                                            val horizontalSpacing = 32.dp
+                                            val verticalSpacingNeeds = 90.dp
+
+                                            // TV dimensions in characters
+                                            val tvCharsWide = 36f
+                                            val tvCharsHigh = 14f
+
+                                            // Calculate available space accounting for layout elements
+                                            val availableHeight = maxHeight - verticalSpacingNeeds
+                                            val availableWidth = maxWidth - buttonColumnWidth - horizontalSpacing
+
+                                            // Calculate TV size constrained by height
+                                            val charHeightFromVertical = availableHeight / tvCharsHigh
+                                            val charWidthFromVertical = charHeightFromVertical / 2f
+                                            val tvWidthFromHeight = charWidthFromVertical * tvCharsWide
+
+                                            // Calculate TV size constrained by width
+                                            val charWidthFromHorizontal = availableWidth / tvCharsWide
+                                            val charHeightFromHorizontal = charWidthFromHorizontal * 2f
+                                            val tvHeightFromWidth = charHeightFromHorizontal * tvCharsHigh
+
+                                            // Use whichever constraint is tighter
+                                            val tvWidth = if (tvHeightFromWidth <= availableHeight) {
+                                                availableWidth
+                                            } else {
+                                                tvWidthFromHeight
+                                            }
+
+                                            AsciiContentWithTv(
+                                                content = if (viewModel.isShowingStatic) staticFrame else item.content.art,
+                                                fps = if (viewModel.isShowingStatic) 1f else item.content.fps,
+                                                availableWidthDp = tvWidth,
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.weight(1f))
+
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                                            modifier = Modifier.width(140.dp)
+                                        ) {
+                                            TamaButton(
+                                                onClick = { viewModel.next() },
+                                                enabled = !viewModel.isShowingStatic,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text("Next →")
+                                            }
+                                            TamaButton(
+                                                onClick = { viewModel.previous() },
+                                                enabled = !viewModel.isShowingStatic,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Text("← Previous")
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // Portrait layout: vertical stack
+                                    BoxWithConstraints(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        val availableWidth = maxWidth.coerceAtMost(400.dp)
+
+                                        AsciiContentWithTv(
+                                            content = if (viewModel.isShowingStatic) staticFrame else item.content.art,
+                                            fps = if (viewModel.isShowingStatic) 1f else item.content.fps,
+                                            availableWidthDp = availableWidth
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        TamaButton(
+                                            onClick = { viewModel.previous() },
+                                            enabled = !viewModel.isShowingStatic
+                                        ) {
+                                            Text("← Previous")
+                                        }
+
+                                        TamaButton(
+                                            onClick = { viewModel.next() },
+                                            enabled = !viewModel.isShowingStatic
+                                        ) {
+                                            Text("Next →")
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    FeedItemView(item, viewModel.isShowingStatic)
+                                }
+                            }
+
+                            if (viewModel.loadingServers.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Loading from ${viewModel.loadingServers.size} more server(s)...",
+                                        style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                             }
-                        },
-                        onReportClick = { showReportDialog = true },
-                        enabled = viewModel.currentItem != null && !viewModel.isShowingStatic
-                    )
-                }
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-        when {
-            viewModel.isLoading && viewModel.feedItems.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            viewModel.errorMessage != null && viewModel.feedItems.isEmpty() -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Error: ${viewModel.errorMessage}",
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-            viewModel.feedItems.isEmpty() && !viewModel.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Nothing to see here, please check back later")
-                }
-            }
-            else -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    viewModel.currentItem?.let { item ->
-                        val staticFrame = remember { generateTvStatic() }
-
-                        BoxWithConstraints(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val availableWidth = if (isLandscape) {
-                                // In landscape, calculate width based on fitting TV vertically
-                                // TV is approximately 14 chars tall with border (10 content + frame)
-                                // Reserve space for buttons and metadata (~200.dp)
-                                val availableHeightForTv = maxHeight - 200.dp
-                                val tvCharsHigh = 14f
-                                val charHeight = availableHeightForTv / tvCharsHigh
-                                val charWidth = charHeight / 2f // 1:2 aspect ratio
-                                val tvCharsWide = 36 // 32 + 4 for borders
-                                (charWidth * tvCharsWide).coerceAtMost(maxWidth)
-                            } else {
-                                // In portrait, cap at 400.dp
-                                maxWidth.coerceAtMost(400.dp)
-                            }
-
-                            AsciiContentWithTv(
-                                content = if (viewModel.isShowingStatic) staticFrame else item.content.art,
-                                fps = if (viewModel.isShowingStatic) 1f else item.content.fps,
-                                availableWidthDp = availableWidth
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            TamaButton(
-                                onClick = { viewModel.previous() },
-                                enabled = !viewModel.isShowingStatic
-                            ) {
-                                Text("← Previous")
-                            }
-
-                            TamaButton(
-                                onClick = { viewModel.next() },
-                                enabled = !viewModel.isShowingStatic
-                            ) {
-                                Text("Next →")
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        FeedItemView(item, viewModel.isShowingStatic)
-                    }
-
-                    if (viewModel.loadingServers.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Loading from ${viewModel.loadingServers.size} more server(s)...",
-                                style = MaterialTheme.typography.bodySmall
-                            )
                         }
                     }
                 }
             }
         }
-        }
-    }
 
         SnackbarHost(
             hostState = snackbarHostState,
@@ -369,7 +428,12 @@ fun ReportContentDialog(
                 OutlinedTextField(
                     value = reason,
                     onValueChange = onReasonChange,
-                    placeholder = { Text("Please describe the issue...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    placeholder = {
+                        Text(
+                            "Please describe the issue...",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 4,
                     maxLines = 5,

@@ -9,9 +9,14 @@ import androidx.compose.runtime.setValue
 
 @Composable
 fun isLandscape(): Boolean {
-    var landscape by remember { mutableStateOf(false) }
+    var isLandscapeMode by remember { mutableStateOf(false) }
+
     BoxWithConstraints {
-        landscape = maxWidth > maxHeight
+        val currentIsLandscape = maxWidth > maxHeight
+        if (isLandscapeMode != currentIsLandscape) {
+            isLandscapeMode = currentIsLandscape
+        }
     }
-    return landscape
+
+    return isLandscapeMode
 }
