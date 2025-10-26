@@ -12,6 +12,8 @@ And we have a content editor:
 
 <img src="docs/editor-dark.png" width="520px"/>
 
+And, of course, there's an app - coming soon to the store.
+
 ## Quick Start
 See [sprites/neko_idle.txt](sprites/neko_idle.txt) for an example of content format.
 

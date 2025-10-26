@@ -42,9 +42,9 @@ class AnimationController {
         this.frames = [];
     }
 
-    start(frames, fps) {
+    start(pixelFrames, fps) {
         this.stop();
-        this.frames = frames;
+        this.frames = pixelFrames; // Now stores pixel arrays instead of braille strings
         this.currentFrame = 0;
 
         const frameTime = 1000 / fps;

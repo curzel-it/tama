@@ -2,11 +2,12 @@
 
 ## Handling a Task
 1. If the task is not too simple, create a plan.md file with a comprehensive list of what you need to change, where, code links and code snippets (especially of data structures)
-2. Ask me any question on things that are uncertain about the plan (you come up with questions in the form of a numbered list)
-3. Update the plan with my answers
-4. Implement and test frequently
-5. Review and cleanup, remove unnecessary comments
-6. Enjoy!
+2. Multiple agents might be working on the codebase at once, so make sure "plan.md" has a name that reflects the tasks at hand to avoid conflicts
+3. Ask me any question on things that are uncertain about the plan (you come up with questions in the form of a numbered list)
+4. Update the plan with my answers
+5. Implement and test frequently
+6. Review and cleanup, remove unnecessary comments
+7. Enjoy!
 
 ## Style and other guideliens
 Stick to style and preferences existing in the current codebase.
@@ -28,3 +29,53 @@ Ideally, new features are "wired up" with jus a few lines of code for configurat
 
 ### User Interface
 Implement the cleanest and simplest possible version of the ui.
+
+### Architectural preferences on Kotlin Multiplatform
+Have dedicated files for `SomethingView`, `SomethingViewModel` and `SomethingUseCase` where applicable.
+For example, should we need a special "account" icon with badges, profile image, login/logout states, I would expect something like: ProfileIconView, ProfileIconViewModel and ProfileIconUseCase
+
+## Building
+Only build/run the Kotlin in jvm / Desktop. Do not ever attempt to build any other way, as it will not work and you will waste a ton of time ;)
+```bash 
+cd app && ./gradlew jvmRun -DmainClass=it.curzel.tama.MainKt
+```
+Rust Server:
+```bash 
+cargo run --bin server
+```
+Rust CLI:
+```bash 
+cargo run --bin tama
+```
+Rust Midi Composer:
+```bash 
+cargo run --bin midi_composer
+```
+
+## Native dependencies in KMP app
+Do not ever use actual/expect.
+Use a dump dependency-injection approach, for example:
+
+in composeApp/commonMain/SomeUseCase.kt
+```
+interface SomeDependency {
+    fun foo()
+}
+
+object SomeUseCase {
+    lateinit var someDependency: SomeDependency // Set during app init by native code
+}
+```
+
+in composeApp/iosMain/SomeDependencyImpl.kt
+```
+// If needed, this wil lbe implemented in Swift or whatever later
+interface SomeDependencyNative {
+    fun foo()
+}
+
+class SomeDependencyImpl(val thing: SomeDependencyNative) : SomeDependency {
+    ...
+}
+```
+in "main" SomeUseCase.someDependency = SomeDependencyImpl(...)
