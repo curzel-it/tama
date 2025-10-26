@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     middleware as axum_middleware,
-    response::Json,
+    response::{Html, Json},
     routing::{get, post},
     Router,
 };
@@ -11,7 +11,7 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tower_http::{cors::CorsLayer, services::{ServeDir, ServeFile}, trace::TraceLayer};
+use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer};
 use axum_server::tls_rustls::RustlsConfig;
 
 #[derive(Serialize, Deserialize)]
@@ -47,6 +47,12 @@ pub struct PaginationParams {
     pub limit: i64,
     #[serde(default)]
     pub offset: i64,
+}
+
+#[derive(Deserialize)]
+pub struct FeedParams {
+    /// Comma-separated list of content IDs to prioritize at the front of the feed
+    pub ids: Option<String>,
 }
 
 fn default_limit() -> i64 {
@@ -124,39 +130,123 @@ pub fn initialize_database(db_path: &str) -> Result<DbPool, String> {
     Ok(pool)
 }
 
-async fn get_feed(State(state): State<AppState>) -> Result<Json<Vec<FeedItem>>, StatusCode> {
+async fn get_feed(
+    Query(params): Query<FeedParams>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<FeedItem>>, StatusCode> {
     println!("[GET /feed] Request received");
     let db = state.db.get()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let mut stmt = db
-        .prepare(
+    let mut feed_items = Vec::new();
+
+    // Parse priority IDs if provided
+    let priority_ids: Vec<i64> = params.ids
+        .as_ref()
+        .map(|ids_str| {
+            ids_str
+                .split(',')
+                .filter_map(|s| s.trim().parse::<i64>().ok())
+                .collect()
+        })
+        .unwrap_or_default();
+
+    // If priority IDs provided, fetch them first
+    if !priority_ids.is_empty() {
+        println!("[GET /feed] Priority IDs: {:?}", priority_ids);
+
+        for id in &priority_ids {
+            let result = db.query_row(
+                "SELECT c.id, c.name, co.id, co.art, co.midi_composition, co.fps
+                 FROM channels c
+                 JOIN contents co ON c.id = co.channel_id
+                 WHERE co.id = ?1",
+                params![id],
+                |row| {
+                    Ok(FeedItem {
+                        channel: ChannelInfo {
+                            id: row.get(0)?,
+                            name: row.get(1)?,
+                        },
+                        content: ContentData {
+                            id: row.get(2)?,
+                            art: row.get(3)?,
+                            midi_composition: row.get(4)?,
+                            fps: row.get(5)?,
+                        },
+                    })
+                },
+            );
+
+            if let Ok(item) = result {
+                feed_items.push(item);
+            }
+        }
+    }
+
+    // Calculate how many more items we need to reach limit of 30
+    let remaining_limit = 30 - feed_items.len();
+
+    if remaining_limit > 0 {
+        // Build NOT IN clause if we have priority IDs
+        let (not_in_clause, not_in_params): (String, Vec<i64>) = if !priority_ids.is_empty() {
+            let placeholders = priority_ids.iter()
+                .enumerate()
+                .map(|(i, _)| format!("?{}", i + 1))
+                .collect::<Vec<_>>()
+                .join(", ");
+            (format!("WHERE co.id NOT IN ({})", placeholders), priority_ids.clone())
+        } else {
+            (String::new(), Vec::new())
+        };
+
+        let query = format!(
             "SELECT c.id, c.name, co.id, co.art, co.midi_composition, co.fps
              FROM channels c
              JOIN contents co ON c.id = co.channel_id
+             {}
              ORDER BY co.created_at DESC
-             LIMIT 30",
-        )
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+             LIMIT ?{}",
+            not_in_clause,
+            not_in_params.len() + 1
+        );
 
-    let feed_items = stmt
-        .query_map([], |row| {
-            Ok(FeedItem {
-                channel: ChannelInfo {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                },
-                content: ContentData {
-                    id: row.get(2)?,
-                    art: row.get(3)?,
-                    midi_composition: row.get(4)?,
-                    fps: row.get(5)?,
-                },
+        let mut stmt = db.prepare(&query)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        // Build parameter list
+        let mut query_params: Vec<Box<dyn rusqlite::ToSql>> = not_in_params
+            .iter()
+            .map(|id| Box::new(*id) as Box<dyn rusqlite::ToSql>)
+            .collect();
+        query_params.push(Box::new(remaining_limit as i64));
+
+        let params_refs: Vec<&dyn rusqlite::ToSql> = query_params
+            .iter()
+            .map(|b| b.as_ref())
+            .collect();
+
+        let remaining_items = stmt
+            .query_map(params_refs.as_slice(), |row| {
+                Ok(FeedItem {
+                    channel: ChannelInfo {
+                        id: row.get(0)?,
+                        name: row.get(1)?,
+                    },
+                    content: ContentData {
+                        id: row.get(2)?,
+                        art: row.get(3)?,
+                        midi_composition: row.get(4)?,
+                        fps: row.get(5)?,
+                    },
+                })
             })
-        })
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        feed_items.extend(remaining_items);
+    }
 
     println!("[GET /feed] Returning {} content items", feed_items.len());
     Ok(Json(feed_items))
@@ -265,6 +355,14 @@ async fn get_servers(State(state): State<AppState>) -> Result<Json<Vec<String>>,
 
     println!("[GET /servers] Returning {} servers", servers.len());
     Ok(Json(servers))
+}
+
+async fn spa_fallback() -> Result<Html<String>, StatusCode> {
+    // Serve index.html for SPA routes
+    tokio::fs::read_to_string("static/index.html")
+        .await
+        .map(Html)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
 
@@ -381,19 +479,23 @@ pub async fn run_server(db_path: &str, port: u16, jwt_secret: String) -> Result<
             middleware::rate_limit_upload,
         ));
 
+    // SPA routes - serve index.html for client-side routing
+    let spa_routes = Router::new()
+        .route("/view/*path", get(spa_fallback));
+
     // Static file serving for the web UI
     let static_service = ServeDir::new("static")
-        .append_index_html_on_directories(true)
-        .not_found_service(ServeFile::new("static/index.html"));
+        .append_index_html_on_directories(true);
 
     let app = Router::new()
         .merge(public_routes)
         .merge(auth_routes)
+        .merge(upload_routes)
+        .merge(spa_routes)
         .nest_service("/", static_service)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
-        .with_state(state)
-        .merge(upload_routes);
+        .with_state(state);
 
     // Check for SSL/TLS configuration
     let ssl_cert_path = std::env::var("SSL_CERT_PATH").ok();

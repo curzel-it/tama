@@ -2,7 +2,8 @@ package it.curzel.tama.canvas
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -13,343 +14,326 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.curzel.tama.pixeleditor.BrailleConverter
 import it.curzel.tama.theme.firaCodeFontFamily
 import kotlinx.coroutines.delay
-import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.max
 
 const val TV_WIDTH = 32
 const val TV_HEIGHT = 10
-const val SPACE = ' '
 
-const val CHAR_WIDTH = 9f
-const val CHAR_HEIGHT = 18f
-const val CHARACTER_SPACING = 1.5f
-const val LINE_SPACING = 3f
-
-/**
- * Calculate optimal character dimensions to fit TV in available width
- * Maintains 1:2 aspect ratio (width:height)
- *
- * @param availableWidthPx Available width in pixels
- * @param density Screen pixel density
- * @param tvCharsWide Number of characters wide (including TV border)
- * @param minCharHeight Minimum character height
- */
-fun calculateOptimalCharDimensions(
-    availableWidthPx: Float,
-    density: Float,
-    tvCharsWide: Int = 36,  // 32 + 4 for borders
-    minCharHeight: Float = 8f
-): Pair<Float, Float> {
-    // Calculate spacing ratio relative to char width
-    val spacingRatio = CHARACTER_SPACING / CHAR_WIDTH
-
-    // Account for density: charWidth values get multiplied by density during rendering
-    // So we need: (tvCharsWide * (charWidth + spacing)) * density = availableWidthPx
-    // Therefore: charWidth = (availableWidthPx / density) / (tvCharsWide + (tvCharsWide - 1) * spacingRatio)
-    val availableWidthDensityIndependent = availableWidthPx / density
-    val maxCharWidth = availableWidthDensityIndependent / (tvCharsWide + (tvCharsWide - 1) * spacingRatio)
-
-    // Calculate char height maintaining 1:2 aspect ratio
-    val charHeight = (maxCharWidth * 2f).coerceAtLeast(minCharHeight)
-    val charWidth = charHeight / 2f
-
-    return Pair(charWidth, charHeight)
-}
+data class AnimationData(
+    val frames: List<Array<BooleanArray>>,
+    val charWidth: Int,
+    val charHeight: Int,
+    val fps: Float
+)
 
 /**
- * Parse ASCII art sprite-sheet format.
- * Format: "Ascii Art Animation, {width}x{height}\n" followed by frames
- * or "ascii art animation, {width}x{height}\n" (case insensitive)
+ * Parse animation content from braille string
+ * Format: "Ascii Art Animation, {width}x{height}, {fps}fps\n" followed by braille frames
  */
-fun parseFrames(artString: String): List<String> {
-    val lines = artString.split('\n')
+fun parseAnimationContent(content: String): AnimationData {
+    val lines = content.split('\n')
 
     if (lines.isEmpty()) {
-        return listOf(artString)
+        return AnimationData(emptyList(), TV_WIDTH, TV_HEIGHT, 12f)
     }
 
-    // Parse header: Check if first line looks like a header with dimensions
+    // Parse header
     val header = lines[0].trim()
     val dimensionMatch = Regex("""(\d+)x(\d+)""", RegexOption.IGNORE_CASE).find(header)
+    val fpsMatch = Regex("""(\d+(?:\.\d+)?)fps""", RegexOption.IGNORE_CASE).find(header)
 
-    // Check if this line is actually a header (contains "ascii" or "animation" or just dimensions)
     val looksLikeHeader = dimensionMatch != null && (
         header.contains("ascii", ignoreCase = true) ||
         header.contains("animation", ignoreCase = true) ||
-        header.matches(Regex("""\s*\d+x\d+\s*""", RegexOption.IGNORE_CASE))
+        header.matches(Regex("""\s*\d+x\d+.*""", RegexOption.IGNORE_CASE))
     )
 
     if (!looksLikeHeader) {
-        // No valid header, treat as single frame
-        return listOf(artString)
+        // No valid header, treat as single frame with default dimensions
+        val frames = BrailleConverter.brailleToPixels(content, TV_WIDTH, TV_HEIGHT)
+        return AnimationData(frames, TV_WIDTH, TV_HEIGHT, 12f)
     }
 
-    val height = dimensionMatch!!.groupValues[2].toInt()
+    val charWidth = dimensionMatch?.groupValues?.get(1)?.toIntOrNull() ?: TV_WIDTH
+    val charHeight = dimensionMatch?.groupValues?.get(2)?.toIntOrNull() ?: TV_HEIGHT
+    val fps = fpsMatch?.groupValues?.get(1)?.toFloatOrNull() ?: 12f
 
-    // Extract frame lines (skip header)
-    val frameLines = lines.drop(1)
+    // Extract frame content (skip header)
+    val brailleContent = lines.drop(1).joinToString("\n")
+    val frames = BrailleConverter.brailleToPixels(brailleContent, charWidth, charHeight)
 
-    // Split into individual frames
-    val frames = mutableListOf<String>()
-    var i = 0
-    while (i < frameLines.size) {
-        val frameContent = frameLines.subList(i, (i + height).coerceAtMost(frameLines.size))
-            .joinToString("\n")
-        if (frameContent.isNotBlank()) {
-            frames.add(frameContent)
-        }
-        i += height
-    }
-
-    return frames.ifEmpty { listOf(artString) }
+    return AnimationData(frames, charWidth, charHeight, fps)
 }
 
 /**
- * Pad text to the right with spaces
- */
-fun paddedRight(text: String, count: Int): String {
-    if (count <= text.length) return text
-    val padding = count - text.length
-    return text + SPACE.toString().repeat(padding)
-}
-
-/**
- * Pad text on both sides to center it
- */
-fun padded(text: String, count: Int): String {
-    if (count <= text.length) return text
-    val totalPadding = count - text.length
-    val left = floor(totalPadding / 2.0).toInt()
-    val right = ceil(totalPadding / 2.0).toInt()
-    return SPACE.toString().repeat(left) + text + SPACE.toString().repeat(right)
-}
-
-/**
- * Format content to TV dimensions (TV_WIDTH x TV_HEIGHT)
- */
-fun formatContentToLines(content: String): List<String> {
-    // Replace various space characters with regular space
-    val normalizedContent = content.replace('⠀', SPACE).replace(' ', SPACE)
-    val lines = normalizedContent.split('\n')
-    val contentWidth = lines.maxOfOrNull { it.length } ?: 0
-
-    val formattedLines = lines
-        .map { paddedRight(it, contentWidth) }
-        .map { padded(it, TV_WIDTH) }
-        .toMutableList()
-
-    // Ensure we always have TV_HEIGHT lines
-    while (formattedLines.size < TV_HEIGHT) {
-        formattedLines.add(SPACE.toString().repeat(TV_WIDTH))
-    }
-
-    return formattedLines.take(TV_HEIGHT)
-}
-
-/**
- * Render content wrapped in TV frame
- * The TV border is dynamically generated using TV_WIDTH and TV_HEIGHT constants
- */
-fun renderContentToString(content: String): String {
-    val formattedLines = formatContentToLines(content)
-
-    // Build horizontal borders dynamically based on TV_WIDTH
-    val outerHorizontal = "─".repeat(TV_WIDTH + 2)
-    val innerHorizontal = "─".repeat(TV_WIDTH)
-
-    // Build the TV label, centered
-    val label = "Tama Tv"
-    val labelLine = "│" + padded(label, TV_WIDTH + 2) + "│"
-
-    // Build antenna (scaled to TV width)
-    val antennaOffset = TV_WIDTH / 3
-    val antenna = buildString {
-        appendLine(" ".repeat(antennaOffset) + "╱")
-        appendLine(" ".repeat(antennaOffset - 4) + "╲  ╱")
-        appendLine(" ".repeat(antennaOffset - 3) + "╲╱")
-    }.trimEnd()
-
-    // Build content lines dynamically based on TV_HEIGHT
-    val contentLines = buildString {
-        for (i in 0 until TV_HEIGHT) {
-            val line = formattedLines.getOrNull(i) ?: SPACE.toString().repeat(TV_WIDTH)
-            appendLine("││$line││")
-        }
-    }.trimEnd()
-
-    return """$antenna
-╭$outerHorizontal╮
-│╭$innerHorizontal╮│
-$contentLines
-│╰$innerHorizontal╯│
-$labelLine
-╰$outerHorizontal╯"""
-}
-
-/**
- * Main composable for displaying ASCII art content with optional animation
- *
- * @param content The ASCII art string (can be single frame or multi-frame format)
- * @param fps Frames per second for animation (default 12)
- * @param showTvFrame Whether to wrap content in TV border (default true)
- * @param modifier Modifier for styling
- * @param charWidth Width of each character in pixels
- * @param charHeight Height of each character in pixels
- * @param characterSpacing Spacing between characters
- * @param lineSpacing Spacing between lines
- * @param lightModeTextColor Text color in light mode
- * @param lightModeBackgroundColor Background color in light mode
- * @param darkModeTextColor Text color in dark mode
- * @param darkModeBackgroundColor Background color in dark mode
+ * Main pixel-based content renderer with optional TV frame
  */
 @Composable
-fun AsciiContentView(
+fun PixelContentView(
     content: String,
-    fps: Float = 12f,
     showTvFrame: Boolean = true,
     modifier: Modifier = Modifier,
-    charWidth: Float = CHAR_WIDTH,
-    charHeight: Float = CHAR_HEIGHT,
-    characterSpacing: Float = CHARACTER_SPACING,
-    lineSpacing: Float = LINE_SPACING,
     lightModeTextColor: Color = Color(0xFF081820),
     lightModeBackgroundColor: Color = Color(0xFFF0FAF0),
     darkModeTextColor: Color = Color(0xFF88C070),
     darkModeBackgroundColor: Color = Color(0xFF081820)
 ) {
-    val frames = remember(content) { parseFrames(content) }
+    val animationData = remember(content) { parseAnimationContent(content) }
     var currentFrameIndex by remember { mutableIntStateOf(0) }
 
     // Animation controller
-    LaunchedEffect(content, fps) {
-        if (frames.size > 1) {
+    LaunchedEffect(content, animationData.fps) {
+        if (animationData.frames.size > 1) {
             while (true) {
-                delay((1000 / fps).toLong())
-                currentFrameIndex = (currentFrameIndex + 1) % frames.size
+                delay((1000 / animationData.fps).toLong())
+                currentFrameIndex = (currentFrameIndex + 1) % animationData.frames.size
             }
         }
     }
 
-    val currentFrame = frames.getOrNull(currentFrameIndex) ?: content
-    val displayText = if (showTvFrame) {
-        renderContentToString(currentFrame)
-    } else {
-        currentFrame
-    }
-
     val isLightMode = MaterialTheme.colorScheme.background.luminance() > 0.5f
-    val textColor = if (isLightMode) lightModeTextColor else darkModeTextColor
+    val pixelColor = if (isLightMode) lightModeTextColor else darkModeTextColor
     val backgroundColor = if (isLightMode) lightModeBackgroundColor else darkModeBackgroundColor
 
-    AsciiCanvas(
-        content = displayText,
-        charWidth = charWidth,
-        charHeight = charHeight,
-        characterSpacing = characterSpacing,
-        lineSpacing = lineSpacing,
-        textColor = textColor,
-        backgroundColor = backgroundColor,
-        modifier = modifier
-    )
+    val currentFrame = animationData.frames.getOrNull(currentFrameIndex)
+
+    if (currentFrame == null || currentFrame.isEmpty()) {
+        return
+    }
+
+    if (showTvFrame) {
+        PixelCanvasWithTv(
+            pixels = currentFrame,
+            pixelColor = pixelColor,
+            backgroundColor = backgroundColor,
+            modifier = modifier
+        )
+    } else {
+        PixelCanvasWithoutTv(
+            pixels = currentFrame,
+            pixelColor = pixelColor,
+            backgroundColor = backgroundColor,
+            modifier = modifier
+        )
+    }
 }
 
 /**
- * Canvas-based ASCII art renderer with precise character positioning
- * Renders each character individually at calculated pixel positions,
- * matching the JavaScript canvas implementation
+ * Render pixel content with TV frame overlay
  */
 @Composable
-fun AsciiCanvas(
-    content: String,
-    charWidth: Float,
-    charHeight: Float,
-    characterSpacing: Float,
-    lineSpacing: Float,
-    textColor: Color,
+fun PixelCanvasWithTv(
+    pixels: Array<BooleanArray>,
+    pixelColor: Color,
     backgroundColor: Color,
     modifier: Modifier = Modifier
 ) {
-    // Validate and sanitize input parameters to avoid constraint errors
-    val safeCharWidth = charWidth.coerceAtLeast(1f)
-    val safeCharHeight = charHeight.coerceAtLeast(1f)
-    val safeCharSpacing = characterSpacing.coerceAtLeast(0f)
-    val safeLineSpacing = lineSpacing.coerceAtLeast(0f)
-
     val textMeasurer = rememberTextMeasurer()
     val firaCode = firaCodeFontFamily()
-    val lines = content.split('\n').filter { it.isNotEmpty() }
-    val maxLineLength = lines.maxOfOrNull { it.length } ?: 0
 
-    // Calculate canvas dimensions in dp with minimum size
-    val canvasWidthDp = (maxLineLength * (safeCharWidth + safeCharSpacing)).coerceAtLeast(10f).dp
-    val canvasHeightDp = (lines.size * (safeCharHeight + safeLineSpacing)).coerceAtLeast(10f).dp
+    Canvas(modifier = modifier) {
+        val pixelSize = size.width / 76f
 
-    // Text style for rendering characters with validated font size
-    val textStyle = TextStyle(
-        fontFamily = firaCode,
-        fontSize = safeCharHeight.coerceAtLeast(8f).sp,
-        color = textColor
-    )
+        // Calculate content offset (centered in TV screen)
+        val contentWidth = pixels.firstOrNull()?.size ?: 0
+        val contentHeight = pixels.size
+        val offsetX = 6f + (64f - contentWidth) / 2f
+        val offsetY = 18f + (40f - contentHeight) / 2f
 
-    Canvas(
-        modifier = modifier
-            .width(canvasWidthDp)
-            .height(canvasHeightDp)
-    ) {
-        // Fill background
+        // Clear background
         drawRect(
             color = backgroundColor,
             size = size
         )
 
-        // Only draw if we have valid content and dimensions
-        if (maxLineLength > 0 && lines.isNotEmpty() &&
-            size.width > 0f && size.height > 0f &&
-            density > 0f) {
-            // Draw each character at precise position
-            lines.forEachIndexed { lineIndex, line ->
-                line.forEachIndexed { charIndex, char ->
-                    if (char.isWhitespace() && char != ' ') return@forEachIndexed
+        // Render pixels
+        renderPixelsToCanvas(
+            pixels = pixels,
+            offsetX = offsetX,
+            offsetY = offsetY,
+            pixelSize = pixelSize,
+            color = pixelColor
+        )
 
-                    val x = charIndex * (safeCharWidth + safeCharSpacing) * density
-                    val y = lineIndex * (safeCharHeight + safeLineSpacing) * density
+        // Render TV frame
+        renderTvFrame(
+            pixelSize = pixelSize,
+            color = pixelColor,
+            textMeasurer = textMeasurer,
+            firaCode = firaCode
+        )
+    }
+}
 
-                    // Only draw if position is within canvas bounds
-                    if (x >= 0f && y >= 0f && x < size.width && y < size.height) {
-                        try {
-                            drawText(
-                                textMeasurer = textMeasurer,
-                                text = char.toString(),
-                                topLeft = Offset(x, y),
-                                style = textStyle
-                            )
-                        } catch (e: IllegalArgumentException) {
-                            // Skip this character if drawing fails
-                        }
-                    }
-                }
+/**
+ * Render pixel content without TV frame
+ */
+@Composable
+fun PixelCanvasWithoutTv(
+    pixels: Array<BooleanArray>,
+    pixelColor: Color,
+    backgroundColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val contentWidth = pixels.firstOrNull()?.size ?: 0
+    val contentHeight = pixels.size
+
+    Canvas(
+        modifier = modifier
+            .width((contentWidth).dp)
+            .height((contentHeight).dp)
+    ) {
+        val pixelSize = if (contentWidth > 0) size.width / contentWidth else 1f
+
+        // Clear background
+        drawRect(
+            color = backgroundColor,
+            size = size
+        )
+
+        // Render pixels
+        renderPixelsToCanvas(
+            pixels = pixels,
+            offsetX = 0f,
+            offsetY = 0f,
+            pixelSize = pixelSize,
+            color = pixelColor
+        )
+    }
+}
+
+/**
+ * Draw individual pixels to canvas
+ */
+private fun DrawScope.renderPixelsToCanvas(
+    pixels: Array<BooleanArray>,
+    offsetX: Float,
+    offsetY: Float,
+    pixelSize: Float,
+    color: Color
+) {
+    for (y in pixels.indices) {
+        val row = pixels[y]
+        for (x in row.indices) {
+            if (row[x]) {
+                drawRect(
+                    color = color,
+                    topLeft = Offset(
+                        (offsetX + x) * pixelSize,
+                        (offsetY + y) * pixelSize
+                    ),
+                    size = Size(pixelSize, pixelSize)
+                )
             }
         }
     }
 }
 
 /**
- * Display ASCII content with TV frame
+ * Draw TV frame overlay (rounded rectangles, antenna, label)
+ */
+private fun DrawScope.renderTvFrame(
+    pixelSize: Float,
+    color: Color,
+    textMeasurer: TextMeasurer,
+    firaCode: androidx.compose.ui.text.font.FontFamily
+) {
+    val strokeWidth = max(floor(pixelSize / 2f), 1f)
+    val stroke = Stroke(
+        width = strokeWidth,
+        cap = StrokeCap.Round,
+        join = StrokeJoin.Round
+    )
+
+    // Outer frame
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(strokeWidth, 12 * pixelSize + strokeWidth),
+        size = Size(
+            76 * pixelSize - pixelSize,
+            56 * pixelSize - pixelSize
+        ),
+        cornerRadius = CornerRadius(pixelSize, pixelSize),
+        style = stroke
+    )
+
+    // Inner frame
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(4 * pixelSize + strokeWidth, 16 * pixelSize + strokeWidth),
+        size = Size(
+            68 * pixelSize - pixelSize,
+            44 * pixelSize - pixelSize
+        ),
+        cornerRadius = CornerRadius(pixelSize, pixelSize),
+        style = stroke
+    )
+
+    // Antenna
+    val antennaCenterX = 25 * pixelSize
+    val antennaCenterY = 12 * pixelSize
+    val antennaLeftEndX = 21 * pixelSize
+    val antennaLeftEndY = 4 * pixelSize
+    val antennaRightEndX = 31 * pixelSize
+    val antennaRightEndY = 0 * pixelSize
+
+    drawLine(
+        color = color,
+        start = Offset(antennaLeftEndX, antennaLeftEndY),
+        end = Offset(antennaCenterX, antennaCenterY),
+        strokeWidth = strokeWidth,
+        cap = StrokeCap.Round
+    )
+
+    drawLine(
+        color = color,
+        start = Offset(antennaCenterX, antennaCenterY),
+        end = Offset(antennaRightEndX, antennaRightEndY),
+        strokeWidth = strokeWidth,
+        cap = StrokeCap.Round
+    )
+
+    // Label text
+    val textStyle = TextStyle(
+        fontFamily = firaCode,
+        fontSize = (3 * pixelSize / density).sp,
+        color = color
+    )
+
+    val textLayoutResult = textMeasurer.measure("Tama Tv", textStyle)
+    val textWidth = textLayoutResult.size.width
+    val textX = 38 * pixelSize - textWidth / 2
+    val textY = 61 * pixelSize + strokeWidth
+
+    drawText(
+        textMeasurer = textMeasurer,
+        text = "Tama Tv",
+        topLeft = Offset(textX, textY),
+        style = textStyle
+    )
+}
+
+/**
+ * Display content with TV frame (for feed)
  */
 @Composable
 fun AsciiContentWithTv(
@@ -358,36 +342,25 @@ fun AsciiContentWithTv(
     modifier: Modifier = Modifier,
     availableWidthDp: Dp? = null
 ) {
-    // Calculate optimal dimensions if available space is provided
-    val (charWidth, charHeight) = if (availableWidthDp != null) {
-        val density = androidx.compose.ui.platform.LocalDensity.current
-        with(density) {
-            calculateOptimalCharDimensions(
-                availableWidthPx = availableWidthDp.toPx(),
-                density = this.density
+    BoxWithConstraints(modifier = modifier) {
+        val canvasWidth = availableWidthDp ?: maxWidth
+
+        Box(
+            modifier = Modifier
+                .width(canvasWidth)
+                .height(canvasWidth) // Square aspect ratio for TV
+        ) {
+            PixelContentView(
+                content = content,
+                showTvFrame = true,
+                modifier = Modifier.fillMaxSize()
             )
         }
-    } else {
-        Pair(CHAR_WIDTH, CHAR_HEIGHT)
     }
-
-    // Scale spacing proportionally
-    val scaleFactor = charWidth / CHAR_WIDTH
-
-    AsciiContentView(
-        content = content,
-        fps = fps,
-        showTvFrame = true,
-        charWidth = charWidth,
-        charHeight = charHeight,
-        characterSpacing = CHARACTER_SPACING * scaleFactor,
-        lineSpacing = LINE_SPACING * scaleFactor,
-        modifier = modifier
-    )
 }
 
 /**
- * Display ASCII content without TV frame
+ * Display content without TV frame (for pixel editor)
  */
 @Composable
 fun AsciiContentWithoutTv(
@@ -395,9 +368,8 @@ fun AsciiContentWithoutTv(
     fps: Float = 12f,
     modifier: Modifier = Modifier
 ) {
-    AsciiContentView(
+    PixelContentView(
         content = content,
-        fps = fps,
         showTvFrame = false,
         modifier = modifier
     )
