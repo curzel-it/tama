@@ -110,7 +110,9 @@ class MidiComposerIos : NativeMidiComposer {
     }
 
     override fun stop() {
+        // Set flags FIRST to prevent any completion handlers from rescheduling
         isCurrentlyPlaying = false
+        shouldLoop = false
         playerNode?.stop()
         audioEngine?.stop()
         audioEngine = null

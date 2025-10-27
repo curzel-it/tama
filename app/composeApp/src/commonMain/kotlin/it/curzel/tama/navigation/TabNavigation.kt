@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -25,8 +26,8 @@ enum class Tab(val title: String) {
 
 @Composable
 fun TabNavigationScreen() {
-    var selectedTab by remember { mutableStateOf(Tab.Feed) }
-    var isInSubScreen by remember { mutableStateOf(false) }
+    var selectedTab by rememberSaveable { mutableStateOf(Tab.Feed) }
+    var isInSubScreen by rememberSaveable { mutableStateOf(false) }
     val colorScheme = MaterialTheme.colorScheme
     val isLandscapeMode = isLandscape()
 

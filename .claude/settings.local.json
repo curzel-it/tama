@@ -39,7 +39,8 @@
       "Bash(findstr:*)",
       "Bash(./gradlew build:*)",
       "Bash(./gradlew:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

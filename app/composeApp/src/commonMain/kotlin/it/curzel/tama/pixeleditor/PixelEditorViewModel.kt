@@ -18,10 +18,11 @@ enum class ToolType {
 }
 
 class PixelEditorViewModel {
-    var canvasWidth by mutableIntStateOf(48)
+    var canvasWidth by mutableIntStateOf(64)
         private set
-    var canvasHeight by mutableIntStateOf(32)
+    var canvasHeight by mutableIntStateOf(40)
         private set
+
     var fps by mutableFloatStateOf(10f)
         private set
 
@@ -93,12 +94,12 @@ class PixelEditorViewModel {
     }
 
     fun updateCanvasWidth(width: Int) {
-        canvasWidth = width.coerceIn(2, 128)
+        canvasWidth = width.coerceIn(2, 64)
         validateCurrentDimensions()
     }
 
     fun updateCanvasHeight(height: Int) {
-        canvasHeight = height.coerceIn(4, 128)
+        canvasHeight = height.coerceIn(4, 40)
         validateCurrentDimensions()
     }
 

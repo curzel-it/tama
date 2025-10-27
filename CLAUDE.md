@@ -12,15 +12,15 @@
 ## Style and other guideliens
 Stick to style and preferences existing in the current codebase.
 After implementing any changes run a code review on all edited files.
-Run `cargo clippy` for hints on what can be improved.
+When editing the rust codebase, run `cargo clippy` for hints on what can be improved.
 Before marking the task as completed, make sure you remove all unnecessary comments.
 
 ## Testing
 All the code you write should be (at least somewhat) unit-testable, in particular game engines.
 Make sure to implement all tests that it makes sense to have
 
-Test your implementation by the various executables to spot compilation errors (`cargo build --bin ...`).
-Remember to run `cargo test` frequently to make sure you did not introduce breaking changes.
+Test your implementation by the various executables to spot compilation errors (see Building).
+When working on Rust, remember to run `cargo test` frequently to make sure you did not introduce breaking changes.
 
 ## How to add a new feature
 We follow a simple architecture, just one rule: One feature = One File.

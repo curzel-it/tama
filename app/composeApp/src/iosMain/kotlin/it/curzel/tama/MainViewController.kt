@@ -1,5 +1,6 @@
 package it.curzel.tama
 
+import androidx.compose.runtime.remember
 import androidx.compose.ui.window.ComposeUIViewController
 import it.curzel.tama.content.ContentWipStorageIos
 import it.curzel.tama.content.ContentWipUseCase
@@ -17,12 +18,17 @@ import it.curzel.tama.sharing.ContentSharingManager
 import it.curzel.tama.sharing.ContentSharerIos
 
 fun MainViewController() = ComposeUIViewController {
-    MidiPlayer.provider = MidiPlayerIos()
-    MidiComposer.backend = MidiComposerIos()
-    ConfigStorage.provider = ConfigStorageIos()
-    ReportedContentStorage.provider = ReportedContentStorageIos()
-    PrivacyPolicyManager.opener = PrivacyPolicyOpenerIos()
-    ContentSharingManager.sharer = ContentSharerIos()
-    ContentWipUseCase.storageProvider = ContentWipStorageIos()
+    // Initialize platform dependencies only once, not on every recomposition
+    // This prevents creating multiple audio backend instances during screen rotation
+    remember {
+        MidiPlayer.provider = MidiPlayerIos()
+        MidiComposer.backend = MidiComposerIos()
+        ConfigStorage.provider = ConfigStorageIos()
+        ReportedContentStorage.provider = ReportedContentStorageIos()
+        PrivacyPolicyManager.opener = PrivacyPolicyOpenerIos()
+        ContentSharingManager.sharer = ContentSharerIos()
+        ContentWipUseCase.storageProvider = ContentWipStorageIos()
+        Unit // remember block must return a value
+    }
     App()
 }
