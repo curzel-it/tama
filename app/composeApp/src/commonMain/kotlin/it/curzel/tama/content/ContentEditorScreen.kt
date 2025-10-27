@@ -9,6 +9,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.content.ContentWipUseCase
+import it.curzel.tama.content.PublishContentDialog
+import it.curzel.tama.content.PublishContentViewModel
+import it.curzel.tama.content.PublishState
+import it.curzel.tama.midi.MidiComposer
 import it.curzel.tama.midi.MidiComposerScreen
 import it.curzel.tama.pixeleditor.PixelEditorScreen
 import it.curzel.tama.storage.ConfigStorage
@@ -39,6 +43,16 @@ fun ContentEditorScreen(
         isLoggedIn = channel != null && token != null
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            try {
+                MidiComposer.stop()
+            } catch (e: Exception) {
+                println("Failed to stop audio on screen dispose: ${e.message}")
+            }
+        }
+    }
+
     if (!isLoggedIn) {
         LoginScreen(onLoginSuccess = {
             checkLoginTrigger++
@@ -47,6 +61,17 @@ fun ContentEditorScreen(
     }
 
     var refreshTrigger by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(currentScreen) {
+        // Stop audio when navigating away from main screen
+        if (currentScreen != EditorScreen.Main) {
+            try {
+                MidiComposer.stop()
+            } catch (e: Exception) {
+                println("Failed to stop audio when navigating away: ${e.message}")
+            }
+        }
+    }
 
     when (currentScreen) {
         EditorScreen.Main -> MainEditorScreen(
@@ -78,6 +103,13 @@ fun MainEditorScreen(
     refreshTrigger: Int = 0
 ) {
     val scrollState = rememberScrollState()
+    var hasContent by remember { mutableStateOf(false) }
+    val publishViewModel = remember { PublishContentViewModel() }
+    var localRefreshTrigger by remember { mutableIntStateOf(refreshTrigger) }
+
+    LaunchedEffect(refreshTrigger) {
+        localRefreshTrigger = refreshTrigger
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -95,12 +127,32 @@ fun MainEditorScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            ContentPreviewSection(refreshTrigger = refreshTrigger)
+            ContentPreviewSection(
+                refreshTrigger = localRefreshTrigger,
+                onContentStateChange = { hasContent = it }
+            )
 
             EditorToolsSection(
                 onNavigateToMidi = onNavigateToMidi,
-                onNavigateToPixel = onNavigateToPixel
+                onNavigateToPixel = onNavigateToPixel,
+                hasContent = hasContent,
+                onPublish = { publishViewModel.showConfirmation() }
             )
+        }
+    }
+
+    PublishContentDialog(
+        publishState = publishViewModel.publishState,
+        onDismiss = { publishViewModel.dismissDialog() },
+        onConfirm = { publishViewModel.publish() },
+        onNavigateToContent = { contentId ->
+            publishViewModel.dismissDialog()
+        }
+    )
+
+    LaunchedEffect(publishViewModel.publishState) {
+        if (publishViewModel.publishState is PublishState.Success) {
+            localRefreshTrigger++
         }
     }
 }
@@ -108,7 +160,9 @@ fun MainEditorScreen(
 @Composable
 fun EditorToolsSection(
     onNavigateToMidi: () -> Unit,
-    onNavigateToPixel: () -> Unit
+    onNavigateToPixel: () -> Unit,
+    hasContent: Boolean,
+    onPublish: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -154,23 +208,25 @@ fun EditorToolsSection(
             }
         }
 
-        OutlinedCard(
-            onClick = { /* TODO: Handle publish */ },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
+        if (hasContent) {
+            OutlinedCard(
+                onClick = onPublish,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
             ) {
-                Text(
-                    text = "Publish",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Share your content with the world",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Publish",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Share your content with the world",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

@@ -209,6 +209,7 @@ private fun FrameThumbnail(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.icon_clear),
+                    tint = Color.White,
                     contentDescription = "Delete",
                     modifier = Modifier.size(24.dp)
                 )
