@@ -95,53 +95,12 @@ fun MainEditorScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            FileSection()
-
             ContentPreviewSection(refreshTrigger = refreshTrigger)
 
             EditorToolsSection(
                 onNavigateToMidi = onNavigateToMidi,
                 onNavigateToPixel = onNavigateToPixel
             )
-        }
-    }
-}
-
-@Composable
-fun FileSection() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "File",
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            TamaButton(
-                onClick = { /* TODO: Handle upload */ },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Upload")
-            }
-
-            TamaButton(
-                onClick = { /* TODO: Handle download */ },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Download")
-            }
-        }
-
-        TamaButton(
-            onClick = { /* TODO: Handle publish */ },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Publish")
         }
     }
 }
@@ -155,11 +114,6 @@ fun EditorToolsSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Tools",
-            style = MaterialTheme.typography.titleLarge
-        )
-
         OutlinedCard(
             onClick = onNavigateToMidi,
             modifier = Modifier.fillMaxWidth()
@@ -168,7 +122,7 @@ fun EditorToolsSection(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "MIDI Composer",
+                    text = "Edit Audio",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -188,12 +142,32 @@ fun EditorToolsSection(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Pixel Art Editor",
+                    text = "Edit Animation",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Draw and animate pixel art",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        OutlinedCard(
+            onClick = { /* TODO: Handle publish */ },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Publish",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Share your content with the world",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

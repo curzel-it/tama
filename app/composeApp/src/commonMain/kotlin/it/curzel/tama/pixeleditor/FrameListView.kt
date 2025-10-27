@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +21,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+import tama.composeapp.generated.resources.Res
+import tama.composeapp.generated.resources.icon_clear
 
 @Composable
 fun FrameListView(
@@ -195,7 +199,7 @@ private fun FrameThumbnail(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .offset(x = 4.dp, y = (-4).dp)
-                    .size(20.dp)
+                    .size(24.dp)
                     .background(
                         color = MaterialTheme.colorScheme.error,
                         shape = RoundedCornerShape(10.dp)
@@ -203,10 +207,10 @@ private fun FrameThumbnail(
                     .clickable { onDelete() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "×",
-                    color = Color.White,
-                    fontSize = 16.sp
+                Icon(
+                    painter = painterResource(Res.drawable.icon_clear),
+                    contentDescription = "Delete",
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }

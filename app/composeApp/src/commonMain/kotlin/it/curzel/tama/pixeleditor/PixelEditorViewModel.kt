@@ -18,9 +18,9 @@ enum class ToolType {
 }
 
 class PixelEditorViewModel {
-    var canvasWidth by mutableIntStateOf(48)
+    var canvasWidth by mutableIntStateOf(64)
         private set
-    var canvasHeight by mutableIntStateOf(32)
+    var canvasHeight by mutableIntStateOf(40)
         private set
     var fps by mutableFloatStateOf(10f)
         private set

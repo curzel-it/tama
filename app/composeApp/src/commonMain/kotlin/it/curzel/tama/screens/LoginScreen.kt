@@ -179,10 +179,10 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TextButton(
                     onClick = {
@@ -196,12 +196,6 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                         fontWeight = FontWeight.Bold
                     )
                 }
-
-                Text(
-                    text = " • ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
 
                 TextButton(
                     onClick = {

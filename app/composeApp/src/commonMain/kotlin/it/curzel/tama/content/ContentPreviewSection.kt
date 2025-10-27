@@ -44,14 +44,11 @@ fun ContentPreviewSection(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .widthIn(max = 600.dp)
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Preview",
-            style = MaterialTheme.typography.titleLarge
-        )
-
         if (content.art.isNotBlank()) {
             PixelArtPreview(
                 art = content.art,
