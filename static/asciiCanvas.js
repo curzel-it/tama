@@ -94,6 +94,9 @@ function renderPixelFrame(pixelFrame) {
     // Render content
     renderPixelsToCanvas(ctx, pixelFrame, offsetX, offsetY, pixelSize);
 
+    // Render grid overlay
+    renderPixelGrid(ctx, pixelFrame[0].length, pixelFrame.length, offsetX, offsetY, pixelSize);
+
     // Render tv
     renderTvFrame(ctx, pixelSize);
 }
@@ -154,6 +157,28 @@ function renderPixelsToCanvas(ctx, pixels, offsetX, offsetY, pixelSize) {
                 );
             }
         }
+    }
+}
+
+// Draw grid overlay
+function renderPixelGrid(ctx, contentWidth, contentHeight, offsetX, offsetY, pixelSize) {
+    if (pixelSize <= 1) return;
+
+    ctx.strokeStyle = backgroundColor();
+    ctx.lineWidth = 1;
+
+    for (let x = 0; x <= contentWidth; x++) {
+        ctx.beginPath();
+        ctx.moveTo((offsetX + x) * pixelSize, offsetY * pixelSize);
+        ctx.lineTo((offsetX + x) * pixelSize, (offsetY + contentHeight) * pixelSize);
+        ctx.stroke();
+    }
+
+    for (let y = 0; y <= contentHeight; y++) {
+        ctx.beginPath();
+        ctx.moveTo(offsetX * pixelSize, (offsetY + y) * pixelSize);
+        ctx.lineTo((offsetX + contentWidth) * pixelSize, (offsetY + y) * pixelSize);
+        ctx.stroke();
     }
 }
 

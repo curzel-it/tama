@@ -277,6 +277,7 @@ fun FeedPortraitLayout(
         AsciiContentWithTv(
             content = if (isShowingStatic) staticFrame else item.content.art,
             fps = if (isShowingStatic) 1f else item.content.fps,
+            showGrid = true,
             availableWidthDp = availableWidth
         )
     }
@@ -348,6 +349,7 @@ fun FeedLandscapeLayout(
             AsciiContentWithTv(
                 content = if (isShowingStatic) staticFrame else item.content.art,
                 fps = if (isShowingStatic) 1f else item.content.fps,
+                showGrid = true,
                 availableWidthDp = tvWidth,
             )
         }

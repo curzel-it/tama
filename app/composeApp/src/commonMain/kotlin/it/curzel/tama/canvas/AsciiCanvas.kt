@@ -91,6 +91,7 @@ fun parseAnimationContent(content: String): AnimationData {
 fun PixelContentView(
     content: String,
     showTvFrame: Boolean = true,
+    showGrid: Boolean = false,
     modifier: Modifier = Modifier,
     lightModeTextColor: Color = Color(0xFF081820),
     lightModeBackgroundColor: Color = Color(0xFFF0FAF0),
@@ -125,6 +126,7 @@ fun PixelContentView(
             pixels = currentFrame,
             pixelColor = pixelColor,
             backgroundColor = backgroundColor,
+            showGrid = showGrid,
             modifier = modifier
         )
     } else {
@@ -132,6 +134,7 @@ fun PixelContentView(
             pixels = currentFrame,
             pixelColor = pixelColor,
             backgroundColor = backgroundColor,
+            showGrid = showGrid,
             modifier = modifier
         )
     }
@@ -145,6 +148,7 @@ fun PixelCanvasWithTv(
     pixels: Array<BooleanArray>,
     pixelColor: Color,
     backgroundColor: Color,
+    showGrid: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val textMeasurer = rememberTextMeasurer()
@@ -174,6 +178,18 @@ fun PixelCanvasWithTv(
             color = pixelColor
         )
 
+        // Render grid overlay
+        if (showGrid) {
+            renderPixelGrid(
+                contentWidth = contentWidth,
+                contentHeight = contentHeight,
+                offsetX = offsetX,
+                offsetY = offsetY,
+                pixelSize = pixelSize,
+                backgroundColor = backgroundColor
+            )
+        }
+
         // Render TV frame
         renderTvFrame(
             pixelSize = pixelSize,
@@ -192,6 +208,7 @@ fun PixelCanvasWithoutTv(
     pixels: Array<BooleanArray>,
     pixelColor: Color,
     backgroundColor: Color,
+    showGrid: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val contentWidth = pixels.firstOrNull()?.size ?: 0
@@ -218,6 +235,18 @@ fun PixelCanvasWithoutTv(
             pixelSize = pixelSize,
             color = pixelColor
         )
+
+        // Render grid overlay
+        if (showGrid) {
+            renderPixelGrid(
+                contentWidth = contentWidth,
+                contentHeight = contentHeight,
+                offsetX = 0f,
+                offsetY = 0f,
+                pixelSize = pixelSize,
+                backgroundColor = backgroundColor
+            )
+        }
     }
 }
 
@@ -245,6 +274,40 @@ private fun DrawScope.renderPixelsToCanvas(
                 )
             }
         }
+    }
+}
+
+/**
+ * Draw grid overlay
+ */
+private fun DrawScope.renderPixelGrid(
+    contentWidth: Int,
+    contentHeight: Int,
+    offsetX: Float,
+    offsetY: Float,
+    pixelSize: Float,
+    backgroundColor: Color
+) {
+    if (pixelSize <= 1f) return
+
+    val strokeWidth = 1f
+
+    for (x in 0..contentWidth) {
+        drawLine(
+            color = backgroundColor,
+            start = Offset((offsetX + x) * pixelSize, offsetY * pixelSize),
+            end = Offset((offsetX + x) * pixelSize, (offsetY + contentHeight) * pixelSize),
+            strokeWidth = strokeWidth
+        )
+    }
+
+    for (y in 0..contentHeight) {
+        drawLine(
+            color = backgroundColor,
+            start = Offset(offsetX * pixelSize, (offsetY + y) * pixelSize),
+            end = Offset((offsetX + contentWidth) * pixelSize, (offsetY + y) * pixelSize),
+            strokeWidth = strokeWidth
+        )
     }
 }
 
@@ -339,6 +402,7 @@ private fun DrawScope.renderTvFrame(
 fun AsciiContentWithTv(
     content: String,
     fps: Float = 12f,
+    showGrid: Boolean = false,
     modifier: Modifier = Modifier,
     availableWidthDp: Dp? = null
 ) {
@@ -353,6 +417,7 @@ fun AsciiContentWithTv(
             PixelContentView(
                 content = content,
                 showTvFrame = true,
+                showGrid = showGrid,
                 modifier = Modifier.fillMaxSize()
             )
         }
