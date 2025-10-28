@@ -1,21 +1,16 @@
 package it.curzel.tama.screenshot
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.singleWindowApplication
-import java.awt.Dimension
-import javax.swing.SwingUtilities
 import it.curzel.tama.App
 import it.curzel.tama.api.ApiManager
 import it.curzel.tama.content.ContentWipStorageJvm
@@ -42,7 +37,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class HomepageScreenshotTest {
+class ScreenshotTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -67,19 +62,20 @@ class HomepageScreenshotTest {
     }
 
     @Test
-    fun captureHomepageLight() {
-        captureHomepageWithTheme(darkTheme = false, themeName = "light")
+    fun takeScreenshots() {
+        listOf(IntSize(400, 1000)).forEach { size ->
+            listOf(DARK_MODE, LIGHT_MODE).forEach { darkTheme ->
+                capture("homepage", darkTheme, size) {}
+            }
+        }
     }
 
-    @Test
-    fun captureHomepageDark() {
-        captureHomepageWithTheme(darkTheme = true, themeName = "dark")
-    }
-
-    private fun captureHomepageWithTheme(darkTheme: Boolean, themeName: String) {
-        val width = 400
-        val height = 1000
-
+    private fun capture(
+        label: String,
+        darkTheme: Boolean,
+        size: IntSize,
+        navigate: (ComposeTestRule) -> Unit
+    ) {
         composeTestRule.setContent {
             CompositionLocalProvider(
                 LocalDensity provides Density(
@@ -89,19 +85,26 @@ class HomepageScreenshotTest {
             ) {
                 App(
                     darkThemeOverride = darkTheme,
-                    modifier = Modifier.width(width.dp).height(height.dp)
+                    modifier = Modifier.width(size.width.dp).height(size.height.dp)
                 )
             }
         }
 
         composeTestRule.waitForIdle()
+        Thread.sleep(1000)
+        navigate(composeTestRule)
         Thread.sleep(5000)
 
         composeTestRule.onRoot().captureScreenshot(
-            label = "homepage",
-            width = width,
-            height = height,
-            theme = themeName
+            label = label,
+            width = size.width,
+            height = size.height,
+            theme = if (darkTheme) "dark" else "light"
         )
     }
 }
+
+private const val DARK_MODE = true
+private const val LIGHT_MODE = false
+
+// private const val
