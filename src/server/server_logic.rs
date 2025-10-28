@@ -370,15 +370,21 @@ async fn get_servers(State(state): State<AppState>) -> Result<Json<Vec<String>>,
     Ok(Json(servers))
 }
 
-async fn get_versions() -> Result<Json<VersionResponse>, StatusCode> {
-    let content = tokio::fs::read_to_string("static/versions.json")
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    let version_response: VersionResponse = serde_json::from_str(&content)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    Ok(Json(version_response))
+async fn get_versions() -> Json<VersionResponse> {
+    // Return version requirements as a structured response
+    // Update these values when you want to enforce version updates
+    Json(VersionResponse {
+        minimum: PlatformVersions {
+            ios: "0.1.0".to_string(),
+            android: "0.1.0".to_string(),
+            cli: "0.1.0".to_string(),
+        },
+        latest: PlatformVersions {
+            ios: "0.1.0".to_string(),
+            android: "0.1.0".to_string(),
+            cli: "0.1.0".to_string(),
+        },
+    })
 }
 
 async fn spa_fallback() -> Result<Html<String>, StatusCode> {
