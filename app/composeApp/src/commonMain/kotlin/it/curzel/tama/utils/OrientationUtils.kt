@@ -7,8 +7,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
+object OrientationStubs {
+    var isForcedLandscape = false
+    var isForcedPortrait = false
+}
+
 @Composable
 fun isLandscape(): Boolean {
+    if (OrientationStubs.isForcedLandscape) return true
+    if (OrientationStubs.isForcedPortrait) return false
+
     var isLandscapeMode by remember { mutableStateOf(false) }
 
     BoxWithConstraints {

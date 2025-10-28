@@ -1,7 +1,12 @@
 package it.curzel.tama
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import it.curzel.tama.model.ThemePreference
 import it.curzel.tama.navigation.TabNavigationScreen
 import it.curzel.tama.screens.UpdateRequiredScreen
@@ -12,11 +17,15 @@ import it.curzel.tama.version.VersionUseCase
 import kotlinx.coroutines.launch
 
 @Composable
-fun App(deepLinkContentId: Long? = null) {
+fun App(
+    deepLinkContentId: Long? = null,
+    darkThemeOverride: Boolean? = null,
+    modifier: Modifier = Modifier
+) {
     val themePreference by rememberThemePreference()
     val systemInDarkTheme = isSystemInDarkTheme()
 
-    val darkTheme = when (themePreference) {
+    val darkTheme = darkThemeOverride ?: when (themePreference) {
         ThemePreference.SYSTEM -> systemInDarkTheme
         ThemePreference.LIGHT -> false
         ThemePreference.DARK -> true
@@ -40,10 +49,14 @@ fun App(deepLinkContentId: Long? = null) {
             return@TamaTheme
         }
 
-        if (versionCheckResult?.updateRequired == true) {
-            UpdateRequiredScreen(versionCheckResult!!)
-        } else {
-            TabNavigationScreen(deepLinkContentId = deepLinkContentId)
+        val content: @Composable () -> Unit = {
+            if (versionCheckResult?.updateRequired == true) {
+                UpdateRequiredScreen(versionCheckResult!!)
+            } else {
+                TabNavigationScreen(deepLinkContentId = deepLinkContentId, modifier = modifier)
+            }
         }
+
+        content()
     }
 }
