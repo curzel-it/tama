@@ -1,9 +1,9 @@
 use crate::{auth_endpoints, channel_endpoints, middleware, rate_limiter, AppState, DbPool};
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{StatusCode, header},
     middleware as axum_middleware,
-    response::{Html, Json},
+    response::{Html, Json, Response},
     routing::{get, post},
     Router,
 };
@@ -365,6 +365,32 @@ async fn spa_fallback() -> Result<Html<String>, StatusCode> {
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
+async fn apple_app_site_association() -> Result<Response, StatusCode> {
+    // Serve apple-app-site-association file as application/octet-stream
+    let content = tokio::fs::read("static/.well-known/apple-app-site-association")
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "application/octet-stream")
+        .body(axum::body::Body::from(content))
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+async fn digital_asset_links() -> Result<Response, StatusCode> {
+    // Serve assetlinks.json file as application/json
+    let content = tokio::fs::read("static/.well-known/assetlinks.json")
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(axum::body::Body::from(content))
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
 
 async fn load_tls_config(cert_path: &str, key_path: &str) -> Result<RustlsConfig, String> {
     RustlsConfig::from_pem_file(cert_path, key_path)
@@ -483,6 +509,15 @@ pub async fn run_server(db_path: &str, port: u16, jwt_secret: String) -> Result<
     let spa_routes = Router::new()
         .route("/view/*path", get(spa_fallback));
 
+    // Apple App Site Association routes for universal links
+    let apple_routes = Router::new()
+        .route("/.well-known/apple-app-site-association", get(apple_app_site_association))
+        .route("/apple-app-site-association", get(apple_app_site_association));
+
+    // Android Digital Asset Links routes for App Links
+    let android_routes = Router::new()
+        .route("/.well-known/assetlinks.json", get(digital_asset_links));
+
     // Static file serving for the web UI
     let static_service = ServeDir::new("static")
         .append_index_html_on_directories(true);
@@ -492,6 +527,8 @@ pub async fn run_server(db_path: &str, port: u16, jwt_secret: String) -> Result<
         .merge(auth_routes)
         .merge(upload_routes)
         .merge(spa_routes)
+        .merge(apple_routes)
+        .merge(android_routes)
         .nest_service("/", static_service)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())

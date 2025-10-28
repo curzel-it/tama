@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "9L5V9XNS25.it.curzel.tama.Tama",
+        "paths": ["/view/content/*"]
+      }
+    ]
+  }
+}

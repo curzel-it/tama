@@ -40,7 +40,8 @@
       "Bash(./gradlew build:*)",
       "Bash(./gradlew:*)",
       "Bash(tree:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

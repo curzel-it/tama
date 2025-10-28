@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "it.curzel.tama.Tama",
+    "sha256_cert_fingerprints": ["C8:AC:81:DF:97:BB:FD:E4:61:5C:31:05:6E:6A:AD:35:2D:9C:70:F1:78:66:83:47:C1:9E:8B:84:B3:02:F3:9B"]
+  }
+}]

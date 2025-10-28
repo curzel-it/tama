@@ -138,6 +138,55 @@ enum PlayMode {
     SingleContent(Channel),
 }
 
+fn compare_versions(current: &str, minimum: &str) -> std::cmp::Ordering {
+    let current_parts: Vec<u32> = current.split('.').filter_map(|s| s.parse().ok()).collect();
+    let minimum_parts: Vec<u32> = minimum.split('.').filter_map(|s| s.parse().ok()).collect();
+
+    let max_len = current_parts.len().max(minimum_parts.len());
+
+    for i in 0..max_len {
+        let current_part = current_parts.get(i).copied().unwrap_or(0);
+        let minimum_part = minimum_parts.get(i).copied().unwrap_or(0);
+
+        match current_part.cmp(&minimum_part) {
+            std::cmp::Ordering::Less => return std::cmp::Ordering::Less,
+            std::cmp::Ordering::Greater => return std::cmp::Ordering::Greater,
+            std::cmp::Ordering::Equal => continue,
+        }
+    }
+
+    std::cmp::Ordering::Equal
+}
+
+async fn check_version_enforcement(server_url: &str) -> io::Result<()> {
+    let api_client = ApiClient::new(server_url.to_string());
+    let current_version = env!("CARGO_PKG_VERSION");
+
+    match api_client.check_version().await {
+        Ok(version_response) => {
+            let minimum_version = &version_response.minimum.cli;
+
+            if compare_versions(current_version, minimum_version) == std::cmp::Ordering::Less {
+                eprintln!("\n╔════════════════════════════════════════════╗");
+                eprintln!("║        UPDATE REQUIRED                     ║");
+                eprintln!("╚════════════════════════════════════════════╝\n");
+                eprintln!("Current version: {}", current_version);
+                eprintln!("Minimum version: {}\n", minimum_version);
+                eprintln!("Please update by running:");
+                eprintln!("  git pull origin main\n");
+                eprintln!("Press any key to exit...");
+
+                let _ = event::read();
+                return Err(io::Error::other("Update required"));
+            }
+        }
+        Err(_) => {
+        }
+    }
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> io::Result<()> {
     dotenvy::dotenv().ok();
@@ -146,6 +195,9 @@ async fn main() -> io::Result<()> {
 
     let server_url = std::env::var("SERVER_URL")
         .unwrap_or_else(|_| "http://localhost:3000".to_string());
+
+    // Check version enforcement before proceeding
+    check_version_enforcement(&server_url).await?;
 
     // Handle non-UI commands first
     match &cli.command {
@@ -242,6 +294,7 @@ async fn main() -> io::Result<()> {
                         }
                     }
                     Err(e) => {
+                        UI::display_server_error()?;
                         UI::cleanup()?;
                         return Err(io::Error::other(format!("Failed to fetch content: {e}")));
                     }
@@ -276,6 +329,7 @@ async fn main() -> io::Result<()> {
                         }
                     }
                     Err(e) => {
+                        UI::display_server_error()?;
                         UI::cleanup()?;
                         return Err(io::Error::other(format!("Failed to fetch channel: {e}")));
                     }
@@ -340,6 +394,7 @@ async fn main() -> io::Result<()> {
         }
 
         if !at_least_one_success && all_items.is_empty() {
+            UI::display_server_error()?;
             UI::cleanup()?;
             return Err(io::Error::other("Failed to fetch feed from any server"));
         }
