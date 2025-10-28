@@ -49,6 +49,19 @@ pub struct PaginationParams {
     pub offset: i64,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct PlatformVersions {
+    pub ios: String,
+    pub android: String,
+    pub cli: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct VersionResponse {
+    pub minimum: PlatformVersions,
+    pub latest: PlatformVersions,
+}
+
 #[derive(Deserialize)]
 pub struct FeedParams {
     /// Comma-separated list of content IDs to prioritize at the front of the feed
@@ -357,6 +370,17 @@ async fn get_servers(State(state): State<AppState>) -> Result<Json<Vec<String>>,
     Ok(Json(servers))
 }
 
+async fn get_versions() -> Result<Json<VersionResponse>, StatusCode> {
+    let content = tokio::fs::read_to_string("static/versions.json")
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let version_response: VersionResponse = serde_json::from_str(&content)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(version_response))
+}
+
 async fn spa_fallback() -> Result<Html<String>, StatusCode> {
     // Serve index.html for SPA routes
     tokio::fs::read_to_string("static/index.html")
@@ -480,6 +504,7 @@ pub async fn run_server(db_path: &str, port: u16, jwt_secret: String) -> Result<
         .route("/channel/:channel_id", get(get_channel))
         .route("/content/:content_id", get(get_content))
         .route("/servers", get(get_servers))
+        .route("/versions", get(get_versions))
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::rate_limit_api,
