@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.content.ContentWipUseCase
 import it.curzel.tama.content.PublishContentDialog
@@ -170,7 +171,7 @@ fun EditorToolsSection(
     ) {
         OutlinedCard(
             onClick = onNavigateToMidi,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().testTag("edit-audio-button")
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
@@ -190,7 +191,7 @@ fun EditorToolsSection(
 
         OutlinedCard(
             onClick = onNavigateToPixel,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().testTag("edit-animation-button")
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)

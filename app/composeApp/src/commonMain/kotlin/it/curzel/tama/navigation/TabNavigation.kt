@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.screens.ContentEditorScreen
@@ -88,6 +89,7 @@ fun TabNavigationScreen(
                             label = { Text(tab.title, color = iconTint) },
                             selected = isSelected,
                             onClick = { selectedTab = tab },
+                            modifier = Modifier.testTag("tab-${tab.name}"),
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = selectedColor,
                                 unselectedIconColor = unselectedColor,

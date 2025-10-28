@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -65,7 +65,42 @@ class ScreenshotTest {
     fun takeScreenshots() {
         listOf(IPHONE_6_5, IPAD_13, ANDROID_FHD).forEach { size ->
             listOf(DARK_MODE, LIGHT_MODE).forEach { darkTheme ->
+                // Homepage (Feed)
                 capture("homepage", darkTheme, size) {}
+
+                // Content Editor
+                capture("content-editor", darkTheme, size) { rule ->
+                    rule.onNodeWithTag("tab-Create").performClick()
+                    rule.waitForIdle()
+                    Thread.sleep(1000)
+                }
+
+                // Pixel Art Editor
+                capture("pixel-editor", darkTheme, size) { rule ->
+                    rule.onNodeWithTag("tab-Create").performClick()
+                    rule.waitForIdle()
+                    Thread.sleep(1000)
+                    rule.onNodeWithTag("edit-animation-button").performClick()
+                    rule.waitForIdle()
+                    Thread.sleep(1000)
+                }
+
+                // MIDI Composer
+                capture("midi-composer", darkTheme, size) { rule ->
+                    rule.onNodeWithTag("tab-Create").performClick()
+                    rule.waitForIdle()
+                    Thread.sleep(1000)
+                    rule.onNodeWithTag("edit-audio-button").performClick()
+                    rule.waitForIdle()
+                    Thread.sleep(1000)
+                }
+
+                // Settings
+                capture("settings", darkTheme, size) { rule ->
+                    rule.onNodeWithTag("tab-Settings").performClick()
+                    rule.waitForIdle()
+                    Thread.sleep(1000)
+                }
             }
         }
     }
@@ -99,7 +134,7 @@ class ScreenshotTest {
         composeTestRule.waitForIdle()
         Thread.sleep(1000)
         navigate(composeTestRule)
-        Thread.sleep(5000)
+        Thread.sleep(3000)
 
         composeTestRule.onRoot().captureScreenshot(
             label = label,
