@@ -154,9 +154,7 @@ fun FeedContent(
             }
 
             viewModel.errorMessage != null && viewModel.feedItems.isEmpty() -> {
-                it.curzel.tama.screens.ServerErrorScreen(
-                    onRetry = { viewModel.retryLoadFeed() }
-                )
+                FeedLoadingState()
             }
 
             viewModel.feedItems.isEmpty() && !viewModel.isLoading -> {
@@ -184,20 +182,6 @@ fun FeedLoadingState() {
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator()
-    }
-}
-
-@Composable
-fun FeedErrorState(errorMessage: String) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Error: $errorMessage",
-            color = MaterialTheme.colorScheme.error
-        )
     }
 }
 

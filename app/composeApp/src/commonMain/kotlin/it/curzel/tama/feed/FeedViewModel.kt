@@ -8,6 +8,7 @@ import it.curzel.tama.api.FeedItem
 import it.curzel.tama.midi.MidiComposer
 import it.curzel.tama.model.TamaConfig
 import it.curzel.tama.sharing.ContentSharingManager
+import it.curzel.tama.state.ConnectionState
 import it.curzel.tama.storage.ConfigStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -105,12 +106,14 @@ class FeedViewModel {
                 onError = { message ->
                     errorMessage = message
                     isLoading = false
+                    ConnectionState.setConnectionError(true, onRetry = { retryLoadFeed() })
                 }
             )
         }
     }
 
     fun retryLoadFeed() {
+        ConnectionState.clearConnectionError()
         clearSessionCache()
         loadFeed()
     }

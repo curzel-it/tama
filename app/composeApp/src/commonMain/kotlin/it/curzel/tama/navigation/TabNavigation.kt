@@ -13,7 +13,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import it.curzel.tama.screens.ContentEditorScreen
 import it.curzel.tama.feed.FeedScreen
+import it.curzel.tama.screens.ServerErrorScreen
 import it.curzel.tama.screens.SettingsScreen
+import it.curzel.tama.state.ConnectionState
 import it.curzel.tama.utils.isLandscape
 import org.jetbrains.compose.resources.painterResource
 import tama.composeapp.generated.resources.*
@@ -30,12 +32,23 @@ fun TabNavigationScreen(deepLinkContentId: Long? = null) {
     var isInSubScreen by rememberSaveable { mutableStateOf(false) }
     val colorScheme = MaterialTheme.colorScheme
     val isLandscapeMode = isLandscape()
+    val hasConnectionError by remember { derivedStateOf { ConnectionState.hasConnectionError } }
 
     // If deep link is present, ensure Feed tab is selected
     LaunchedEffect(deepLinkContentId) {
         if (deepLinkContentId != null) {
             selectedTab = Tab.Feed
         }
+    }
+
+    // If there's a connection error, show ServerErrorScreen without navigation
+    if (hasConnectionError) {
+        ServerErrorScreen(
+            onRetry = {
+                ConnectionState.retry()
+            }
+        )
+        return
     }
 
     val selectedColor = Color(0xFF88C070)

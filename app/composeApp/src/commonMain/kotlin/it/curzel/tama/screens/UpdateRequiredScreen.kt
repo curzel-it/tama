@@ -1,5 +1,6 @@
 package it.curzel.tama.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -32,7 +33,9 @@ fun UpdateRequiredScreen(versionCheckResult: VersionCheckResult) {
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -46,7 +49,8 @@ fun UpdateRequiredScreen(versionCheckResult: VersionCheckResult) {
                 text = "Update Required",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Column(
@@ -56,7 +60,8 @@ fun UpdateRequiredScreen(versionCheckResult: VersionCheckResult) {
                 Text(
                     text = "Your current version (${versionCheckResult.currentVersion}) is outdated.",
                     style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                 )
 
                 Text(
