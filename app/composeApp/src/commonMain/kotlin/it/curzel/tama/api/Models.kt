@@ -65,3 +65,16 @@ data class CreateContentResponse(
     @SerialName("channel_id") val channelId: Long,
     val message: String
 )
+
+@Serializable
+data class PlatformVersions(
+    val ios: String,
+    val android: String,
+    val cli: String
+)
+
+@Serializable
+data class VersionResponse(
+    val minimum: PlatformVersions,
+    val latest: PlatformVersions
+)

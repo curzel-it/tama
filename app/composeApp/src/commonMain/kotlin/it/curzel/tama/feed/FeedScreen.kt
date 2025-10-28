@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun FeedScreen(
+    priorityContentId: Long? = null,
     viewModel: FeedViewModel = remember { FeedViewModel() },
     isLandscape: Boolean = false
 ) {
@@ -36,8 +37,8 @@ fun FeedScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadFeed()
+    LaunchedEffect(priorityContentId) {
+        viewModel.loadFeed(priorityContentId)
     }
 
     LaunchedEffect(viewModel.currentIndex, viewModel.isShowingStatic, viewModel.currentItem) {
@@ -153,7 +154,9 @@ fun FeedContent(
             }
 
             viewModel.errorMessage != null && viewModel.feedItems.isEmpty() -> {
-                FeedErrorState(errorMessage = viewModel.errorMessage!!)
+                it.curzel.tama.screens.ServerErrorScreen(
+                    onRetry = { viewModel.retryLoadFeed() }
+                )
             }
 
             viewModel.feedItems.isEmpty() && !viewModel.isLoading -> {

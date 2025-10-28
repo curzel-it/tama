@@ -33,8 +33,13 @@ class ApiClient(
         sessionToken = null
     }
 
-    suspend fun fetchFeed(): Result<List<FeedItem>> = try {
-        val response: List<FeedItem> = client.get("$baseUrl/feed").body()
+    suspend fun fetchFeed(priorityContentIds: List<Long>? = null): Result<List<FeedItem>> = try {
+        val url = if (priorityContentIds != null && priorityContentIds.isNotEmpty()) {
+            "$baseUrl/feed?ids=${priorityContentIds.joinToString(",")}"
+        } else {
+            "$baseUrl/feed"
+        }
+        val response: List<FeedItem> = client.get(url).body()
         Result.success(response)
     } catch (e: Exception) {
         Result.failure(e)
@@ -136,6 +141,13 @@ class ApiClient(
             setBody(request)
         }
         Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    suspend fun checkVersion(): Result<VersionResponse> = try {
+        val response: VersionResponse = client.get("$baseUrl/versions").body()
+        Result.success(response)
     } catch (e: Exception) {
         Result.failure(e)
     }

@@ -25,11 +25,18 @@ enum class Tab(val title: String) {
 }
 
 @Composable
-fun TabNavigationScreen() {
+fun TabNavigationScreen(deepLinkContentId: Long? = null) {
     var selectedTab by rememberSaveable { mutableStateOf(Tab.Feed) }
     var isInSubScreen by rememberSaveable { mutableStateOf(false) }
     val colorScheme = MaterialTheme.colorScheme
     val isLandscapeMode = isLandscape()
+
+    // If deep link is present, ensure Feed tab is selected
+    LaunchedEffect(deepLinkContentId) {
+        if (deepLinkContentId != null) {
+            selectedTab = Tab.Feed
+        }
+    }
 
     val selectedColor = Color(0xFF88C070)
     val unselectedColor = Color(0xFF4A6A40)
@@ -91,7 +98,10 @@ fun TabNavigationScreen() {
             }
         )) {
             when (selectedTab) {
-                Tab.Feed -> FeedScreen(isLandscape = isLandscapeMode)
+                Tab.Feed -> FeedScreen(
+                    priorityContentId = deepLinkContentId,
+                    isLandscape = isLandscapeMode
+                )
                 Tab.Create -> ContentEditorScreen(
                     onSubScreenChange = { inSubScreen -> isInSubScreen = inSubScreen }
                 )

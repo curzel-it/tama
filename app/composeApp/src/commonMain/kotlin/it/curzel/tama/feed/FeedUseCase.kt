@@ -7,9 +7,12 @@ import it.curzel.tama.storage.ConfigStorage
 import it.curzel.tama.storage.ReportedContentStorage
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 object FeedUseCase {
     suspend fun loadFeedFromServers(
+        priorityContentId: Long? = null,
         onItemsLoaded: (List<FeedItem>) -> Unit,
         onServerLoading: (String) -> Unit,
         onServerCompleted: (String) -> Unit,
@@ -42,13 +45,17 @@ object FeedUseCase {
                 (listOf(config.server_url) + fetchedServers).distinct()
             }
 
+            val mutex = Mutex()
+            var anyServerSucceeded = false
+
             coroutineScope {
                 servers.forEach { serverUrl ->
                     launch {
                         onServerLoading(serverUrl)
                         try {
                             val client = ApiManager.getClient(serverUrl)
-                            val feedResult = client.fetchFeed()
+                            val priorityIds = priorityContentId?.let { listOf(it) }
+                            val feedResult = client.fetchFeed(priorityIds)
 
                             if (feedResult.isSuccess) {
                                 val items = feedResult.getOrNull() ?: emptyList()
@@ -58,6 +65,9 @@ object FeedUseCase {
                                         !ReportedContentStorage.isContentReported(item.serverUrl, item.content.id)
                                     }
                                     if (filteredItems.isNotEmpty()) {
+                                        mutex.withLock {
+                                            anyServerSucceeded = true
+                                        }
                                         onItemsLoaded(filteredItems)
                                     }
                                 }
@@ -69,6 +79,10 @@ object FeedUseCase {
                         }
                     }
                 }
+            }
+
+            if (!anyServerSucceeded) {
+                onError("Unable to connect to server")
             }
         } catch (e: Exception) {
             onError("Unexpected error: ${e.message}")

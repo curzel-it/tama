@@ -54,8 +54,12 @@ class FeedViewModel {
     val hasNext: Boolean
         get() = feedItems.isNotEmpty()
 
-    fun loadFeed() {
+    fun loadFeed(priorityContentId: Long? = null) {
         CoroutineScope(Dispatchers.Default).launch {
+            errorMessage = null
+            isLoading = true
+            feedItems = emptyList()
+
             // Load config to check if it has changed
             val config = it.curzel.tama.storage.ConfigStorage.loadConfig()
                 ?: it.curzel.tama.model.TamaConfig()
@@ -66,8 +70,11 @@ class FeedViewModel {
                 clearSessionCache()
             }
 
-            // If feed was already loaded with same config, use cached data
-            if (sessionFeedLoaded && sessionConfigHash == currentConfigHash) {
+            // If we have a priority content ID, skip cache to fetch fresh prioritized feed
+            val skipCache = priorityContentId != null
+
+            // If feed was already loaded with same config and no priority override, use cached data
+            if (!skipCache && sessionFeedLoaded && sessionConfigHash == currentConfigHash) {
                 feedItems = sessionFeedItems.toList()
                 isLoading = false
                 return@launch
@@ -76,9 +83,12 @@ class FeedViewModel {
             sessionConfigHash = currentConfigHash
 
             FeedUseCase.loadFeedFromServers(
+                priorityContentId = priorityContentId,
                 onItemsLoaded = { items ->
                     feedItems = feedItems + items
-                    sessionFeedItems.addAll(items)
+                    if (!skipCache) {
+                        sessionFeedItems.addAll(items)
+                    }
                 },
                 onServerLoading = { server ->
                     loadingServers = loadingServers + server
@@ -87,7 +97,9 @@ class FeedViewModel {
                     loadingServers = loadingServers - server
                     if (loadingServers.isEmpty()) {
                         isLoading = false
-                        sessionFeedLoaded = true
+                        if (!skipCache) {
+                            sessionFeedLoaded = true
+                        }
                     }
                 },
                 onError = { message ->
@@ -96,6 +108,11 @@ class FeedViewModel {
                 }
             )
         }
+    }
+
+    fun retryLoadFeed() {
+        clearSessionCache()
+        loadFeed()
     }
 
     fun showStatic() {
