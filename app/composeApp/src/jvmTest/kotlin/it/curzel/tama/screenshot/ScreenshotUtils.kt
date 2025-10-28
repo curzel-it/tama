@@ -1,40 +1,52 @@
 package it.curzel.tama.screenshot
 
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toAwtImage
-import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.unit.IntSize
+import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 
-/**
- * Captures a screenshot of a composable and saves it to the screenshots directory.
- *
- * @param label A descriptive label for the screenshot (e.g., "homepage", "profile")
- * @param width Width in pixels
- * @param height Height in pixels
- * @param theme Theme variant ("light" or "dark")
- */
 fun SemanticsNodeInteraction.captureScreenshot(
     label: String,
-    width: Int,
-    height: Int,
+    originalSize: IntSize,
     theme: String
 ) {
     val image = captureToImage()
-    val filename = "${label}-${width}x${height}-${theme}.png"
+    val bufferedImage = image.toAwtImage()
 
-    println("Captured image size: ${image.width}x${image.height}, requested: ${width}x${height}")
+    val resizedImage = resizeImage(bufferedImage, originalSize)
 
-    saveScreenshot(image, filename)
+    val filename = "${label}-${originalSize.width}x${originalSize.height}-${theme}.png"
+
+    println("Captured image size: ${image.width}x${image.height}, resized to: ${resizedImage.width}x${resizedImage.height}")
+
+    saveScreenshotFromBufferedImage(resizedImage, filename)
 }
 
 /**
- * Saves an ImageBitmap to the screenshots directory as a PNG file.
+ * Resizes a BufferedImage by the given scale factor using high-quality interpolation.
  */
-private fun saveScreenshot(image: ImageBitmap, filename: String) {
+private fun resizeImage(image: BufferedImage, newSize: IntSize): BufferedImage {
+    val resized = BufferedImage(newSize.width, newSize.height, BufferedImage.TYPE_INT_ARGB)
+    val graphics = resized.createGraphics()
+
+    graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
+    graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF)
+
+    graphics.drawImage(image, 0, 0, newSize.width, newSize.height, null)
+    graphics.dispose()
+
+    return resized
+}
+
+/**
+ * Saves a BufferedImage to the screenshots directory as a PNG file.
+ */
+private fun saveScreenshotFromBufferedImage(bufferedImage: BufferedImage, filename: String) {
     val projectRoot = File(System.getProperty("user.dir")).parentFile.parentFile
     val screenshotsDir = File(projectRoot, "screenshots")
     if (!screenshotsDir.exists()) {
@@ -42,7 +54,6 @@ private fun saveScreenshot(image: ImageBitmap, filename: String) {
     }
 
     val outputFile = File(screenshotsDir, filename)
-    val bufferedImage = image.toAwtImage()
     ImageIO.write(bufferedImage, "png", outputFile)
 
     println("Screenshot saved: ${outputFile.absolutePath}")

@@ -63,7 +63,7 @@ class ScreenshotTest {
 
     @Test
     fun takeScreenshots() {
-        listOf(IntSize(400, 1000)).forEach { size ->
+        listOf(IPHONE_6_5, IPAD_13, ANDROID_FHD).forEach { size ->
             listOf(DARK_MODE, LIGHT_MODE).forEach { darkTheme ->
                 capture("homepage", darkTheme, size) {}
             }
@@ -73,19 +73,25 @@ class ScreenshotTest {
     private fun capture(
         label: String,
         darkTheme: Boolean,
-        size: IntSize,
+        originalSize: IntSize,
         navigate: (ComposeTestRule) -> Unit
     ) {
+        val scaleFactor = 4
+        val size = originalSize.scale(1 / scaleFactor.toFloat())
+
         composeTestRule.setContent {
+            val density = Density(
+                density = 1f,
+                fontScale = 1f
+            )
             CompositionLocalProvider(
-                LocalDensity provides Density(
-                    density = 1f,
-                    fontScale = 1f
-                )
+                LocalDensity provides density
             ) {
+                val widthDp = with(density) { size.width.toDp() }
+                val heightDp = with(density) { size.height.toDp() }
                 App(
                     darkThemeOverride = darkTheme,
-                    modifier = Modifier.width(size.width.dp).height(size.height.dp)
+                    modifier = Modifier.width(widthDp).height(heightDp)
                 )
             }
         }
@@ -97,9 +103,8 @@ class ScreenshotTest {
 
         composeTestRule.onRoot().captureScreenshot(
             label = label,
-            width = size.width,
-            height = size.height,
-            theme = if (darkTheme) "dark" else "light"
+            originalSize = originalSize,
+            theme = if (darkTheme) "dark" else "light",
         )
     }
 }
@@ -107,4 +112,10 @@ class ScreenshotTest {
 private const val DARK_MODE = true
 private const val LIGHT_MODE = false
 
-// private const val
+private val IPHONE_6_5 = IntSize(1242, 2688)
+private val IPAD_13 = IntSize(2064, 2752)
+private val ANDROID_FHD = IntSize(1080, 1920)
+
+private fun IntSize.scale(v: Float): IntSize {
+    return IntSize((width * v).toInt(), (height * v).toInt())
+}
