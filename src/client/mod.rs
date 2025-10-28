@@ -8,6 +8,19 @@ use crate::api::{
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PlatformVersions {
+    pub ios: String,
+    pub android: String,
+    pub cli: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct VersionResponse {
+    pub minimum: PlatformVersions,
+    pub latest: PlatformVersions,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ChannelInfo {
     pub id: i64,
     pub name: String,
@@ -219,6 +232,15 @@ impl ApiClient {
 
         let response = reqwest::get(&url).await
             .map_err(|e| format!("Failed to fetch servers: {e}"))?;
+
+        Self::handle_response(response).await
+    }
+
+    pub async fn check_version(&self) -> Result<VersionResponse, String> {
+        let url = format!("{}/versions", self.base_url);
+
+        let response = reqwest::get(&url).await
+            .map_err(|e| format!("Failed to check version: {e}"))?;
 
         Self::handle_response(response).await
     }

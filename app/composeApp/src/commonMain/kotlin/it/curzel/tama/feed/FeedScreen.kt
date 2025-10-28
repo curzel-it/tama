@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun FeedScreen(
+    priorityContentId: Long? = null,
     viewModel: FeedViewModel = remember { FeedViewModel() },
     isLandscape: Boolean = false
 ) {
@@ -36,8 +37,8 @@ fun FeedScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        viewModel.loadFeed()
+    LaunchedEffect(priorityContentId) {
+        viewModel.loadFeed(priorityContentId)
     }
 
     LaunchedEffect(viewModel.currentIndex, viewModel.isShowingStatic, viewModel.currentItem) {
@@ -153,7 +154,7 @@ fun FeedContent(
             }
 
             viewModel.errorMessage != null && viewModel.feedItems.isEmpty() -> {
-                FeedErrorState(errorMessage = viewModel.errorMessage!!)
+                FeedLoadingState()
             }
 
             viewModel.feedItems.isEmpty() && !viewModel.isLoading -> {
@@ -181,20 +182,6 @@ fun FeedLoadingState() {
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator()
-    }
-}
-
-@Composable
-fun FeedErrorState(errorMessage: String) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Error: $errorMessage",
-            color = MaterialTheme.colorScheme.error
-        )
     }
 }
 

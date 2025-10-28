@@ -14,6 +14,7 @@ use crossterm::{
     execute, queue,
     style::{Print},
     terminal::{self, ClearType},
+    event::{self, Event},
 };
 
 pub struct UI;
@@ -163,6 +164,57 @@ impl UI {
             }
 
             stdout.flush()?;
+        }
+
+        Ok(())
+    }
+
+    pub fn display_server_error() -> io::Result<()> {
+        Self::clear_screen()?;
+        let mut stdout = io::stdout();
+
+        let messages = vec![
+            "",
+            "Unable to connect to server",
+            "",
+            "Something's wrong on our side.",
+            "Please check back later.",
+            "",
+            "Press any key to exit...",
+        ];
+
+        let max_width = messages.iter().map(|s| s.len()).max().unwrap_or(0);
+        let box_width = max_width + 4;
+
+        let top_line = format!("╔{}╗", "═".repeat(box_width - 2));
+        let bottom_line = format!("╚{}╝", "═".repeat(box_width - 2));
+
+        let (term_width, term_height) = terminal::size()?;
+        let start_y = (term_height / 2).saturating_sub((messages.len() as u16 + 2) / 2);
+        let start_x = (term_width / 2).saturating_sub((box_width as u16) / 2);
+
+        queue!(stdout, cursor::MoveTo(start_x, start_y), Print(&top_line))?;
+
+        for (i, msg) in messages.iter().enumerate() {
+            let padding = (box_width - 2 - msg.len()) / 2;
+            let right_padding = box_width - 2 - msg.len() - padding;
+            let line = format!("║{}{}{}║",
+                " ".repeat(padding),
+                msg,
+                " ".repeat(right_padding)
+            );
+            queue!(stdout, cursor::MoveTo(start_x, start_y + 1 + i as u16), Print(line))?;
+        }
+
+        queue!(stdout, cursor::MoveTo(start_x, start_y + messages.len() as u16 + 1), Print(&bottom_line))?;
+        stdout.flush()?;
+
+        loop {
+            if event::poll(std::time::Duration::from_millis(100))? {
+                if let Event::Key(_) = event::read()? {
+                    break;
+                }
+            }
         }
 
         Ok(())
