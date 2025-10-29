@@ -1,3 +1,5 @@
+*.apk
+*.aab
 *.iml
 .kotlin
 .gradle

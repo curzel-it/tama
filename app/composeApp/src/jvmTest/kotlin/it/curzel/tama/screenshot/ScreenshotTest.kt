@@ -66,7 +66,9 @@ class ScreenshotTest {
         listOf(IPHONE_6_5, IPAD_13, ANDROID_FHD).forEach { size ->
             listOf(DARK_MODE, LIGHT_MODE).forEach { darkTheme ->
                 // Homepage (Feed)
-                capture("homepage", darkTheme, size) {}
+                capture("homepage", darkTheme, size) {
+                    Thread.sleep(1000)
+                }
 
                 // Content Editor
                 capture("content-editor", darkTheme, size) { rule ->
