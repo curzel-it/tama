@@ -10,7 +10,15 @@ object PublishContentUseCase {
             Exception("No content to publish")
         )
 
+        println("[PUBLISH] Loaded WIP content:")
+        println("[PUBLISH]   title: '${wipContent.title}'")
+        println("[PUBLISH]   art length: ${wipContent.art.length}")
+        println("[PUBLISH]   midi: '${wipContent.midi}'")
+        println("[PUBLISH]   midi length: ${wipContent.midi.length}")
+        println("[PUBLISH]   fps: ${wipContent.fps}")
+
         if (wipContent.title.trim().isEmpty()) {
+            println("[PUBLISH] Error: Title is empty")
             return Result.failure(Exception("Please enter a title for your content"))
         }
 
@@ -29,6 +37,13 @@ object PublishContentUseCase {
         val apiClient = ApiManager.getClient(config.server_url)
         apiClient.setSessionToken(token)
 
+        println("[PUBLISH] About to upload:")
+        println("[PUBLISH]   channelId: ${channelInfo.id}")
+        println("[PUBLISH]   name: '${wipContent.title.trim()}'")
+        println("[PUBLISH]   art length: ${wipContent.art.length}")
+        println("[PUBLISH]   midi: '${wipContent.midi}'")
+        println("[PUBLISH]   fps: ${wipContent.fps}")
+
         val result = apiClient.uploadContent(
             channelId = channelInfo.id,
             name = wipContent.title.trim(),
@@ -38,7 +53,10 @@ object PublishContentUseCase {
         )
 
         if (result.isSuccess) {
+            println("[PUBLISH] Success! Clearing WIP content.")
             ContentWipUseCase.storageProvider.clearContent()
+        } else {
+            println("[PUBLISH] Failed: ${result.exceptionOrNull()?.message}")
         }
 
         return result

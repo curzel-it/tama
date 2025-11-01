@@ -6,13 +6,11 @@ Ascii art, retro vibes, and MIDI music in your command line, in _glorious_ 64 x 
 
 Ok, ok, it also works on [the web](https://tama.curzel.it):
 
-<img src="docs/feed-dark.png" width="520px"/>
+<img src="docs/feed-light.png" width="520px"/>
 
-And we have a content editor:
+And, of course, there's an app - coming soon to the stores:
 
-<img src="docs/editor-dark.png" width="520px"/>
-
-And, of course, there's an app - coming soon to the store.
+<img src="docs/ios-dark.png" width="300"/>
 
 ## Quick Start
 See [sprites/neko_idle.txt](sprites/neko_idle.txt) for an example of content format.

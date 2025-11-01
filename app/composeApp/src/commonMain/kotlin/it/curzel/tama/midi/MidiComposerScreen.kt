@@ -17,6 +17,10 @@ fun MidiComposerScreen(
 ) {
     val scrollState = rememberScrollState()
 
+    LaunchedEffect(Unit) {
+        viewModel.reload()
+    }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {

@@ -15,14 +15,13 @@ import it.curzel.tama.sharing.ContentSharingManager
 import it.curzel.tama.theme.TamaButton
 import it.curzel.tama.storage.ConfigStorage
 
-private const val COPIED_MESSAGE_DURATION = 2000L
-
 @Composable
 fun PublishContentDialog(
     publishState: PublishState,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
-    onNavigateToContent: (Long) -> Unit
+    onNavigateToContent: (Long) -> Unit,
+    onShowToast: (String) -> Unit = {}
 ) {
     when (publishState) {
         is PublishState.ConfirmationNeeded -> {
@@ -31,22 +30,27 @@ fun PublishContentDialog(
                 onConfirm = onConfirm
             )
         }
+
         is PublishState.Publishing -> {
             PublishingDialog()
         }
+
         is PublishState.Success -> {
             SuccessDialog(
                 contentId = publishState.contentId,
                 onDismiss = onDismiss,
-                onNavigateToContent = onNavigateToContent
+                onNavigateToContent = onNavigateToContent,
+                onShowToast = onShowToast
             )
         }
+
         is PublishState.Error -> {
             ErrorDialog(
                 message = publishState.message,
                 onDismiss = onDismiss
             )
         }
+
         else -> {}
     }
 }
@@ -91,7 +95,7 @@ private fun ConfirmationDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedButton(
+                    TextButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
@@ -147,24 +151,17 @@ private fun PublishingDialog() {
 private fun SuccessDialog(
     contentId: Long,
     onDismiss: () -> Unit,
-    onNavigateToContent: (Long) -> Unit
+    onNavigateToContent: (Long) -> Unit,
+    onShowToast: (String) -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val modalBg = colorScheme.background
     val modalBorder = colorScheme.outline
-    var showCopiedMessage by remember { mutableStateOf(false) }
     var serverUrl by remember { mutableStateOf("https://tama.curzel.it") }
 
     LaunchedEffect(Unit) {
         val config = ConfigStorage.loadConfig()
         serverUrl = config?.server_url ?: "https://tama.curzel.it"
-    }
-
-    LaunchedEffect(showCopiedMessage) {
-        if (showCopiedMessage) {
-            kotlinx.coroutines.delay(COPIED_MESSAGE_DURATION)
-            showCopiedMessage = false
-        }
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -183,7 +180,7 @@ private fun SuccessDialog(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Published Successfully!",
+                        text = "Success!",
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
@@ -195,15 +192,6 @@ private fun SuccessDialog(
                         modifier = Modifier.padding(bottom = 24.dp)
                     )
 
-                    if (showCopiedMessage) {
-                        Text(
-                            text = "Link copied to clipboard!",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -214,12 +202,11 @@ private fun SuccessDialog(
                         ) {
                             Text("View Content")
                         }
-
-                        OutlinedButton(
+                        TamaButton(
                             onClick = {
                                 val shareUrl = "$serverUrl/view/content/$contentId"
                                 ContentSharingManager.sharer.shareContent(shareUrl) {
-                                    showCopiedMessage = true
+                                    onShowToast("Link copied to clipboard!")
                                 }
                             },
                             modifier = Modifier.fillMaxWidth()

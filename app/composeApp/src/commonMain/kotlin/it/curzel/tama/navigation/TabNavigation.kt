@@ -34,6 +34,7 @@ fun TabNavigationScreen(
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(Tab.Feed) }
     var isInSubScreen by rememberSaveable { mutableStateOf(false) }
+    var navigateToContentId by remember { mutableStateOf<Long?>(null) }
     val colorScheme = MaterialTheme.colorScheme
     val isLandscapeMode = isLandscape()
     val hasConnectionError by remember { derivedStateOf { ConnectionState.hasConnectionError } }
@@ -41,6 +42,13 @@ fun TabNavigationScreen(
     // If deep link is present, ensure Feed tab is selected
     LaunchedEffect(deepLinkContentId) {
         if (deepLinkContentId != null) {
+            selectedTab = Tab.Feed
+        }
+    }
+
+    // Handle navigation to specific content
+    LaunchedEffect(navigateToContentId) {
+        if (navigateToContentId != null) {
             selectedTab = Tab.Feed
         }
     }
@@ -120,12 +128,15 @@ fun TabNavigationScreen(
         ) {
             when (selectedTab) {
                 Tab.Feed -> FeedScreen(
-                    priorityContentId = deepLinkContentId,
+                    priorityContentId = navigateToContentId ?: deepLinkContentId,
                     isLandscape = isLandscapeMode
                 )
 
                 Tab.Create -> ContentEditorScreen(
-                    onSubScreenChange = { inSubScreen -> isInSubScreen = inSubScreen }
+                    onSubScreenChange = { inSubScreen -> isInSubScreen = inSubScreen },
+                    onNavigateToContent = { contentId ->
+                        navigateToContentId = contentId
+                    }
                 )
 
                 Tab.Settings -> SettingsScreen()

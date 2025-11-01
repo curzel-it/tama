@@ -52,18 +52,24 @@ object ContentWipUseCase {
     }
 
     suspend fun saveMidi(composition: String) {
+        println("[WIP_STORAGE] saveMidi called with: '${composition}'")
         cachedMidi = composition
         saveToFile()
     }
 
     suspend fun saveTitle(title: String) {
+        println("[WIP_STORAGE] saveTitle called with: '${title}'")
         cachedTitle = title
         saveToFile()
     }
 
     suspend fun loadWipContent(): WipContent? {
-        val content = storageProvider.loadContent() ?: return null
-        return parseContent(content)
+        val content = storageProvider.loadContent()
+        println("[WIP_STORAGE] loadWipContent: content ${if (content == null) "is null" else "loaded (${content.length} chars)"}")
+        if (content == null) return null
+        val parsed = parseContent(content)
+        println("[WIP_STORAGE] Parsed WIP: title='${parsed?.title}', midi='${parsed?.midi}', art_len=${parsed?.art?.length}")
+        return parsed
     }
 
     suspend fun loadPixelArtFrames(): Triple<List<PixelFrame>, Int, Float>? {
@@ -93,6 +99,8 @@ object ContentWipUseCase {
     }
 
     private suspend fun saveToFile() {
+        println("[WIP_STORAGE] saveToFile: title='${cachedTitle}', midi='${cachedMidi}', art_len=${cachedArt.length}")
+
         val contentBuilder = StringBuilder()
 
         contentBuilder.append("--- TITLE ---\n")
@@ -106,7 +114,9 @@ object ContentWipUseCase {
         contentBuilder.append("--- ART ---\n")
         contentBuilder.append(cachedArt)
 
-        storageProvider.saveContent(contentBuilder.toString())
+        val finalContent = contentBuilder.toString()
+        println("[WIP_STORAGE] Saving ${finalContent.length} chars to storage")
+        storageProvider.saveContent(finalContent)
     }
 
     private fun parseContent(content: String): WipContent? {

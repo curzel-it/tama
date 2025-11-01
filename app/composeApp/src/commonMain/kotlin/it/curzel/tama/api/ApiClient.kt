@@ -116,14 +116,22 @@ class ApiClient(
             fps = fps
         )
 
-        val response: CreateContentResponse = client.post("$baseUrl/content") {
+        val httpResponse = client.post("$baseUrl/content") {
             contentType(ContentType.Application.Json)
             header("Authorization", "Bearer $token")
             setBody(request)
-        }.body()
+        }
 
-        Result.success(response)
+        if (httpResponse.status.value in 200..299) {
+            val response: CreateContentResponse = httpResponse.body()
+            Result.success(response)
+        } else {
+            val errorBody = httpResponse.bodyAsText()
+            println("[API_CLIENT] Upload failed with status ${httpResponse.status.value}: $errorBody")
+            Result.failure(Exception("Server error (${httpResponse.status.value}): $errorBody"))
+        }
     } catch (e: Exception) {
+        println("[API_CLIENT] Upload exception: ${e.message}")
         Result.failure(e)
     }
 

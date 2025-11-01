@@ -7,6 +7,7 @@ import it.curzel.tama.content.ContentWipUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MidiComposerViewModel {
     var composition by mutableStateOf("4c 4e 4g 2c5 4g 4e 2c")
@@ -21,28 +22,48 @@ class MidiComposerViewModel {
     private val scope = CoroutineScope(Dispatchers.Default)
 
     init {
+        scope.launch {
+            loadFromWip()
+        }
+    }
+
+    suspend fun reload() {
         loadFromWip()
     }
 
-    private fun loadFromWip() {
-        scope.launch {
-            val loadedComposition = ContentWipUseCase.loadMidiComposition()
-            if (loadedComposition != null) {
+    private suspend fun loadFromWip() {
+        val loadedComposition = ContentWipUseCase.loadMidiComposition()
+        println("[MIDI_COMPOSER] Loaded composition from WIP: '${loadedComposition}'")
+        if (loadedComposition != null) {
+            withContext(Dispatchers.Main) {
                 composition = loadedComposition
+                println("[MIDI_COMPOSER] Updated composition state on Main dispatcher")
             }
         }
     }
 
     private fun saveWip() {
         scope.launch {
+            println("[MIDI_COMPOSER] Saving composition to WIP: '${composition}'")
             ContentWipUseCase.saveMidi(composition)
         }
     }
 
     fun updateComposition(newComposition: String) {
+        println("[MIDI_COMPOSER] Composition updated: '${newComposition}'")
         composition = newComposition
-        errorMessage = null
-        saveWip()
+
+        if (newComposition.isBlank()) {
+            errorMessage = null
+            return
+        }
+
+        if (MidiComposerUseCase.validateComposition(newComposition)) {
+            errorMessage = null
+            saveWip()
+        } else {
+            errorMessage = "Invalid MIDI composition - check note format"
+        }
     }
 
     fun play() {

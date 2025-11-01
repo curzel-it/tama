@@ -31,7 +31,8 @@ enum class EditorScreen {
 
 @Composable
 fun ContentEditorScreen(
-    onSubScreenChange: (Boolean) -> Unit = {}
+    onSubScreenChange: (Boolean) -> Unit = {},
+    onNavigateToContent: (Long) -> Unit = {}
 ) {
     var currentScreen by remember { mutableStateOf(EditorScreen.Main) }
     var isLoggedIn by remember { mutableStateOf(false) }
@@ -81,7 +82,8 @@ fun ContentEditorScreen(
         EditorScreen.Main -> MainEditorScreen(
             onNavigateToMidi = { currentScreen = EditorScreen.MidiComposer },
             onNavigateToPixel = { currentScreen = EditorScreen.PixelEditor },
-            refreshTrigger = refreshTrigger
+            refreshTrigger = refreshTrigger,
+            onNavigateToContent = onNavigateToContent
         )
 
         EditorScreen.MidiComposer -> MidiComposerScreen(
@@ -104,13 +106,16 @@ fun ContentEditorScreen(
 fun MainEditorScreen(
     onNavigateToMidi: () -> Unit,
     onNavigateToPixel: () -> Unit,
-    refreshTrigger: Int = 0
+    refreshTrigger: Int = 0,
+    onNavigateToContent: (Long) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var hasContent by remember { mutableStateOf(false) }
     var contentTitle by remember { mutableStateOf("") }
     val publishViewModel = remember { PublishContentViewModel() }
     var localRefreshTrigger by remember { mutableIntStateOf(refreshTrigger) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(refreshTrigger) {
         localRefreshTrigger = refreshTrigger
@@ -119,63 +124,79 @@ fun MainEditorScreen(
         contentTitle = wipContent?.title ?: ""
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        MyNavigationBar(
-            title = "Content Editor"
-        )
-
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .widthIn(max = 600.dp)
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            OutlinedTextField(
-                value = contentTitle,
-                onValueChange = { newTitle ->
-                    if (newTitle.length <= 50) {
-                        contentTitle = newTitle
-                        CoroutineScope(Dispatchers.Default).launch {
-                            ContentWipUseCase.saveTitle(newTitle)
-                        }
-                    }
-                },
-                label = { Text("Title") },
-                placeholder = { Text("Enter content title (max 50 chars)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                supportingText = { Text("${contentTitle.length}/50") }
+            MyNavigationBar(
+                title = "Content Editor"
             )
 
-            key(localRefreshTrigger) {
-                ContentPreviewSection(
-                    refreshTrigger = localRefreshTrigger,
-                    onContentStateChange = { hasContent = it }
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 600.dp)
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = contentTitle,
+                    onValueChange = { newTitle ->
+                        if (newTitle.length <= 50) {
+                            contentTitle = newTitle
+                            CoroutineScope(Dispatchers.Default).launch {
+                                ContentWipUseCase.saveTitle(newTitle)
+                            }
+                        }
+                    },
+                    label = { Text("Title") },
+                    placeholder = { Text("Enter content title (max 50 chars)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    supportingText = { Text("${contentTitle.length}/50") }
+                )
+
+                key(localRefreshTrigger) {
+                    ContentPreviewSection(
+                        refreshTrigger = localRefreshTrigger,
+                        onContentStateChange = { hasContent = it }
+                    )
+                }
+
+                EditorToolsSection(
+                    onNavigateToMidi = onNavigateToMidi,
+                    onNavigateToPixel = onNavigateToPixel,
+                    hasContent = hasContent,
+                    onPublish = { publishViewModel.showConfirmation() }
                 )
             }
-
-            EditorToolsSection(
-                onNavigateToMidi = onNavigateToMidi,
-                onNavigateToPixel = onNavigateToPixel,
-                hasContent = hasContent,
-                onPublish = { publishViewModel.showConfirmation() }
-            )
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+
+        PublishContentDialog(
+            publishState = publishViewModel.publishState,
+            onDismiss = { publishViewModel.dismissDialog() },
+            onConfirm = { publishViewModel.publish() },
+            onNavigateToContent = { contentId ->
+                publishViewModel.dismissDialog()
+                onNavigateToContent(contentId)
+            },
+            onShowToast = { message ->
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = message,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+        )
     }
-
-    PublishContentDialog(
-        publishState = publishViewModel.publishState,
-        onDismiss = { publishViewModel.dismissDialog() },
-        onConfirm = { publishViewModel.publish() },
-        onNavigateToContent = { contentId ->
-            publishViewModel.dismissDialog()
-        }
-    )
 
     LaunchedEffect(publishViewModel.publishState) {
         if (publishViewModel.publishState is PublishState.Success) {
