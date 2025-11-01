@@ -4,6 +4,7 @@ import it.curzel.tama.pixeleditor.BrailleConverter
 import it.curzel.tama.pixeleditor.PixelFrame
 
 data class WipContent(
+    val title: String,
     val midi: String,
     val art: String,
     val width: Int,
@@ -20,6 +21,7 @@ interface ContentWipStorageProvider {
 object ContentWipUseCase {
     lateinit var storageProvider: ContentWipStorageProvider
 
+    private var cachedTitle: String = ""
     private var cachedMidi: String = ""
     private var cachedArt: String = ""
     private var cachedWidth: Int = 24
@@ -51,6 +53,11 @@ object ContentWipUseCase {
 
     suspend fun saveMidi(composition: String) {
         cachedMidi = composition
+        saveToFile()
+    }
+
+    suspend fun saveTitle(title: String) {
+        cachedTitle = title
         saveToFile()
     }
 
@@ -88,6 +95,10 @@ object ContentWipUseCase {
     private suspend fun saveToFile() {
         val contentBuilder = StringBuilder()
 
+        contentBuilder.append("--- TITLE ---\n")
+        contentBuilder.append(cachedTitle)
+        contentBuilder.append("\n")
+
         contentBuilder.append("--- MIDI ---\n")
         contentBuilder.append(cachedMidi)
         contentBuilder.append("\n")
@@ -101,6 +112,7 @@ object ContentWipUseCase {
     private fun parseContent(content: String): WipContent? {
         val lines = content.lines()
 
+        var titleSection = ""
         var midiSection = ""
         var artSection = ""
         var width = 24
@@ -112,7 +124,14 @@ object ContentWipUseCase {
 
         for (line in lines) {
             when {
+                line.startsWith("--- TITLE ---") -> {
+                    currentSection = "TITLE"
+                    sectionLines.clear()
+                }
                 line.startsWith("--- MIDI ---") -> {
+                    if (currentSection == "TITLE") {
+                        titleSection = sectionLines.joinToString("\n").trim()
+                    }
                     currentSection = "MIDI"
                     sectionLines.clear()
                 }
@@ -144,6 +163,7 @@ object ContentWipUseCase {
             }
         }
 
+        cachedTitle = titleSection
         cachedMidi = midiSection
         cachedArt = artSection
         cachedWidth = width
@@ -151,6 +171,7 @@ object ContentWipUseCase {
         cachedFps = fps
 
         return WipContent(
+            title = titleSection,
             midi = midiSection,
             art = artSection,
             width = width,

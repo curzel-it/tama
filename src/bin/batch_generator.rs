@@ -53,7 +53,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let viz_config = VisualizerConfig::random(&mut rng, style);
         let art = Visualizer::generate(&viz_config, &mut rng);
 
-        let content = format!("--- MIDI ---\n{midi_composition}\n--- ART ---\n{art}");
+        // Generate pattern-based title
+        let complexity_str = match complexity {
+            Complexity::Simple => "Simple",
+            Complexity::Medium => "Medium",
+            Complexity::Complex => "Complex",
+        };
+        let style_str = match style {
+            VisualizationStyle::Bars => "Bars",
+            VisualizationStyle::Waveform => "Waveform",
+            VisualizationStyle::Particles => "Particles",
+            VisualizationStyle::Geometric => "Geometric",
+            VisualizationStyle::Ripples => "Ripples",
+            VisualizationStyle::Spiral => "Spiral",
+        };
+        let title = format!("{} {} #{}", style_str, complexity_str, i + 1);
+
+        let content = format!("--- TITLE ---\n{title}\n--- MIDI ---\n{midi_composition}\n--- ART ---\n{art}");
 
         let filename = format!("{}/content_{:03}.txt", args.output_dir, i + 1);
         fs::write(&filename, content)?;

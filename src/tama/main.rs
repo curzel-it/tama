@@ -617,7 +617,7 @@ async fn handle_upload(server_url: &str, file_path: &str) -> io::Result<()> {
     // Parse content file
     println!("Parsing content file: {file_path}");
     let content = content_parser::parse_content_file(file_path)
-        .map_err(|e| io::Error::other(format!("Failed to parse content file: {e:?}")))?;
+        .map_err(|e| io::Error::other(format!("Failed to parse content file: {}", e)))?;
 
     println!("✓ Content file structure parsed successfully");
     println!("  MIDI composition length: {} chars", content.midi_composition.len());
@@ -708,7 +708,7 @@ async fn handle_preview(file_path: &str) -> io::Result<()> {
 
     println!("Parsing content file: {file_path}");
     let content = content_parser::parse_content_file(file_path)
-        .map_err(|e| io::Error::other(format!("Failed to parse content file: {e:?}")))?;
+        .map_err(|e| io::Error::other(format!("Failed to parse content file: {}", e)))?;
 
     println!("✓ Content file parsed successfully");
 

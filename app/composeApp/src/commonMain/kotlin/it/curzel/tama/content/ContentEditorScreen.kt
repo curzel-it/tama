@@ -105,11 +105,15 @@ fun MainEditorScreen(
 ) {
     val scrollState = rememberScrollState()
     var hasContent by remember { mutableStateOf(false) }
+    var contentTitle by remember { mutableStateOf("") }
     val publishViewModel = remember { PublishContentViewModel() }
     var localRefreshTrigger by remember { mutableIntStateOf(refreshTrigger) }
 
     LaunchedEffect(refreshTrigger) {
         localRefreshTrigger = refreshTrigger
+        // Load title from WIP content
+        val wipContent = ContentWipUseCase.loadWipContent()
+        contentTitle = wipContent?.title ?: ""
     }
 
     Column(
@@ -128,6 +132,23 @@ fun MainEditorScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            OutlinedTextField(
+                value = contentTitle,
+                onValueChange = { newTitle ->
+                    if (newTitle.length <= 50) {
+                        contentTitle = newTitle
+                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+                            ContentWipUseCase.saveTitle(newTitle)
+                        }
+                    }
+                },
+                label = { Text("Title") },
+                placeholder = { Text("Enter content title (max 50 chars)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                supportingText = { Text("${contentTitle.length}/50") }
+            )
+
             key(localRefreshTrigger) {
                 ContentPreviewSection(
                     refreshTrigger = localRefreshTrigger,

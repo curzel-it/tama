@@ -12,6 +12,7 @@ data class ChannelInfo(
 @Serializable
 data class ContentData(
     val id: Long,
+    val name: String,
     val art: String,
     @SerialName("midi_composition") val midiComposition: String,
     val fps: Float
