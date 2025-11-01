@@ -59,19 +59,34 @@ pub async fn create_content(
     headers: HeaderMap,
     Json(request): Json<CreateContentRequest>,
 ) -> Result<Json<CreateContentResponse>, (StatusCode, String)> {
+    eprintln!("[CREATE_CONTENT] Received request: channel_id={}, name='{}', art_len={}, midi_len={}, fps={}",
+        request.channel_id, request.name, request.art.len(), request.midi.len(), request.fps);
+
     let channel_id = auth::authenticate_request(&headers, &state.jwt_secret)
-        .map_err(|status| (status, "Authentication failed".to_string()))?;
+        .map_err(|status| {
+            eprintln!("[CREATE_CONTENT] Authentication failed with status: {:?}", status);
+            (status, "Authentication failed".to_string())
+        })?;
+
+    eprintln!("[CREATE_CONTENT] Authenticated as channel_id={}", channel_id);
 
     if channel_id != request.channel_id {
+        eprintln!("[CREATE_CONTENT] Channel ID mismatch: auth={}, request={}", channel_id, request.channel_id);
         return Err((StatusCode::FORBIDDEN, "Channel ID mismatch".to_string()));
     }
 
     // Validate content before processing
     validate_content_upload(&request)
-        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+        .map_err(|e| {
+            eprintln!("[CREATE_CONTENT] Validation failed: {}", e);
+            (StatusCode::BAD_REQUEST, e.to_string())
+        })?;
 
     let db = state.db.get()
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Database connection error: {e}")))?;
+        .map_err(|e| {
+            eprintln!("[CREATE_CONTENT] Database connection error: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, format!("Database connection error: {e}"))
+        })?;
 
     let channel_exists: Result<i64, _> = db.query_row(
         "SELECT id FROM channels WHERE id = ?1",
@@ -80,6 +95,7 @@ pub async fn create_content(
     );
 
     if channel_exists.is_err() {
+        eprintln!("[CREATE_CONTENT] Channel not found: {}", request.channel_id);
         return Err((StatusCode::NOT_FOUND, "Channel not found".to_string()));
     }
 
@@ -97,9 +113,14 @@ pub async fn create_content(
             now
         ],
     )
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to insert content: {e}")))?;
+    .map_err(|e| {
+        eprintln!("[CREATE_CONTENT] Failed to insert content: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to insert content: {e}"))
+    })?;
 
     let content_id = db.last_insert_rowid();
+
+    eprintln!("[CREATE_CONTENT] Successfully created content with id={}", content_id);
 
     Ok(Json(CreateContentResponse {
         id: content_id,
