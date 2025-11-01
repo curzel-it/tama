@@ -333,7 +333,9 @@ impl Visualizer {
     }
 
     fn frames_to_braille(frames: &[PixelFrame], fps: u32) -> String {
-        let mut result = format!("Ascii Art Animation, {WIDTH}x{HEIGHT}, {fps}fps\n");
+        let char_width = WIDTH / 2;
+        let char_height = HEIGHT / 4;
+        let mut result = format!("Ascii Art Animation, {char_width}x{char_height}, {fps}fps\n");
 
         for frame in frames {
             for row_chunk in frame.pixels.chunks(4) {
@@ -388,7 +390,7 @@ mod tests {
         let result = Visualizer::generate(&config, &mut rng);
 
         assert!(result.contains("Ascii Art Animation"));
-        assert!(result.contains(&format!("{}x{}", WIDTH, HEIGHT)));
+        assert!(result.contains(&format!("{}x{}", WIDTH / 2, HEIGHT / 4)));
         assert!(!result.is_empty());
     }
 

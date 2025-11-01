@@ -19,6 +19,9 @@ import it.curzel.tama.pixeleditor.PixelEditorScreen
 import it.curzel.tama.storage.ConfigStorage
 import it.curzel.tama.theme.MyNavigationBar
 import it.curzel.tama.theme.TamaButton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 enum class EditorScreen {
     Main,
@@ -137,7 +140,7 @@ fun MainEditorScreen(
                 onValueChange = { newTitle ->
                     if (newTitle.length <= 50) {
                         contentTitle = newTitle
-                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+                        CoroutineScope(Dispatchers.Default).launch {
                             ContentWipUseCase.saveTitle(newTitle)
                         }
                     }
