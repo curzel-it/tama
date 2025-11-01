@@ -128,10 +128,12 @@ fun MainEditorScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            ContentPreviewSection(
-                refreshTrigger = localRefreshTrigger,
-                onContentStateChange = { hasContent = it }
-            )
+            key(localRefreshTrigger) {
+                ContentPreviewSection(
+                    refreshTrigger = localRefreshTrigger,
+                    onContentStateChange = { hasContent = it }
+                )
+            }
 
             EditorToolsSection(
                 onNavigateToMidi = onNavigateToMidi,

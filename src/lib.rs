@@ -5,4 +5,5 @@ pub mod channel;
 pub mod client;
 pub mod content_parser;
 pub mod midi_composer;
+pub mod procedural;
 pub mod ui;

@@ -700,6 +700,46 @@ impl MidiEngine {
         Ok(())
     }
 
+    pub fn play_channels_looping(&mut self, channels: &[Vec<Note>]) -> Result<(), String> {
+        self.stop();
+
+        if channels.is_empty() {
+            return Err("No channels to play".to_string());
+        }
+
+        let sample_rate = 48000_u32;
+        let mut channel_samples: Vec<Vec<f32>> = Vec::new();
+        let mut max_length = 0;
+
+        for channel_notes in channels {
+            let mut channel_buffer = Vec::new();
+            for note in channel_notes {
+                let note_samples = self.generate_note_samples(note);
+                channel_buffer.extend(note_samples);
+            }
+            max_length = max_length.max(channel_buffer.len());
+            channel_samples.push(channel_buffer);
+        }
+
+        let mut mixed_samples = vec![0.0_f32; max_length];
+        for channel_buffer in &channel_samples {
+            for (i, &sample) in channel_buffer.iter().enumerate() {
+                mixed_samples[i] += sample;
+            }
+        }
+
+        let source = SamplesBuffer::new(1, sample_rate, mixed_samples);
+        let looping_source = source.repeat_infinite();
+
+        let sink = Sink::try_new(&self.stream_handle)
+            .map_err(|e| format!("Failed to create audio sink: {e}"))?;
+
+        sink.append(looping_source);
+        self.current_sink = Some(sink);
+
+        Ok(())
+    }
+
     pub fn stop(&mut self) {
         if let Some(sink) = self.current_sink.take() {
             sink.stop();
@@ -945,7 +985,23 @@ impl MidiEngine {
 
             self.play_notes_looping(&notes)
         } else {
-            Err("Looping playback is only supported for single-channel compositions".to_string())
+            let mut all_channel_notes = Vec::new();
+
+            for channel in &channels {
+                let mut notes = self.parse_notes(&channel.composition)?;
+
+                for note in &mut notes {
+                    if channel.volume.is_some() && note.volume == 1.0 {
+                        note.volume = channel.volume.unwrap_or(1.0);
+                    }
+                    note.adsr = channel.adsr;
+                    note.vibrato = channel.vibrato;
+                }
+
+                all_channel_notes.push(notes);
+            }
+
+            self.play_channels_looping(&all_channel_notes)
         }
     }
 
