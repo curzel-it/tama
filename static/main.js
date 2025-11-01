@@ -122,11 +122,14 @@ function renderContent() {
         navigationControls.style.display = isSingleContentMode ? 'none' : 'block';
     }
 
-    container.innerHTML = `
+    const isProceduralContent = item.channel.id === 1;
+    const headerHtml = isProceduralContent ? '' : `
         <div class="content-header">
             <h2>${escapeHtml(item.content.name || 'Untitled')}</h2>
             <div class="content-info">by ${escapeHtml(item.channel.name)}</div>
-        </div>
+        </div>`;
+
+    container.innerHTML = headerHtml + `
     `;
 
     animationController.start(pixelFrames, item.content.fps);

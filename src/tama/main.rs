@@ -281,6 +281,7 @@ async fn main() -> io::Result<()> {
                         match Channel::new(
                             content_id,
                             "Single Content".to_string(),
+                            content_data.name,
                             content_data.art,
                             content_data.midi_composition,
                             content_data.fps,
@@ -311,6 +312,7 @@ async fn main() -> io::Result<()> {
                                 let channel = Channel::new(
                                     channel_response.id,
                                     channel_response.name.clone(),
+                                    content.name,
                                     content.art,
                                     content.midi_composition,
                                     content.fps,
@@ -460,13 +462,19 @@ fn tv_loop(
             current_channel.render(delta_time).to_string()
         };
 
-        let title = "Tama Tv"; // feed_manager.current().name.clone();
-        let channel_id = feed_manager.current().id;
-        let content_id = feed_manager.current().content_id;
-        let server_url = feed_manager.current().server_url.as_deref().unwrap_or("unknown");
+        let current_channel = feed_manager.current();
+        let is_procedural_content = current_channel.id == 1;
+        let title = if is_procedural_content {
+            "Tama Tv".to_string()
+        } else {
+            format!("{} by {}", current_channel.content_name, current_channel.name)
+        };
+        let channel_id = current_channel.id;
+        let content_id = current_channel.content_id;
+        let server_url = current_channel.server_url.as_deref().unwrap_or("unknown");
 
         let remote_frame = remote.get_frame();
-        UI::display_channel_ascii(title, &ascii_art, remote_frame)?;
+        UI::display_channel_ascii(&title, &ascii_art, remote_frame)?;
 
         if event::poll(Duration::from_millis(100))? {
             if let crossterm::event::Event::Key(key_event) = event::read()? {
@@ -726,6 +734,7 @@ async fn handle_preview(file_path: &str) -> io::Result<()> {
     let channel = Channel::new(
         0,
         channel_name.clone(),
+        content.title.clone(),
         content.art,
         content.midi_composition.clone(),
         content.fps,
