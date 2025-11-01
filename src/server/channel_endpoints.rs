@@ -7,7 +7,7 @@ use rusqlite::params;
 use crate::{auth, AppState};
 use tama::api::{CreateContentRequest, CreateContentResponse};
 
-const MAX_CONTENT_NAME_LENGTH: usize = 200;
+const MAX_CONTENT_NAME_LENGTH: usize = 50;
 const MAX_ART_SIZE: usize = 100_000; // 100KB
 const MAX_MIDI_SIZE: usize = 50_000; // 50KB
 const MIN_FPS: f32 = 0.1;
@@ -15,8 +15,12 @@ const MAX_FPS: f32 = 120.0;
 
 fn validate_content_upload(request: &CreateContentRequest) -> Result<(), &'static str> {
     // Validate content name
+    if request.name.trim().is_empty() {
+        return Err("Content title cannot be empty");
+    }
+
     if request.name.len() > MAX_CONTENT_NAME_LENGTH {
-        return Err("Content name is too long");
+        return Err("Content title is too long (max 50 characters)");
     }
 
     // Validate FPS range

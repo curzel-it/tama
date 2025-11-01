@@ -29,6 +29,7 @@ pub struct FeedItem {
 #[derive(Serialize, Deserialize)]
 pub struct ContentData {
     pub id: i64,
+    pub name: String,
     pub art: String,
     pub midi_composition: String,
     pub fps: f32,
@@ -170,7 +171,7 @@ async fn get_feed(
 
         for id in &priority_ids {
             let result = db.query_row(
-                "SELECT c.id, c.name, co.id, co.art, co.midi_composition, co.fps
+                "SELECT c.id, c.name, co.id, co.name, co.art, co.midi_composition, co.fps
                  FROM channels c
                  JOIN contents co ON c.id = co.channel_id
                  WHERE co.id = ?1",
@@ -183,9 +184,10 @@ async fn get_feed(
                         },
                         content: ContentData {
                             id: row.get(2)?,
-                            art: row.get(3)?,
-                            midi_composition: row.get(4)?,
-                            fps: row.get(5)?,
+                            name: row.get(3)?,
+                            art: row.get(4)?,
+                            midi_composition: row.get(5)?,
+                            fps: row.get(6)?,
                         },
                     })
                 },
@@ -214,7 +216,7 @@ async fn get_feed(
         };
 
         let query = format!(
-            "SELECT c.id, c.name, co.id, co.art, co.midi_composition, co.fps
+            "SELECT c.id, c.name, co.id, co.name, co.art, co.midi_composition, co.fps
              FROM channels c
              JOIN contents co ON c.id = co.channel_id
              {}
@@ -248,9 +250,10 @@ async fn get_feed(
                     },
                     content: ContentData {
                         id: row.get(2)?,
-                        art: row.get(3)?,
-                        midi_composition: row.get(4)?,
-                        fps: row.get(5)?,
+                        name: row.get(3)?,
+                        art: row.get(4)?,
+                        midi_composition: row.get(5)?,
+                        fps: row.get(6)?,
                     },
                 })
             })
@@ -299,7 +302,7 @@ async fn get_channel(
 
     let mut stmt = db
         .prepare(
-            "SELECT id, art, midi_composition, fps
+            "SELECT id, name, art, midi_composition, fps
              FROM contents
              WHERE channel_id = ?1
              ORDER BY id
@@ -311,9 +314,10 @@ async fn get_channel(
         .query_map(params![id, limit, offset], |row| {
             Ok(ContentData {
                 id: row.get(0)?,
-                art: row.get(1)?,
-                midi_composition: row.get(2)?,
-                fps: row.get(3)?,
+                name: row.get(1)?,
+                art: row.get(2)?,
+                midi_composition: row.get(3)?,
+                fps: row.get(4)?,
             })
         })
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -333,16 +337,17 @@ async fn get_content(
 
     let content = db
         .query_row(
-            "SELECT id, art, midi_composition, fps
+            "SELECT id, name, art, midi_composition, fps
              FROM contents
              WHERE id = ?1",
             params![content_id],
             |row| {
                 Ok(ContentData {
                     id: row.get(0)?,
-                    art: row.get(1)?,
-                    midi_composition: row.get(2)?,
-                    fps: row.get(3)?,
+                    name: row.get(1)?,
+                    art: row.get(2)?,
+                    midi_composition: row.get(3)?,
+                    fps: row.get(4)?,
                 })
             },
         )

@@ -10,6 +10,10 @@ object PublishContentUseCase {
             Exception("No content to publish")
         )
 
+        if (wipContent.title.trim().isEmpty()) {
+            return Result.failure(Exception("Please enter a title for your content"))
+        }
+
         val config = ConfigStorage.loadConfig() ?: return Result.failure(
             Exception("Configuration not found")
         )
@@ -27,7 +31,7 @@ object PublishContentUseCase {
 
         val result = apiClient.uploadContent(
             channelId = channelInfo.id,
-            name = "",
+            name = wipContent.title.trim(),
             art = wipContent.art,
             midi = wipContent.midi,
             fps = wipContent.fps

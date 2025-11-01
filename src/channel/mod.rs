@@ -12,6 +12,7 @@ use std::fs;
 pub struct Channel {
     pub id: i64,
     pub name: String,
+    pub content_name: String,
     pub player: AsciiArtPlayer,
     pub content: ChannelContent,
     pub content_id: i64,
@@ -19,13 +20,14 @@ pub struct Channel {
 }
 
 impl Channel {
-    pub fn new(id: i64, name: String, art: String, midi_composition: String, fps: f32, content_id: i64) -> Result<Self, String> {
+    pub fn new(id: i64, name: String, content_name: String, art: String, midi_composition: String, fps: f32, content_id: i64) -> Result<Self, String> {
         let content = ChannelContent::new(art.clone(), midi_composition);
         let player = AsciiArtPlayer::from_string(art, fps)?;
 
         Ok(Self {
             id,
             name,
+            content_name,
             player,
             content,
             content_id,
@@ -73,6 +75,7 @@ impl ChannelManager {
             Channel::new(
                 -2,
                 "Sleeping Cat".to_string(),
+                sleeping_parsed.title.clone(),
                 sleeping_parsed.art,
                 sleeping_parsed.midi_composition,
                 sleeping_parsed.fps,
@@ -81,6 +84,7 @@ impl ChannelManager {
             Channel::new(
                 -3,
                 "Idle Cat".to_string(),
+                idle_parsed.title.clone(),
                 idle_parsed.art,
                 idle_parsed.midi_composition,
                 idle_parsed.fps,

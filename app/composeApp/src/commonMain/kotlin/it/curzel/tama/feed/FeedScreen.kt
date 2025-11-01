@@ -367,13 +367,24 @@ fun FeedLandscapeLayout(
 
 @Composable
 fun FeedItemView(item: FeedItem, isShowingStatic: Boolean) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Channel: ${item.channel.name}",
-            style = MaterialTheme.typography.bodyMedium
-        )
+    val isProceduralContent = item.channel.id == 1L
+
+    if (!isProceduralContent) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = item.content.name.ifBlank { "Untitled" },
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            )
+            Text(
+                text = "by ${item.channel.name}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

@@ -463,27 +463,43 @@ document.addEventListener('mouseup', () => {
 
 function parseContentFile(fileContent) {
     const lines = fileContent.split('\n');
+    let title = '';
     let midi = '';
     let art = '';
     let width = 20;
     let height = 10;
     let fps = 10;
+    let inTitle = false;
     let inMidi = false;
     let inArt = false;
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
+        if (line.includes('--- TITLE ---')) {
+            inTitle = true;
+            inMidi = false;
+            inArt = false;
+            continue;
+        }
+
         if (line.includes('--- MIDI ---')) {
+            inTitle = false;
             inMidi = true;
             inArt = false;
             continue;
         }
 
         if (line.includes('--- ART ---')) {
+            inTitle = false;
             inMidi = false;
             inArt = true;
             continue;
+        }
+
+        if (inTitle && line.trim()) {
+            title = line.trim();
+            inTitle = false;
         }
 
         if (inMidi && line.trim()) {
@@ -505,7 +521,7 @@ function parseContentFile(fileContent) {
         }
     }
 
-    return { midi, art, width, height, fps };
+    return { title, midi, art, width, height, fps };
 }
 
 document.getElementById('loadFile').addEventListener('change', (e) => {
@@ -517,6 +533,7 @@ document.getElementById('loadFile').addEventListener('change', (e) => {
         const content = event.target.result;
         const parsed = parseContentFile(content);
 
+        document.getElementById('contentTitle').value = parsed.title || '';
         document.getElementById('midiComposition').value = parsed.midi;
         document.getElementById('fps').value = parsed.fps;
         document.getElementById('canvasWidth').value = parsed.width * 2;
@@ -543,10 +560,19 @@ document.getElementById('loadFile').addEventListener('change', (e) => {
 });
 
 document.getElementById('downloadButton').addEventListener('click', () => {
+    const title = document.getElementById('contentTitle').value.trim();
+
+    if (!title) {
+        alert('Please enter a title for your content');
+        return;
+    }
+
     const fps = parseFloat(document.getElementById('fps').value);
     const midiComposition = document.getElementById('midiComposition').value.trim();
 
-    let content = '--- MIDI ---\n';
+    let content = '--- TITLE ---\n';
+    content += `${title}\n`;
+    content += '--- MIDI ---\n';
     if (midiComposition) {
         content += `--bpm 150 ${midiComposition}\n`;
     } else {
@@ -616,6 +642,13 @@ document.getElementById('publishButton').addEventListener('click', async () => {
         return;
     }
 
+    const title = document.getElementById('contentTitle').value.trim();
+
+    if (!title) {
+        publishError.textContent = 'Please enter a title for your content';
+        return;
+    }
+
     const fps = parseFloat(document.getElementById('fps').value);
 
     if (isNaN(fps) || fps < 1 || fps > 30) {
@@ -633,7 +666,7 @@ document.getElementById('publishButton').addEventListener('click', async () => {
     try {
         const payload = {
             channel_id: channel.id,
-            name: '',
+            name: title,
             art: brailleArt.trim(),
             midi: midiComposition,
             fps: fps

@@ -35,6 +35,7 @@ pub struct FeedItem {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ContentData {
     pub id: i64,
+    pub name: String,
     pub art: String,
     pub midi_composition: String,
     pub fps: f32,

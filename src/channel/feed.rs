@@ -10,6 +10,7 @@ impl FeedItem {
         let channel = Channel::new(
             api_item.channel.id,
             api_item.channel.name,
+            api_item.content.name,
             api_item.content.art,
             api_item.content.midi_composition,
             api_item.content.fps,
@@ -23,6 +24,7 @@ impl FeedItem {
         let channel = Channel::new(
             api_item.channel.id,
             api_item.channel.name,
+            api_item.content.name,
             api_item.content.art,
             api_item.content.midi_composition,
             api_item.content.fps,
@@ -60,6 +62,7 @@ impl FeedManager {
         let channel = Channel::new(
             -1,
             "No content".to_string(),
+            "".to_string(),
             static_art,
             "16-".to_string(),
             10.0,
@@ -106,6 +109,7 @@ mod tests {
         let channel = Channel::new(
             id,
             format!("Test {id}"),
+            parsed.title.clone(),
             parsed.art,
             parsed.midi_composition,
             parsed.fps,

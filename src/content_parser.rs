@@ -2,6 +2,7 @@ use std::fs;
 
 #[derive(Debug, Clone)]
 pub struct ContentFile {
+    pub title: String,
     pub midi_composition: String,
     pub art: String,
     pub fps: f32,
@@ -10,6 +11,7 @@ pub struct ContentFile {
 #[derive(Debug)]
 pub enum ParseError {
     IoError(String),
+    MissingTitleSection,
     MissingMidiSection,
     MissingArtSection,
     InvalidFormat(String),
@@ -20,6 +22,20 @@ impl From<std::io::Error> for ParseError {
         ParseError::IoError(err.to_string())
     }
 }
+
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParseError::IoError(msg) => write!(f, "IO error: {}", msg),
+            ParseError::MissingTitleSection => write!(f, "Missing '--- TITLE ---' section. Content files must include a title."),
+            ParseError::MissingMidiSection => write!(f, "Missing '--- MIDI ---' section"),
+            ParseError::MissingArtSection => write!(f, "Missing '--- ART ---' section"),
+            ParseError::InvalidFormat(msg) => write!(f, "{}", msg),
+        }
+    }
+}
+
+impl std::error::Error for ParseError {}
 
 fn parse_fps_from_header(header: &str) -> f32 {
     let after_prefix = header
@@ -52,15 +68,25 @@ pub fn parse_content_file(path: &str) -> Result<ContentFile, ParseError> {
 pub fn parse_content(content: &str) -> Result<ContentFile, ParseError> {
     let lines: Vec<&str> = content.lines().collect();
 
+    // Parse required TITLE section
+    let title_start = lines.iter().position(|&line| line.trim() == "--- TITLE ---")
+        .ok_or(ParseError::MissingTitleSection)?;
+
+    let title = lines.get(title_start + 1)
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty() && !s.starts_with("---"))
+        .ok_or_else(|| ParseError::InvalidFormat("TITLE section cannot be empty".to_string()))?
+        .to_string();
+
     let midi_start = lines.iter().position(|&line| line.trim() == "--- MIDI ---")
         .ok_or(ParseError::MissingMidiSection)?;
 
     let art_start = lines.iter().position(|&line| line.trim() == "--- ART ---")
         .ok_or(ParseError::MissingArtSection)?;
 
-    if midi_start >= art_start {
+    if title_start >= midi_start || midi_start >= art_start {
         return Err(ParseError::InvalidFormat(
-            "MIDI section must come before ART section".to_string()
+            "Sections must be in order: TITLE, MIDI, ART".to_string()
         ));
     }
 
@@ -100,6 +126,7 @@ pub fn parse_content(content: &str) -> Result<ContentFile, ParseError> {
     let fps = parse_fps_from_header(first_art_line);
 
     Ok(ContentFile {
+        title,
         midi_composition,
         art,
         fps,
@@ -112,7 +139,9 @@ mod tests {
 
     #[test]
     fn test_parse_valid_content() {
-        let content = r#"--- MIDI ---
+        let content = r#"--- TITLE ---
+Test Content
+--- MIDI ---
 8c4t 8e4t 8g4t
 8c5t 8g4t
 --- ART ---
@@ -125,14 +154,45 @@ Ascii Art Animation, 16x11
         assert!(result.is_ok());
 
         let parsed = result.unwrap();
+        assert_eq!(parsed.title, "Test Content");
         assert_eq!(parsed.midi_composition, "8c4t 8e4t 8g4t 8c5t 8g4t");
         assert!(parsed.art.contains("Ascii Art Animation"));
         assert_eq!(parsed.fps, 10.0);
     }
 
     #[test]
+    fn test_parse_missing_title_section() {
+        let content = r#"--- MIDI ---
+8c4t 8e4t
+--- ART ---
+Ascii Art Animation, 16x11
+⠀⠀⠀⠀
+"#;
+
+        let result = parse_content(content);
+        assert!(matches!(result, Err(ParseError::MissingTitleSection)));
+    }
+
+    #[test]
+    fn test_parse_empty_title() {
+        let content = r#"--- TITLE ---
+
+--- MIDI ---
+8c4t 8e4t
+--- ART ---
+Ascii Art Animation, 16x11
+⠀⠀⠀⠀
+"#;
+
+        let result = parse_content(content);
+        assert!(matches!(result, Err(ParseError::InvalidFormat(_))));
+    }
+
+    #[test]
     fn test_parse_missing_midi_section() {
-        let content = r#"--- ART ---
+        let content = r#"--- TITLE ---
+My Title
+--- ART ---
 Ascii Art Animation, 16x11
 ⠀⠀⠀⠀
 "#;
@@ -143,7 +203,9 @@ Ascii Art Animation, 16x11
 
     #[test]
     fn test_parse_missing_art_section() {
-        let content = r#"--- MIDI ---
+        let content = r#"--- TITLE ---
+My Title
+--- MIDI ---
 8c4t 8e4t
 "#;
 
@@ -153,10 +215,13 @@ Ascii Art Animation, 16x11
 
     #[test]
     fn test_parse_sections_in_wrong_order() {
-        let content = r#"--- ART ---
-Ascii Art Animation, 16x11
---- MIDI ---
+        let content = r#"--- MIDI ---
 8c4t 8e4t
+--- TITLE ---
+My Title
+--- ART ---
+Ascii Art Animation, 16x11
+⠀⠀⠀⠀
 "#;
 
         let result = parse_content(content);
@@ -165,7 +230,9 @@ Ascii Art Animation, 16x11
 
     #[test]
     fn test_parse_empty_midi() {
-        let content = r#"--- MIDI ---
+        let content = r#"--- TITLE ---
+My Title
+--- MIDI ---
 
 --- ART ---
 Ascii Art Animation, 16x11
@@ -178,7 +245,9 @@ Ascii Art Animation, 16x11
 
     #[test]
     fn test_parse_custom_fps() {
-        let content = r#"--- MIDI ---
+        let content = r#"--- TITLE ---
+Custom FPS Test
+--- MIDI ---
 8c4t 8e4t
 --- ART ---
 Ascii Art Animation, 16x11, 5fps
@@ -189,12 +258,15 @@ Ascii Art Animation, 16x11, 5fps
         assert!(result.is_ok());
 
         let parsed = result.unwrap();
+        assert_eq!(parsed.title, "Custom FPS Test");
         assert_eq!(parsed.fps, 5.0);
     }
 
     #[test]
     fn test_parse_default_fps() {
-        let content = r#"--- MIDI ---
+        let content = r#"--- TITLE ---
+Default FPS Test
+--- MIDI ---
 8c4t 8e4t
 --- ART ---
 Ascii Art Animation, 16x11
@@ -205,12 +277,15 @@ Ascii Art Animation, 16x11
         assert!(result.is_ok());
 
         let parsed = result.unwrap();
+        assert_eq!(parsed.title, "Default FPS Test");
         assert_eq!(parsed.fps, 10.0);
     }
 
     #[test]
     fn test_parse_fps_with_trailing_characters() {
-        let content = r#"--- MIDI ---
+        let content = r#"--- TITLE ---
+Trailing Chars Test
+--- MIDI ---
 8c4t 8e4t
 --- ART ---
 Ascii Art Animation, 16x11, 2fps⠀⠀⠀
@@ -221,6 +296,7 @@ Ascii Art Animation, 16x11, 2fps⠀⠀⠀
         assert!(result.is_ok());
 
         let parsed = result.unwrap();
+        assert_eq!(parsed.title, "Trailing Chars Test");
         assert_eq!(parsed.fps, 2.0);
     }
 }
