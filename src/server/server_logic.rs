@@ -4,7 +4,7 @@ use axum::{
     http::{StatusCode, header},
     middleware as axum_middleware,
     response::{Html, Json, Response},
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 use r2d2_sqlite::SqliteConnectionManager;
@@ -526,6 +526,7 @@ pub async fn run_server(db_path: &str, port: u16, jwt_secret: String) -> Result<
         .route("/auth/register", post(auth_endpoints::register))
         .route("/auth/login", post(auth_endpoints::login))
         .route("/auth/login-or-signup", post(auth_endpoints::login_or_signup))
+        .route("/auth/account", delete(auth_endpoints::delete_account))
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::rate_limit_auth,

@@ -1,11 +1,11 @@
 use axum::{
     extract::{Json, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
 };
 use rusqlite::params;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::AppState;
+use crate::{auth, AppState};
 use tama::api::{AuthResponse, ChannelInfo, LoginRequest, RegisterRequest};
 
 pub async fn register(
@@ -220,4 +220,40 @@ pub async fn login_or_signup(
             name: channel_name,
         },
     }))
+}
+
+pub async fn delete_account(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<StatusCode, (StatusCode, String)> {
+    let channel_id = auth::authenticate_request(&headers, &state.jwt_secret)
+        .map_err(|status| (status, "Authentication failed".to_string()))?;
+
+    let db = state.db.get()
+        .map_err(|e| {
+            tracing::error!("Database connection error: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+        })?;
+
+    db.execute(
+        "DELETE FROM contents WHERE channel_id = ?1",
+        params![channel_id],
+    )
+    .map_err(|e| {
+        tracing::error!("Failed to delete content for channel {}: {}", channel_id, e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete content".to_string())
+    })?;
+
+    db.execute(
+        "DELETE FROM channels WHERE id = ?1",
+        params![channel_id],
+    )
+    .map_err(|e| {
+        tracing::error!("Failed to delete channel {}: {}", channel_id, e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete account".to_string())
+    })?;
+
+    tracing::info!("Account deleted: channel_id={}", channel_id);
+
+    Ok(StatusCode::NO_CONTENT)
 }

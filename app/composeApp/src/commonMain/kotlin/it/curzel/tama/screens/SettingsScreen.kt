@@ -30,6 +30,9 @@ fun SettingsScreen() {
     var showTermsWebView by remember { mutableStateOf(false) }
     var channelName by remember { mutableStateOf<String?>(null) }
     var isLoggedIn by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
+    var deleteAccountLoading by remember { mutableStateOf(false) }
+    var deleteAccountError by remember { mutableStateOf<String?>(null) }
 
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -267,8 +270,59 @@ fun SettingsScreen() {
                     ) {
                         Text("Logout")
                     }
+
+                    TamaButton(
+                        onClick = { showDeleteAccountDialog = true }
+                    ) {
+                        Text("Delete Account")
+                    }
                 }
             }
+        }
+
+        if (showDeleteAccountDialog) {
+            it.curzel.tama.settings.DeleteAccountDialog(
+                onDismiss = {
+                    showDeleteAccountDialog = false
+                    deleteAccountError = null
+                },
+                onConfirm = {
+                    scope.launch {
+                        deleteAccountLoading = true
+                        deleteAccountError = null
+
+                        try {
+                            val config = ConfigStorage.loadConfig()
+                            if (config == null) {
+                                deleteAccountError = "Configuration not found"
+                                deleteAccountLoading = false
+                                return@launch
+                            }
+
+                            val client = it.curzel.tama.api.ApiManager.getClient(config.server_url)
+                            val result = client.deleteAccount()
+
+                            if (result.isSuccess) {
+                                ConfigStorage.clearToken()
+                                ConfigStorage.clearChannelInfo()
+
+                                isLoggedIn = false
+                                channelName = null
+                                showDeleteAccountDialog = false
+                                saveMessage = "Account deleted successfully"
+                            } else {
+                                deleteAccountError = result.exceptionOrNull()?.message ?: "Unknown error"
+                            }
+                        } catch (e: Exception) {
+                            deleteAccountError = "Unexpected error: ${e.message}"
+                        } finally {
+                            deleteAccountLoading = false
+                        }
+                    }
+                },
+                isLoading = deleteAccountLoading,
+                errorMessage = deleteAccountError
+            )
         }
     }
 }

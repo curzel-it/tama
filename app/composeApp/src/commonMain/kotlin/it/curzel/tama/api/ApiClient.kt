@@ -153,6 +153,28 @@ class ApiClient(
         Result.failure(e)
     }
 
+    suspend fun deleteAccount(): Result<Unit> = try {
+        val token = sessionToken
+            ?: return Result.failure(Exception("No session token available. Please authenticate first."))
+
+        val httpResponse = client.delete("$baseUrl/auth/account") {
+            header("Authorization", "Bearer $token")
+        }
+
+        if (httpResponse.status.value == 204) {
+            Result.success(Unit)
+        } else {
+            val errorBody = try {
+                httpResponse.bodyAsText()
+            } catch (e: Exception) {
+                "Unknown error"
+            }
+            Result.failure(Exception("Delete failed: $errorBody"))
+        }
+    } catch (e: Exception) {
+        Result.failure(Exception("Network error: ${e.message}"))
+    }
+
     suspend fun checkVersion(): Result<VersionResponse> = try {
         val response: VersionResponse = client.get("$baseUrl/versions").body()
         Result.success(response)
